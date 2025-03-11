@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-
+import logo from "@/public/1.png"
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -10,8 +10,8 @@ const Navbar: React.FC = () => {
     <main className="container">
     <nav className="navbar blur-box display-flex justify-between align-center">
       <div className="navbar-logo">
-        <img src="/logo.png" alt="FreeFlow Logo" width="30" />
-        <span>FreeFlow</span>
+        <img src="logo"  />
+        <span className="">FreeFlow</span>
       </div>
 
       {/* Nav Links */}
@@ -24,11 +24,6 @@ const Navbar: React.FC = () => {
 
       {/* CTA Button */}
       <Link href="/get-started" className="navbar-btn">Get Started</Link>
-
-      {/* Mobile Menu Button */}
-      <div className="menu-icon" onClick={() => setIsOpen(!isOpen)}>
-        <span>☰</span>
-      </div>
     </nav>
     </main>
   );
