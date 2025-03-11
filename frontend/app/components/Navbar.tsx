@@ -7,8 +7,8 @@ const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="navbar blur-box">
-      {/* Logo Section */}
+    <main className="container">
+    <nav className="navbar blur-box display-flex justify-between align-center">
       <div className="navbar-logo">
         <img src="/logo.png" alt="FreeFlow Logo" width="30" />
         <span>FreeFlow</span>
@@ -30,6 +30,7 @@ const Navbar: React.FC = () => {
         <span>☰</span>
       </div>
     </nav>
+    </main>
   );
 };
 
