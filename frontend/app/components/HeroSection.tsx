@@ -1,9 +1,9 @@
 import React from "react";
-
 const HeroSection = () => {
   return (
-    <section className="hero">
-      {/* Tagline */}
+    <>
+    <section className="hero glow-effect">
+    
       <span className="hero-tagline">🔗 Connect Seamlessly, Securely</span>
 
       {/* Heading */}
@@ -20,6 +20,7 @@ const HeroSection = () => {
       {/* Call to Action */}
       <button className="hero-cta">Start Communicating</button>
     </section>
+    </>
   );
 };
 
