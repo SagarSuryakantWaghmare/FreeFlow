@@ -1,6 +1,4 @@
 "use client";
-
-import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "@/public/1.png";
@@ -15,7 +13,7 @@ const Navbar: React.FC = () => {
         </div>
 
         {/* Nav Links */}
-        <div className={`navbar-links ${isOpen ? "open" : ""}`}>
+        <div className={`navbar-links`}>
           <Link href="/about">About</Link>
           <Link href="/features">Features</Link>
           <Link href="/pricing">Pricing</Link>
