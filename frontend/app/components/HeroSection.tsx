@@ -18,7 +18,7 @@ const HeroSection = () => {
       </p>
 
       {/* Call to Action */}
-      <button className="hero-cta">Start Communicating</button>
+      <button className="hero-cta glow">Start Communicating</button>
     </section>
     </>
   );

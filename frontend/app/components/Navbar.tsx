@@ -6,8 +6,6 @@ import Image from "next/image";
 import logo from "@/public/1.png";
 
 const Navbar: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-
   return (
     <main className="container">
       <nav className="navbar blur-box display-flex justify-between align-center">

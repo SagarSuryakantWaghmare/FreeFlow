@@ -203,7 +203,7 @@ body {
 }
 
 /* Hover state modifications */
-.glow-effect:hover {
+.glow:hover {
   background: linear-gradient(
     180deg, 
     #0e0e0e 0%, 
@@ -223,7 +223,7 @@ body {
 
 /* Controlled glow activation */
 .glow-effect:hover::before {
-  opacity: 0.2; /* Hover glow intensity */
+  opacity: 0.1; 
 }
 
 /* Focus state refinement */
