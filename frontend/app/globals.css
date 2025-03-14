@@ -172,7 +172,7 @@ body {
   .navbar-links {
     position: fixed;
     top: 70px;
-    right: -100%;
+    right: -150%;
     flex-direction: column;
     background: rgba(26, 13, 46, 0.95);
     backdrop-filter: blur(10px);
