@@ -272,6 +272,75 @@ export default function Home() {
           </div>
         </div>
       </section>
+      {/* Footer */}
+      <footer className="footer-container">
+        <div className="footer-content">
+          {/* Brand Section */}
+          <div className="footer-section">
+            <h2 className="footer-brand">FreeFlow</h2>
+            <p className="footer-tagline">
+              Peer-to-peer communication without barriers.
+            </p>
+          </div>
+
+          {/* Quick Links */}
+          <div className="footer-section">
+            <h3 className="footer-heading">Quick Links</h3>
+            <ul className="footer-links">
+              <li>
+                <a href="/about">About</a>
+              </li>
+              <li>
+                <a href="/features">Features</a>
+              </li>
+              <li>
+                <a href="/pricing">Pricing</a>
+              </li>
+              <li>
+                <a href="/blog">Blog</a>
+              </li>
+              <li>
+                <a href="/contact">Contact</a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Legal Links */}
+          <div className="footer-section">
+            <h3 className="footer-heading">Legal</h3>
+            <ul className="footer-links">
+              <li>
+                <a href="/privacy">Privacy Policy</a>
+              </li>
+              <li>
+                <a href="/terms">Terms of Service</a>
+              </li>
+              <li>
+                <a href="/cookies">Cookie Policy</a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Newsletter */}
+          <div className="footer-section">
+            <h3 className="footer-heading">Newsletter</h3>
+            <p className="newsletter-text">
+              Subscribe to our newsletter for updates and news.
+            </p>
+            <div className="newsletter-form">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="email-input"
+              />
+              <button className="subscribe-button">Subscribe</button>
+            </div>
+          </div>
+        </div>
+
+        {/* Copyright */}
+        <div className="copyright">© 2025 FreeFlow. All rights reserved.</div>
+      </footer>
     </>
   );
 }

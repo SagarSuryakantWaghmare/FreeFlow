@@ -810,3 +810,140 @@ h1 {
       padding: 1.5rem;
   }
 }
+/* Footer */
+.footer-container {
+  background: #1A0D2E;
+  color: #fff;
+  padding: 4rem 2rem 2rem;
+  border-top: 1px solid rgba(147, 112, 219, 0.2);
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 3rem;
+}
+
+.footer-section {
+  margin-bottom: 2rem;
+}
+
+.footer-brand {
+  font-size: 2rem;
+  background: linear-gradient(45deg, #8A2BE2, #4B0082);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 1rem;
+}
+
+.footer-tagline {
+  color: #D8BFD8;
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+.footer-heading {
+  color: #BA68C8;
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid rgba(147, 112, 219, 0.3);
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-links li {
+  margin-bottom: 0.8rem;
+}
+
+.footer-links a {
+  color: #E6E6FA;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.footer-links a:hover {
+  color: #BA68C8;
+}
+
+.footer-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: #BA68C8;
+  transition: width 0.3s ease;
+}
+
+.footer-links a:hover::after {
+  width: 100%;
+}
+
+.newsletter-text {
+  color: #D8BFD8;
+  margin-bottom: 1.5rem;
+}
+
+.newsletter-form {
+  display: flex;
+  gap: 1rem;
+}
+
+.email-input {
+  flex: 1;
+  padding: 0.8rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(147, 112, 219, 0.3);
+  border-radius: 8px;
+  color: #fff;
+}
+
+.email-input::placeholder {
+  color: #C3B1E1;
+}
+
+.subscribe-button {
+  background: linear-gradient(45deg, #8A2BE2, #4B0082);
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.subscribe-button:hover {
+  transform: translateY(-2px);
+}
+
+.copyright {
+  text-align: center;
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(147, 112, 219, 0.2);
+  color: #C3B1E1;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .newsletter-form {
+    flex-direction: column;
+  }
+
+  .footer-links a::after {
+    display: none;
+  }
+}
