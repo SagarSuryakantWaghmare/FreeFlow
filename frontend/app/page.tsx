@@ -90,8 +90,6 @@ export default function Home() {
             </div>
           ))}
         </div>
-
-        <button className="cta-button">Start Communication</button>
       </section>
 
       {/* Pricing Section */}
