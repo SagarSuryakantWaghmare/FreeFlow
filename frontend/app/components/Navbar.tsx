@@ -5,7 +5,7 @@ import logo from "@/public/1.png";
 
 const Navbar: React.FC = () => {
   return (
-    <main className="container">
+    <main className="navbar-container">
       <nav className="navbar blur-box display-flex justify-between align-center">
         <div className="navbar-logo">
           <Image src={logo} alt="FreeFlow Logo" width={50} height={50} />
