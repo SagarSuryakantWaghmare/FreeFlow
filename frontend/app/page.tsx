@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Navbar from "@/app/components/Navbar";
 import HeroSection from "@/app/components/HeroSection";
 import { FaUsers, FaHeadset, FaCogs } from "react-icons/fa";
