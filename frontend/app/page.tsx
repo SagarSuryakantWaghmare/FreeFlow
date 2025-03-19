@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import Navbar from "@/app/components/Navbar";
-import HeroSection from "@/app/components/HeroSection";
 import { FaUsers, FaHeadset, FaCogs } from "react-icons/fa";
 import { AiOutlineRobot } from "react-icons/ai";
 import { MdLockOutline, MdDevices } from "react-icons/md";
@@ -40,7 +39,24 @@ export default function Home() {
   return (
     <>
       <Navbar />
-      <HeroSection />
+      <section className="hero glow-effect">
+        <span className="hero-tagline">🔗 Connect Seamlessly, Securely</span>
+
+        {/* Heading */}
+        <h1 className="hero-heading" style={{ color: "white", fontWeight: "bold" }}>
+          Peer-to-Peer Communication, <br /> Without Barriers.
+        </h1>
+
+        {/* Subtext */}
+        <p className="hero-subtext">
+          FreeFlow lets you communicate securely and instantly, without
+          centralized servers. Experience a truly **decentralized** way to
+          connect.
+        </p>
+
+        {/* Call to Action */}
+        <button className="hero-cta glow">Start Communicating</button>
+      </section>
 
       {/* Features Section */}
       <section className="features-container">

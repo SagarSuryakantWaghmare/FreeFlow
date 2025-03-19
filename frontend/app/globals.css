@@ -208,11 +208,12 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
+  
 }
 
 .hero-tagline {
   background: rgba(147, 51, 234, 0.2);
-  color: var(--secondary-color);
+  color: white;
   padding: 8px 16px;
   border-radius: 20px;
   font-size: 14px;
@@ -220,6 +221,7 @@ body {
 }
 
 .hero-heading {
+  color: white;
   font-size: 56px;
   font-weight: bold;
   margin-top: 20px;
