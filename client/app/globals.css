@@ -470,6 +470,7 @@ body {
   background: var(--primary-gradient);
   -webkit-background-clip: text;
   background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   display: inline-block;
 }
@@ -674,6 +675,7 @@ h1 {
   margin-bottom: 1rem;
   background: linear-gradient(45deg, var(--light-purple), var(--primary-purple));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -967,6 +969,7 @@ h1 {
   font-size: 2rem;
   background: linear-gradient(45deg, #8A2BE2, #4B0082);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 1rem;
 }
