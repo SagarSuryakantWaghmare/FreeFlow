@@ -76,6 +76,7 @@ body {
 
 /* Navbar Styling */
 .navbar-container {
+  
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
@@ -93,7 +94,7 @@ body {
   backdrop-filter: blur(10px);
   position: fixed;
   width: 80%;
-  top: 10;
+  top: 20px;
   z-index: 1000;
 }
 
