@@ -1,10 +1,9 @@
 "use client";
 import { useState } from "react";
-import Navbar from "@/app/components/Navbar";
+import Navbar from "@/components/Navbar";
 import { FaUsers, FaHeadset, FaCogs } from "react-icons/fa";
 import { AiOutlineRobot } from "react-icons/ai";
 import { MdLockOutline, MdDevices } from "react-icons/md";
-
 interface FAQItem {
   question: string;
   answer: string;
