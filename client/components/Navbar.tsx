@@ -3,7 +3,14 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "@/public/1.png";
-
+import {
+  SignInButton,
+  SignUpButton,
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from '@clerk/nextjs'
+import { Button } from "./ui/button";
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -12,16 +19,16 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <main className="navbar-container">
+    <main className="navbar-container top-10 z-50 bottom-0">
       <nav className="navbar blur-box display-flex justify-between align-center">
         <div className="navbar-logo">
           <Image src={logo} alt="FreeFlow Logo" width={50} height={50} />
-          <span className="text-4xl">FreeFlow</span>
+          <span className="text-4xl text-white">FreeFlow</span>
         </div>
 
         {/* Hamburger Menu Icon */}
-        <button 
-          className="hamburger-menu" 
+        <button
+          className="hamburger-menu"
           onClick={toggleMenu}
           aria-label="Toggle navigation menu"
         >
@@ -47,14 +54,10 @@ const Navbar: React.FC = () => {
 
         {/* Nav Links */}
         <div className={`navbar-links ${isMenuOpen ? "active" : ""}`}>
-          <Link href="/about" onClick={() => setIsMenuOpen(false)}>About</Link>
-          <Link href="/features" onClick={() => setIsMenuOpen(false)}>Features</Link>
-          <Link href="/pricing" onClick={() => setIsMenuOpen(false)}>Pricing</Link>
-          <Link href="/faq" onClick={() => setIsMenuOpen(false)}>FAQs</Link>
-          
+
           {/* Mobile CTA Button */}
-          <Link 
-            href="/get-started" 
+          <Link
+            href="/get-started"
             className="navbar-btn mobile-cta"
             onClick={() => setIsMenuOpen(false)}
           >
@@ -63,9 +66,14 @@ const Navbar: React.FC = () => {
         </div>
 
         {/* Desktop CTA Button */}
-        <Link href="/get-started" className="navbar-btn desktop-cta">
-          Get Started
-        </Link>
+        <SignedOut>
+          <Button className="navbar-btn desktop-cta">
+            <Link href="/sign-in">Sign in</Link>
+          </Button>
+        </SignedOut>
+        <SignedIn>
+          <UserButton />
+        </SignedIn>
       </nav>
     </main>
   );

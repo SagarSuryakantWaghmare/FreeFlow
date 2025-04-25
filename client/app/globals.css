@@ -12,11 +12,11 @@
 
   /* Navbar */
   .navbar-container {
-    @apply max-w-[1200px] mx-auto px-5 flex justify-center items-center;
+    @apply  max-w-[1200px] mx-auto px-5 flex justify-center items-center;
   }
 
   .navbar {
-    @apply flex justify-between items-center py-4 px-10 bg-gray-950/90 backdrop-blur fixed w-[80%] top-0 z-[1000];
+    @apply flex justify-between items-center top-10 py-4 px-10 bg-gray-950/90 backdrop-blur fixed w-[80%] top-0 z-[1000];
   }
 
   .navbar-logo {
