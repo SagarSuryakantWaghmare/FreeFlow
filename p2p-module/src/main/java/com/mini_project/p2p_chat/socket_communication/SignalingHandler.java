@@ -29,7 +29,7 @@ public class SignalingHandler extends TextWebSocketHandler {
         if (userId != null) {
             onlineUsers.remove(userId);
         }
-        
+
         // Broadcast updated user list after a user disconnects
         try {
             broadcastOnlineUsers();
@@ -79,41 +79,40 @@ public class SignalingHandler extends TextWebSocketHandler {
         String userId = jsonNode.get("userId").asText();
         onlineUsers.put(userId, session);
         sessionIdToUserId.put(session.getId(), userId);
-        
+
         // Broadcast updated list of online users to all connected clients
         broadcastOnlineUsers();
     }
 
     private void broadcastOnlineUsers() throws IOException {
-    // Get the list of online users
-    List<String> onlineUserList = new ArrayList<>(onlineUsers.keySet());
+        // Get the list of online users
+        List<String> onlineUserList = new ArrayList<>(onlineUsers.keySet());
 
-    // Create a new message to send to all connected clients
-    ObjectNode onlineUsersMessage = objectMapper.createObjectNode();
-    onlineUsersMessage.put("type", "online_users");
+        // Create a new message to send to all connected clients
+        ObjectNode onlineUsersMessage = objectMapper.createObjectNode();
+        onlineUsersMessage.put("type", "online_users");
 
-    // Create a new ArrayNode to hold the user list as JsonNode
-    ArrayNode usersArray = objectMapper.createArrayNode();
-    
-    // Add each user as a JsonNode to the array
-    for (String user : onlineUserList) {
-        usersArray.add(user);
-    }
-    
-    // Attach the array to the message
-    onlineUsersMessage.set("users", usersArray);
+        // Create a new ArrayNode to hold the user list as JsonNode
+        ArrayNode usersArray = objectMapper.createArrayNode();
 
-    // Send the message to all users
-    for (WebSocketSession webSocketSession : onlineUsers.values()) {
-        try {
-            webSocketSession.sendMessage(new TextMessage(onlineUsersMessage.toString()));
-        } catch (IOException e) {
-            // Log the error and continue broadcasting to other sessions
-            e.printStackTrace();
+        // Add each user as a JsonNode to the array
+        for (String user : onlineUserList) {
+            usersArray.add(user);
+        }
+
+        // Attach the array to the message
+        onlineUsersMessage.set("users", usersArray);
+
+        // Send the message to all users
+        for (WebSocketSession webSocketSession : onlineUsers.values()) {
+            try {
+                webSocketSession.sendMessage(new TextMessage(onlineUsersMessage.toString()));
+            } catch (IOException e) {
+                // Log the error and continue broadcasting to other sessions
+                e.printStackTrace();
+            }
         }
     }
-}
-
 
     private void handleRequestConnection(WebSocketSession session, JsonNode jsonNode) throws IOException {
         if (!jsonNode.has("toUserId")) {
