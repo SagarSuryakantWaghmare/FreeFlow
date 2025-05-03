@@ -62,8 +62,10 @@ export default function Home() {
         <button className="hero-cta glow">Start Communicating</button>
       </section>
 
+      {/* Changes to make in the glow-effect */}
+
       {/* Features Section */}
-      <section className="features-container">
+      <section className="features-container glow-effect"> 
         <h1 className="title gradient-text">Everything You Need to Connect</h1>
         <p className="subtitle">
           Powerful features designed to make your communication seamless,
