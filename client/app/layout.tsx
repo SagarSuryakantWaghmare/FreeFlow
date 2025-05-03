@@ -7,18 +7,18 @@ import {
   ClerkProvider,
 } from '@clerk/nextjs'
 import Navbar from "@/components/Navbar";
-const anton = Anton({
-  weight: "400",
-  variable: "--font-anton",
-  subsets: ["latin"],
-});
+// const anton = Anton({
+//   weight: "400",
+//   variable: "--font-anton",
+//   subsets: ["latin"],
+// });
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-const bebasNeue = Bebas_Neue({
-  weight: "400",
-  variable: "--font-bebas",
-  subsets: ["latin"],
-});
+// const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+// const bebasNeue = Bebas_Neue({
+//   weight: "400",
+//   variable: "--font-bebas",
+//   subsets: ["latin"],
+// });
 
 export const metadata: Metadata = {
   title: "FreeFlow - Peer to Peer Communication",
@@ -33,7 +33,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={`${bebasNeue.variable} ${inter.variable} ${anton.variable} antialiased`}>
+        <body className={`antialiased`}>
           <Navbar/>  
           {children}
         </body>
