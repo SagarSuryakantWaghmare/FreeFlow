@@ -51,7 +51,7 @@
     @apply m-0 p-0 box-border ;
   }
   .wholebody {
-    @apply bg-black ;
+    @apply bg-purple-300 ;
   }
 
   .body-styles {
