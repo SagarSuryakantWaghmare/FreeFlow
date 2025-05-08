@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "@/public/1.png";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   SignInButton,
   SignUpButton,
@@ -24,7 +25,9 @@ const Navbar: React.FC = () => {
         <div className="navbar-logo">
           <Image src={logo} alt="FreeFlow Logo" width={50} height={50} />
           <span className="text-4xl text-white">FreeFlow</span>
+
         </div>
+        
 
         {/* Hamburger Menu Icon */}
         <button
@@ -66,8 +69,12 @@ const Navbar: React.FC = () => {
         </div>
 
         {/* Desktop CTA Button */}
+        <div className="flex ml-40">
+        <ThemeToggle/>
+        </div> 
         <SignedOut>
           <Button className="navbar-btn desktop-cta">
+            
             <Link href="/sign-in">Sign in</Link>
           </Button>
         </SignedOut>
