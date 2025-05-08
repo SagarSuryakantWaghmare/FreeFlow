@@ -38,6 +38,7 @@ export default function Home() {
   return (
     <>
       <Navbar />
+      <div className="wholebody">
       <section className="hero glow-effect">
         <span className="hero-tagline">🔗 Connect Seamlessly, Securely</span>
 
@@ -65,7 +66,7 @@ export default function Home() {
       {/* Changes to make in the glow-effect */}
 
       {/* Features Section */}
-      <section className="features-container glow-effect"> 
+      <section className="features-container "> 
         <h1 className="title gradient-text">Everything You Need to Connect</h1>
         <p className="subtitle">
           Powerful features designed to make your communication seamless,
@@ -361,6 +362,7 @@ export default function Home() {
         {/* Copyright */}
         <div className="copyright">© 2025 FreeFlow. All rights reserved.</div>
       </footer>
+      </div>
     </>
   );
 }

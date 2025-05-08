@@ -1,24 +1,14 @@
-import type { Metadata } from "next";
-import { Bebas_Neue } from "next/font/google";
-import "./globals.css";
-import { Anton } from "next/font/google";
+import './globals.css';
+import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { ThemeProvider } from '@/components/theme-provider';
+import { Toaster } from '@/components/ui/toaster';
+import  Navbar  from '@/components/Navbar';
 import {
   ClerkProvider,
 } from '@clerk/nextjs'
-import Navbar from "@/components/Navbar";
-// const anton = Anton({
-//   weight: "400",
-//   variable: "--font-anton",
-//   subsets: ["latin"],
-// });
 
-// const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-// const bebasNeue = Bebas_Neue({
-//   weight: "400",
-//   variable: "--font-bebas",
-//   subsets: ["latin"],
-// });
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: "FreeFlow - Peer to Peer Communication",
@@ -27,18 +17,33 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <body className={`antialiased`}>
-          <Navbar/>  
-          {children}
-        </body>
-      </html>
-    </ClerkProvider>
-
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className={inter.className}>
+      <ClerkProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <div className="flex min-h-screen flex-col max-w-[1420px] mx-auto">
+            <Navbar />
+            <main className="flex-1">{children}</main>
+          </div>
+          <Toaster />
+        </ThemeProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }
