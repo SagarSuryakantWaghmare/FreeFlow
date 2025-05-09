@@ -5,13 +5,12 @@ import Image from "next/image";
 import logo from "@/public/1.png";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
-  SignInButton,
-  SignUpButton,
   SignedIn,
   SignedOut,
   UserButton,
-} from '@clerk/nextjs'
+} from "@clerk/nextjs";
 import { Button } from "./ui/button";
+
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -20,27 +19,21 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <main className="navbar-container top-10 z-50 bottom-0">
-      <nav className="navbar blur-box display-flex justify-between align-center">
-        <div className="navbar-logo">
-          <Image src={logo} alt="FreeFlow Logo" width={50} height={50} />
-          <span className="text-4xl text-white">FreeFlow</span>
-
+    <header className="fixed container top-0 left-0 w-full z-50 border-b border-container backdrop-blur-md ">
+      <nav className="flex items-center justify-between px-6 py-3 max-w-7xl mx-auto">
+        {/* Logo Section */}
+        <div className="flex items-center gap-2">
+          <Image src={logo} alt="FreeFlow Logo" width={40} height={40} />
+          <span className="text-2xl text-gray-600 font-semibold">FreeFlow</span>
         </div>
-        
 
-        {/* Hamburger Menu Icon */}
+        {/* Hamburger Icon (Mobile Only) */}
         <button
-          className="hamburger-menu"
+          className="md:hidden text-white"
           onClick={toggleMenu}
           aria-label="Toggle navigation menu"
         >
-          <svg
-            className="hamburger-icon"
-            viewBox="0 0 24 24"
-            width="24"
-            height="24"
-          >
+          <svg viewBox="0 0 24 24" width={28} height={28}>
             {isMenuOpen ? (
               <path
                 fill="currentColor"
@@ -55,34 +48,50 @@ const Navbar: React.FC = () => {
           </svg>
         </button>
 
-        {/* Nav Links */}
-        <div className={`navbar-links ${isMenuOpen ? "active" : ""}`}>
+        {/* Desktop Menu */}
+        <div className="hidden md:flex items-center gap-4">
+            <Link
+            href="/get-started"
+            className="text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-sm transition-colors"
+            >
+            Get Started
+            </Link>
+          <ThemeToggle />
+          <SignedOut>
+            <Button variant="outline">
+              <Link href="/sign-in">Sign in</Link>
+            </Button>
+          </SignedOut>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
+        </div>
+      </nav>
 
-          {/* Mobile CTA Button */}
+      {/* Mobile Menu Dropdown */}
+      {isMenuOpen && (
+        <div className="md:hidden bg-black px-6 py-3 space-y-2">
           <Link
             href="/get-started"
-            className="navbar-btn mobile-cta"
+            className="block text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-center"
             onClick={() => setIsMenuOpen(false)}
           >
             Get Started
           </Link>
+          <div className="flex justify-between items-center mt-2">
+            <ThemeToggle />
+            <SignedOut>
+              <Link href="/sign-in" className="text-white underline">
+                Sign in
+              </Link>
+            </SignedOut>
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
+          </div>
         </div>
-
-        {/* Desktop CTA Button */}
-        <div className="flex ml-40">
-        <ThemeToggle/>
-        </div> 
-        <SignedOut>
-          <Button className="navbar-btn desktop-cta">
-            
-            <Link href="/sign-in">Sign in</Link>
-          </Button>
-        </SignedOut>
-        <SignedIn>
-          <UserButton />
-        </SignedIn>
-      </nav>
-    </main>
+      )}
+    </header>
   );
 };
 

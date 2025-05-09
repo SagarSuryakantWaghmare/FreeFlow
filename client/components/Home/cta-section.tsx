@@ -19,45 +19,45 @@ export function CtaSection() {
           >
             Ready to Transform Your Communication?
           </h2>
-          <p className="text-xl text-primary-foreground/80 mb-8 md:mb-12">
+          <p className="text-xl text-gray-600 mb-8 md:mb-12">
             Join thousands of teams who've already made the switch to seamless, 
             secure peer-to-peer communication.
           </p>
           
           <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
-            <Button size="lg" variant="secondary" asChild>
+            <Button size="lg" className="bg-gray-600" variant="secondary" asChild>
               <Link href="/signin">Sign In</Link>
             </Button>
-            <Button size="lg" className="bg-white text-primary hover:bg-white/90" asChild>
+            <Button size="lg" className="bg-[hsl(263.4,70%,50.4%)] text-black hover:bg-white/90" asChild>
               <Link href="/signup">Join Now Free</Link>
             </Button>
           </div>
           
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-2xl mx-auto  font-bold">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4 text-left text-sm text-primary-foreground/90">
-              <div className="flex items-start gap-2">
-                <Check className="h-5 w-5 text-white mt-px" />
-                <span>No credit card required</span>
+              <div className="flex text-gray-600 items-start gap-2">
+                <Check className=" h-5 w-5 mt-px"  />
+                <span className=" ">No credit card required</span>
               </div>
-              <div className="flex items-start gap-2">
-                <Check className="h-5 w-5 text-white mt-px" />
-                <span>Free plan available forever</span>
+              <div className="flex text-gray-600 items-start gap-2">
+                <Check className="h-5 w-5  mt-px" />
+                <span  >Free plan available forever</span>
               </div>
-              <div className="flex items-start gap-2">
-                <Check className="h-5 w-5 text-white mt-px" />
-                <span>No downloads needed</span>
+              <div className="flex text-gray-600 items-start gap-2">
+                <Check className="h-5 w-5  mt-px" />
+                <span  >No downloads needed</span>
               </div>
-              <div className="flex items-start gap-2">
-                <Check className="h-5 w-5 text-white mt-px" />
-                <span>Works on all modern browsers</span>
+              <div className="flex text-gray-600 items-start gap-2">
+                <Check className="h-5 w-5 mt-px" />
+                <span  >Works on all modern browsers</span>
               </div>
-              <div className="flex items-start gap-2">
-                <Check className="h-5 w-5 text-white mt-px" />
-                <span>End-to-end encryption</span>
+              <div className="flex text-gray-600 items-start gap-2">
+                <Check className="h-5 w-5  mt-px" />
+                <span  >End-to-end encryption</span>
               </div>
-              <div className="flex items-start gap-2">
-                <Check className="h-5 w-5 text-white mt-px" />
-                <span>14-day money-back guarantee</span>
+              <div className="flex text-gray-600 items-start gap-2">
+                <Check className="h-5 w-5  mt-px" />
+                <span  >14-day money-back guarantee</span>
               </div>
             </div>
           </div>

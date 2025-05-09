@@ -61,7 +61,7 @@
   }
 
   /* Navbar */
-  .navbar-container {
+  /* .navbar-container {
     @apply  max-w-[1200px] mx-auto px-5 flex justify-center items-center;
   }
 
@@ -95,10 +95,10 @@
 
   .navbar-btn:hover {
     @apply scale-[1.05];
-  }
+  } */
 
   /* Mobile Nav */
-  .hamburger-menu {
+  /* .hamburger-menu {
     @apply hidden bg-transparent border-none cursor-pointer p-2 z-[1000];
   }
 
@@ -148,7 +148,7 @@
     .mobile-cta {
       @apply block w-full text-center mt-8;
     }
-  }
+  } */
 }
 @font-face {
   font-family: 'Bebas Neue';
