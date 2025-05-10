@@ -77,7 +77,7 @@ export default function P2PLanding() {
           </div>
         </div>
         
-        {!isLoggedIn && (
+        {(
           <Button 
             size="lg" 
             onClick={() => router.push('/simple-sign-in')}
