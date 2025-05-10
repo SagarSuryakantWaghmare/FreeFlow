@@ -22,11 +22,10 @@ export function HeroSection() {
       <div className="container relative z-10 mx-auto px-4 md:px-6 ml-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div
-            className={`space-y-6 transition-all duration-1000 ease-out ${
-              isVisible
+            className={`space-y-6 transition-all duration-1000 ease-out ${isVisible
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-10"
-            }`}
+              }`}
           >
             <div className="inline-block rounded-full bg-[hsl(263.4,70%,50.4%)/0.1] px-4 py-2 text-sm font-semibold text-[hsl(263.4,70%,50.4%)]">
               Simple. Secure. Free.
@@ -40,7 +39,7 @@ export function HeroSection() {
               Seamless Peer-to-Peer Communication
             </h1>
             <p className="text-lg md:text-xl text-[hsl(217.9,10.6%,64.9%)] max-w-xl">
-              Connect with anyone, anywhere through secure video calls and text chat – 
+              Connect with anyone, anywhere through secure video calls and text chat –
               no downloads, no hassle, just communication that flows freely.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
@@ -57,11 +56,10 @@ export function HeroSection() {
           </div>
 
           <div
-            className={`relative transition-all duration-1000 ease-out delay-300 ${
-              isVisible
+            className={`relative transition-all duration-1000 ease-out delay-300 ${isVisible
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-10"
-            }`}
+              }`}
           >
             {/* Decorative elements */}
             <div className="absolute -top-16 -right-16 w-48 h-48 bg-[hsl(263.4,70%,50.4%)/0.1] rounded-full blur-3xl" />
@@ -80,11 +78,10 @@ export function HeroSection() {
       {/* Stats */}
       <div className="container mx-auto px-4 md:px-6 mt-16 md:mt-24">
         <div
-          className={`grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 py-8 px-4 md:px-8 bg-white dark:bg-[hsl(215,27.9%,16.9%)] rounded-xl shadow-lg border border-[hsl(215,27.9%,16.9%)] transition-all duration-1000 ease-out delay-500 ${
-            isVisible
+          className={`grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 py-8 px-4 md:px-8 bg-white dark:bg-[hsl(215,27.9%,16.9%)] rounded-xl shadow-lg border border-[hsl(215,27.9%,16.9%)] transition-all duration-1000 ease-out delay-500 ${isVisible
               ? "opacity-100 translate-y-0"
               : "opacity-0 translate-y-10"
-          }`}
+            }`}
         >
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold text-[hsl(263.4,70%,50.4%)] mb-2">100</div>

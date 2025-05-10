@@ -21,14 +21,20 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
       message.isSelf ? "items-end" : "items-start"
     )}>
       <div className={cn(
-        message.isSelf 
-          ? "chat-bubble-sent"
-          : "chat-bubble-received"
+        "max-w-[75%] rounded-lg px-4 py-2",
+        message.isSelf
+          ? "bg-whisper-purple text-white"
+          : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
       )}>
+        {!message.isSelf && (
+          <div className="text-xs font-medium mb-1 text-whisper-blue">
+            {message.sender}
+          </div>
+        )}
         <p>{message.content}</p>
       </div>
       <span className="text-xs text-muted-foreground mt-1 mx-1">
-        {format(message.timestamp, 'p')}
+        {format(new Date(message.timestamp), 'p')}
       </span>
     </div>
   );

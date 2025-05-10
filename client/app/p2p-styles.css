@@ -1,0 +1,98 @@
+/* Chat specific styles for the P2P application */
+.chat-bubble-sent {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  max-width: 75%;
+}
+
+.chat-bubble-received {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  max-width: 75%;
+}
+
+/* WebSocket connection status indicator */
+.connection-status {
+  height: 0.5rem;
+  width: 0.5rem;
+  border-radius: 9999px;
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.connection-status.connected {
+  background-color: #22c55e; /* green-500 */
+}
+
+.connection-status.disconnected {
+  background-color: #ef4444; /* red-500 */
+}
+
+.connection-status.connecting {
+  background-color: #eab308; /* yellow-500 */
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Special P2P app background */
+.whisper-blue {
+  background-color: #4f46e5;
+}
+
+.whisper-purple {
+  background-color: #8b5cf6;
+}
+
+.sidebar {
+  background-color: #f9fafb;
+}
+
+.dark .sidebar {
+  background-color: #111827;
+}
+
+.sidebar-primary {
+  background-color: rgba(139, 92, 246, 0.1);
+}
+
+.dark .sidebar-primary {
+  background-color: rgba(139, 92, 246, 0.2);
+}
+
+.sidebar-accent {
+  background-color: rgba(139, 92, 246, 0.05);
+}
+
+.dark .sidebar-accent {
+  background-color: rgba(139, 92, 246, 0.1);
+}
+
+/* Animation for the wave emoji */
+@keyframes wave {
+  0% { transform: rotate(0deg); }
+  10% { transform: rotate(14deg); }
+  20% { transform: rotate(-8deg); }
+  30% { transform: rotate(14deg); }
+  40% { transform: rotate(-4deg); }
+  50% { transform: rotate(10deg); }
+  60% { transform: rotate(0deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.animate-wave {
+  animation: wave 2.5s ease infinite;
+  transform-origin: 70% 70%;
+  display: inline-block;
+}

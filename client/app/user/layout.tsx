@@ -2,10 +2,10 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
-import  Navbar  from '@/components/Navbar';
-import {
-  ClerkProvider,
-} from '@clerk/nextjs'
+import Navbar from '@/components/Navbar';
+import { ClerkProvider } from '@clerk/nextjs';
+import { WebRTCProvider } from '@/providers/webrtc-provider';
+import '../p2p-styles.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -34,12 +34,13 @@ export default function RootLayout({
           defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
-        >
-          <div className="flex min-h-screen flex-col max-w-[1420px] mx-auto">
-            {/* <Navbar /> */}
-            <main className="flex-1">{children}</main>
-          </div>
-          <Toaster />
+        >          <WebRTCProvider>
+            <div className="flex min-h-screen flex-col max-w-[1420px] mx-auto">
+              <Navbar />
+              <main className="flex-1 pt-16">{children}</main>
+            </div>
+            <Toaster />
+          </WebRTCProvider>
         </ThemeProvider>
         </ClerkProvider>
       </body>
