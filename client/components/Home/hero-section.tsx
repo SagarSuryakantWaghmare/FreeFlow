@@ -17,6 +17,7 @@ export function HeroSection() {
     <section className="relative overflow-hidden pt-36 pb-16 md:pt-40 md:pb-24">
       {/* Background gradient */}
       <div className="absolute inset-0 z-0" />
+      {/* Changes in the ml for the desktop view */}
 
       {/* Hero content */}
       <div className="container relative z-10 mx-auto px-4 md:px-6 md:ml-12">
