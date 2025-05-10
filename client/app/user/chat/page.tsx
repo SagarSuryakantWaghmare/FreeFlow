@@ -11,7 +11,6 @@ import UserList from '@/components/User/UserList';
 import ChatMessage from '@/components/User/ChatMessage';
 import EmptyChat from '@/components/User/EmptyChat';
 
-
 const mockUsers = [
   { id: '1', name: 'Alex', online: true },
   { id: '2', name: 'Taylor', online: true },
@@ -32,12 +31,16 @@ const Chat = () => {
   const [messages, setMessages] = useState(mockMessages);
   const [users, setUsers] = useState(mockUsers);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const username = localStorage.getItem('username') || 'User';
+  const [username, setUsername] = useState('User');
 
   useEffect(() => {
-    // Check if user is logged in
-    if (!localStorage.getItem('username')) {
-      router.push('/');
+    if (typeof window !== 'undefined') {
+      const storedUsername = localStorage.getItem('username');
+      if (storedUsername) {
+        setUsername(storedUsername);
+      } else {
+        router.push('/');
+      }
     }
   }, [router]);
 
@@ -57,7 +60,6 @@ const Chat = () => {
     setMessages([...messages, newMessage]);
     setMessage('');
     
-    // Simulate reply in a real app
     setTimeout(() => {
       const reply = {
         id: (Date.now() + 1).toString(),
@@ -73,13 +75,15 @@ const Chat = () => {
 
   const handleSelectUser = (userId: string) => {
     setSelectedUser(userId);
-    // In a real app, you would load the conversation history here
+    // Load conversation in a real app
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('username');
-    toast.success('Logged out successfully');
-    router.push('/');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('username');
+      toast.success('Logged out successfully');
+      router.push('/');
+    }
   };
 
   return (
