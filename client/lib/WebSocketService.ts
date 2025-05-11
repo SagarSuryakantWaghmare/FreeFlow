@@ -27,7 +27,7 @@ class WebSocketService {
     return new Promise((resolve, reject) => {
       this.userId = userId;
       const serverUrl = "ws://localhost:8080/ws";
-      
+
       if (this.socket && this.socket.readyState === WebSocket.OPEN) {
         resolve();
         return;
@@ -39,13 +39,13 @@ class WebSocketService {
         this.socket.onopen = () => {
           console.log("WebSocket connection established");
           this.reconnectAttempts = 0;
-          
+
           // Send user_online message once connected
           this.sendMessage({
             type: "user_online",
             userId: this.userId
           });
-          
+
           resolve();
         };
 
@@ -105,10 +105,10 @@ class WebSocketService {
    */
   removeEventListener(type: string, callback: (data: any) => void): void {
     if (!this.listeners.has(type)) return;
-    
+
     const callbacks = this.listeners.get(type) || [];
     const index = callbacks.indexOf(callback);
-    
+
     if (index !== -1) {
       callbacks.splice(index, 1);
       this.listeners.set(type, callbacks);
@@ -154,9 +154,9 @@ class WebSocketService {
 
     this.reconnectAttempts++;
     const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
-    
+
     console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
-    
+
     this.reconnectTimeout = setTimeout(() => {
       if (this.userId) {
         this.connect(this.userId).catch(err => {
