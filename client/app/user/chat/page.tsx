@@ -53,19 +53,42 @@ const Chat = () => {
     // Initialize WebRTC service with the user's ID
     webRTCService.initialize(userId.current);
 
-    // Connect to WebSocket server
-    webSocketService.connect(userId.current)
+    // Connection status event handler
+    const handleConnectionStatus = (data: any) => {
+      if (data.status === 'reconnecting') {
+        toast.info(`Reconnecting... Attempt ${data.attempt}/${data.maxAttempts}`);
+      } else if (data.status === 'mock_mode') {
+        setIsConnected(false);
+        toast.error('Using mock mode - server connection failed');
+      }
+    };
+
+    // Connect to WebSocket server with timeout
+    let connectionTimeout: NodeJS.Timeout;
+
+    const connectionPromise = webSocketService.connect(userId.current)
       .then(() => {
+        clearTimeout(connectionTimeout);
         setIsConnected(true);
         toast.success('Connected to the server');
 
         // Add WebSocket event listeners
         webSocketService.addEventListener('online_users', handleOnlineUsers);
+        webSocketService.addEventListener('connection_status', handleConnectionStatus);
       })
       .catch((error) => {
+        clearTimeout(connectionTimeout);
         console.error('Failed to connect to WebSocket server:', error);
-        toast.error('Failed to connect to the server');
+        toast.error(`Connection failed: ${error.message || 'Could not connect to the server'}`);
       });
+
+    // Set a timeout to handle connection attempts that take too long
+    connectionTimeout = setTimeout(() => {
+      if (!webSocketService.isConnected()) {
+        setIsConnected(false);
+        toast.error('Connection timeout - the server might be down or unreachable');
+      }
+    }, 8000);
 
     // Set up WebRTC message handler
     webRTCService.onMessage(handleRTCMessage);
@@ -76,6 +99,7 @@ const Chat = () => {
     // Clean up on unmount
     return () => {
       webSocketService.removeEventListener('online_users', handleOnlineUsers);
+      webSocketService.removeEventListener('connection_status', handleConnectionStatus);
       webSocketService.disconnect();
       webRTCService.closeAllConnections();
     };
@@ -184,10 +208,11 @@ const Chat = () => {
     webRTCService.closeAllConnections();
 
     localStorage.removeItem('username');
-    localStorage.removeItem('userId');    toast.success('Logged out successfully');
+    localStorage.removeItem('userId');
+    toast.success('Logged out successfully');
     router.push('/');
   };
-  
+
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col bg-gray-50 dark:bg-gray-900">
       <div className="flex flex-1 overflow-hidden">
@@ -275,9 +300,9 @@ const Chat = () => {
                   size="icon"
                   disabled={!message.trim() || !selectedUser || !webRTCService.isConnectedToPeer(selectedUser)}
                   className="bg-whisper-purple hover:bg-whisper-purple/90"
-                >
-                  <Send className="h-5 w-5" />
-                </Button>
+                ></Button>
+                <Send className="h-5 w-5" />
+                {/* </Button> */}
               </form>
             </>
           ) : (
@@ -285,7 +310,7 @@ const Chat = () => {
           )}
         </main>
       </div>
-    </div>
+    </div >
   );
 };
 
