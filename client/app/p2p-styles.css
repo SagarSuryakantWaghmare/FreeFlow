@@ -46,37 +46,33 @@
   }
 }
 
-/* Special P2P app background */
-.whisper-blue {
-  background-color: #4f46e5;
+/* Special P2P app colors - mapped to CSS variables for theme support */
+.text-whisper-blue {
+  color: hsl(var(--primary));
 }
 
-.whisper-purple {
-  background-color: #8b5cf6;
+.bg-whisper-blue {
+  background-color: hsl(var(--primary));
 }
 
-.sidebar {
-  background-color: #f9fafb;
+.text-whisper-purple {
+  color: hsl(var(--primary));
 }
 
-.dark .sidebar {
-  background-color: #111827;
+.bg-whisper-purple {
+  background-color: hsl(var(--primary));
+}
+
+.bg-sidebar {
+  background-color: hsl(var(--card));
 }
 
 .sidebar-primary {
-  background-color: rgba(139, 92, 246, 0.1);
-}
-
-.dark .sidebar-primary {
-  background-color: rgba(139, 92, 246, 0.2);
+  background-color: hsl(var(--primary) / 0.1);
 }
 
 .sidebar-accent {
-  background-color: rgba(139, 92, 246, 0.05);
-}
-
-.dark .sidebar-accent {
-  background-color: rgba(139, 92, 246, 0.1);
+  background-color: hsl(var(--primary) / 0.05);
 }
 
 /* Animation for the wave emoji */
