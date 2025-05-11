@@ -40,10 +40,12 @@ class WebSocketService {
           console.log("WebSocket connection established");
           this.reconnectAttempts = 0;
 
-          // Send user_online message once connected
+          // Send user_online message with username
+          const username = localStorage.getItem('username');
           this.sendMessage({
             type: "user_online",
-            userId: this.userId
+            userId: this.userId,
+            userName: username || this.userId
           });
 
           resolve();
