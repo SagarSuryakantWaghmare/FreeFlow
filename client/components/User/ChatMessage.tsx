@@ -23,11 +23,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
       <div className={cn(
         "max-w-[75%] rounded-lg px-4 py-2",
         message.isSelf
-          ? "bg-whisper-purple text-white"
-          : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          ? "bg-primary text-primary-foreground"
+          : "bg-muted text-muted-foreground"
       )}>
         {!message.isSelf && (
-          <div className="text-xs font-medium mb-1 text-whisper-blue">
+          <div className="text-xs font-medium mb-1 text-primary">
             {message.sender}
           </div>
         )}
