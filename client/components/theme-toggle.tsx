@@ -8,12 +8,34 @@ import { Button } from "@/components/ui/button";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+
+  // Only show the toggle after mounting on the client
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    // Return a placeholder with the same width/height to prevent layout shift
+    // but with no functionality until client-side hydration completes
+    return (
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="cursor-default opacity-0 pointer-events-none" 
+        aria-hidden="true"
+      >
+        <div className="h-5 w-5" />
+      </Button>
+    );
+  }
 
   return (
     <Button
       variant="ghost"
       size="icon"
       onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+      className="cursor-pointer"
     >
       <motion.div
         initial={{ scale: 0.5, opacity: 0 }}
