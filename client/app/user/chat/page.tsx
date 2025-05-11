@@ -114,10 +114,10 @@ const Chat = () => {
   const handleOnlineUsers = (data: any) => {
     if (data.users && Array.isArray(data.users)) {
       const onlineUsers = data.users
-        .filter((id: string) => id !== userId.current) // Filter out current user
-        .map((id: string) => ({
-          id,
-          name: id, // Using id as name since we don't have actual names from the server
+        .filter((user: any) => user.id !== userId.current) // Filter out current user
+        .map((user: any) => ({
+          id: user.id,
+          name: user.name || user.id, // Use name if available, fallback to id
           online: true
         }));
 
