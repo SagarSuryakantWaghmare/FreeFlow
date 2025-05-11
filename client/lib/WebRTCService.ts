@@ -23,8 +23,6 @@ class WebRTCService {
   private localUserId: string | null = null;
   private messageCallbacks: MessageCallback[] = [];
   private connectionStateCallbacks: ConnectionStateCallback[] = [];
-  private mockMode = false;
-  private mockConnections: Set<string> = new Set();
   private iceServers = [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
@@ -39,12 +37,6 @@ class WebRTCService {
    */
   initialize(userId: string): void {
     this.localUserId = userId;
-    
-    // Check if we need to use mock mode (for development)
-    if (process.env.NODE_ENV === 'development' && (!webSocketService.isConnected || webSocketService.isConnected() === false)) {
-      console.log("Using WebRTC mock mode for development (WebSocket is not connected)");
-      this.mockMode = true;
-    }
   }
 
   /**
@@ -86,23 +78,13 @@ class WebRTCService {
       }
     });
   }
+
   /**
    * Initiate a connection with another user
    */
   requestConnection(remoteUserId: string): void {
     if (!this.localUserId) {
       console.error("Local user ID not set. Call initialize first.");
-      return;
-    }
-    
-    // Handle mock mode
-    if (this.mockMode) {
-      // Add the user to mock connections and notify about connection
-      setTimeout(() => {
-        console.log(`Mock mode: Simulating connection to ${remoteUserId}`);
-        this.mockConnections.add(remoteUserId);
-        this.notifyConnectionStateChange(remoteUserId, 'connected');
-      }, 1000);
       return;
     }
 
@@ -277,33 +259,11 @@ class WebRTCService {
       }
     });
   }
+
   /**
    * Send a message to a remote peer
    */
   sendMessage(remoteUserId: string, message: Omit<Message, 'isSelf'>): boolean {
-    // Handle mock mode for local testing without WebSocket server
-    if (this.mockMode) {
-      console.log(`Mock mode: Would send message to ${remoteUserId}:`, message);
-      // Add user to mock connections if not already there
-      if (!this.mockConnections.has(remoteUserId)) {
-        this.mockConnections.add(remoteUserId);
-        this.notifyConnectionStateChange(remoteUserId, 'connected');
-      }
-      
-      // Echo the message back after a delay to simulate a response
-      setTimeout(() => {
-        this.notifyMessageReceived({
-          id: `mock-${Date.now()}`,
-          sender: remoteUserId,
-          content: `Reply to: ${message.content}`,
-          timestamp: new Date(),
-          isSelf: false
-        });
-      }, 1000);
-      
-      return true;
-    }
-    
     const peer = this.peers.get(remoteUserId);
     
     if (peer && peer.dataChannel && peer.dataChannel.readyState === 'open') {
@@ -362,11 +322,6 @@ class WebRTCService {
    * Check if connected to a specific peer
    */
   isConnectedToPeer(remoteUserId: string): boolean {
-    // For mock mode, check the mock connections set
-    if (this.mockMode) {
-      return this.mockConnections.has(remoteUserId);
-    }
-    
     const peer = this.peers.get(remoteUserId);
     return !!peer && peer.peerConnection.connectionState === 'connected';
   }
@@ -375,11 +330,6 @@ class WebRTCService {
    * Get all connected peer IDs
    */
   getConnectedPeers(): string[] {
-    // For mock mode, return all mock connections
-    if (this.mockMode) {
-      return Array.from(this.mockConnections);
-    }
-    
     const connectedPeers: string[] = [];
     this.peers.forEach((peer, userId) => {
       if (peer.peerConnection.connectionState === 'connected') {
@@ -388,6 +338,7 @@ class WebRTCService {
     });
     return connectedPeers;
   }
+
   /**
    * Notify all subscribers about a new message
    */
@@ -405,12 +356,6 @@ class WebRTCService {
    * Notify all subscribers about connection state changes
    */
   private notifyConnectionStateChange(userId: string, state: 'connected' | 'disconnected'): void {
-    if (state === 'connected' && this.mockMode) {
-      this.mockConnections.add(userId);
-    } else if (state === 'disconnected' && this.mockMode) {
-      this.mockConnections.delete(userId);
-    }
-    
     this.connectionStateCallbacks.forEach(callback => {
       try {
         callback(userId, state);

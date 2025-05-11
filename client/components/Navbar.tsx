@@ -137,7 +137,7 @@ const Navbar: React.FC = () => {
                     handleLogout();
                     setIsMenuOpen(false);
                   }}
-                  className="w-full bg-whisper-purple hover:bg-whisper-purple/90 text-white"
+                  className="w-full cursor-pointer bg-whisper-purple hover:bg-whisper-purple/90"
                 >
                   Logout
                 </Button>

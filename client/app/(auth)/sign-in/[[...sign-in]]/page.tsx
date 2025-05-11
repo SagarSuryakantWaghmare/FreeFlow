@@ -2,18 +2,18 @@ import { SignIn } from '@clerk/nextjs'
 
 export default function Page() {
   return (
-    <div className='relative h-screen w-full'>
+    <div className='relative min-h-screen w-full'>
       <video
         autoPlay
         muted
         loop
-        className="absolute top-0 left-0 w-full h-full object-cover"
+        className="fixed top-0 left-0 w-full h-full object-cover -z-10"
       >
         <source src="/login.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
-      <div className="flex min-h-screen w-full items-center justify-center bg-black p-4">
-        <div className="w-full max-w-md rounded-xl bg-white/10 p-8 backdrop-blur-lg">
+      <div className="flex min-h-screen w-full items-center justify-center pt-16 bg-black/50">
+        <div className="w-full max-w-md rounded-xl bg-white/10 p-8 backdrop-blur-lg my-4">
           <SignIn
             appearance={{
               elements: {

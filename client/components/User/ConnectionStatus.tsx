@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Badge } from '../ui/badge';
-import webSocketService from '@/lib/WebSocketService.js';
+import webSocketService from '@/lib/WebSocketService';
 
 interface ConnectionStatusProps {
   className?: string;

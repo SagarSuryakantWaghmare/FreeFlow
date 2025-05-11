@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import webRTCService from '@/lib/WebRTCService.js';
+import webRTCService from '@/lib/WebRTCService';
 
 interface User {
   id: string;
@@ -21,6 +21,8 @@ const UserList: React.FC<UserListProps> = ({ users, selectedUserId, onSelectUser
         No users online
       </div>
     );
+  } else {
+    console.log("UserList", users);
   }
 
   return (
@@ -32,10 +34,10 @@ const UserList: React.FC<UserListProps> = ({ users, selectedUserId, onSelectUser
           <button
             key={user.id}
             className={cn(
-              "w-full text-left px-3 py-2 rounded-md mb-1 flex items-center gap-2 transition-colors text-foreground",
+              "w-full text-left px-3 py-2 rounded-md mb-1 flex items-center gap-2 transition-colors",
               selectedUserId === user.id 
-                ? "bg-primary/10" 
-                : "hover:bg-primary/5"
+                ? "bg-sidebar-primary text-sidebar-primary-foreground" 
+                : "hover:bg-sidebar-accent"
             )}
             onClick={() => onSelectUser(user.id)}
           >
