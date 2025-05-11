@@ -12,8 +12,8 @@ import ChatMessage from '@/components/User/ChatMessage';
 import EmptyChat from '@/components/User/EmptyChat';
 import ConnectionStatus from '@/components/User/ConnectionStatus';
 import HelpInfo from '@/components/User/HelpInfo';
-import webSocketService from '@/lib/WebSocketService';
-import webRTCService from '@/lib/WebRTCService';
+import webSocketService from '@/lib/WebSocketService.js';
+import webRTCService from '@/lib/WebRTCService.js';
 
 const Chat = () => {
   const router = useRouter();
@@ -36,7 +36,6 @@ const Chat = () => {
   const username = useRef<string>('');
   const userId = useRef<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
   // Initialize WebSocket when component mounts
   useEffect(() => {
     // Check if user is logged in
@@ -55,8 +54,23 @@ const Chat = () => {
     webRTCService.initialize(userId.current);
 
     // Connect to WebSocket server
+    let connectionTimer = setTimeout(() => {
+      // If connection takes too long, show error and continue with UI
+      setIsConnected(false);
+      toast.error('Could not connect to server - using offline mode');
+      
+      // Setup mock users in offline mode
+      setUsers([
+        { id: 'user1', name: 'Alice', online: true },
+        { id: 'user2', name: 'Bob', online: true },
+        { id: 'user3', name: 'Charlie', online: true },
+      ]);
+      
+    }, 5000);
+    
     webSocketService.connect(userId.current)
       .then(() => {
+        clearTimeout(connectionTimer);
         setIsConnected(true);
         toast.success('Connected to the server');
 
@@ -64,8 +78,16 @@ const Chat = () => {
         webSocketService.addEventListener('online_users', handleOnlineUsers);
       })
       .catch((error) => {
+        clearTimeout(connectionTimer);
         console.error('Failed to connect to WebSocket server:', error);
-        toast.error('Failed to connect to the server');
+        toast.error('Failed to connect to the server - using offline mode');
+        
+        // Setup mock users in offline mode
+        setUsers([
+          { id: 'user1', name: 'Alice', online: true },
+          { id: 'user2', name: 'Bob', online: true },
+          { id: 'user3', name: 'Charlie', online: true },
+        ]);
       });
 
     // Set up WebRTC message handler
@@ -76,6 +98,7 @@ const Chat = () => {
 
     // Clean up on unmount
     return () => {
+      clearTimeout(connectionTimer);
       webSocketService.removeEventListener('online_users', handleOnlineUsers);
       webSocketService.disconnect();
       webRTCService.closeAllConnections();
@@ -185,20 +208,19 @@ const Chat = () => {
     webRTCService.closeAllConnections();
 
     localStorage.removeItem('username');
-    localStorage.removeItem('userId');    toast.success('Logged out successfully');
+    localStorage.removeItem('userId'); toast.success('Logged out successfully');
     router.push('/');
   };
-  
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="h-[calc(100vh-4rem)] flex flex-col bg-background">
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Online Users */}
-        <aside className="w-64 bg-sidebar flex flex-col border-r">
-          <div className="p-4 bg-sidebar">
+        <aside className="w-64 bg-card flex flex-col border-r border-border">
+          <div className="p-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                <h2 className="font-medium">Online Users</h2>
+                <Users className="h-5 w-5 text-primary" />
+                <h2 className="font-medium text-foreground">Online Users</h2>
               </div>
               <Button
                 variant="ghost"
@@ -227,16 +249,16 @@ const Chat = () => {
         </aside>
 
         {/* Main Chat Area */}
-        <main className="flex-1 flex flex-col">
+        <main className="flex-1 flex flex-col bg-background">
           {selectedUser ? (
             <>
               {/* Chat Header */}
-              <div className="p-3 border-b flex items-center gap-2">
-                <User className="h-5 w-5 text-whisper-blue" />
-                <span className="font-medium">
+              <div className="p-3 border-b border-border flex items-center gap-2">
+                <User className="h-5 w-5 text-primary" />
+                <span className="font-medium text-foreground">
                   {users.find(u => u.id === selectedUser)?.name || selectedUser}
                 </span>
-                <span className="text-xs ml-2">
+                <span className="text-xs ml-2 text-muted-foreground">
                   {selectedUser && webRTCService.isConnectedToPeer(selectedUser)
                     ? '(Connected)'
                     : '(Connecting...)'}
@@ -263,7 +285,7 @@ const Chat = () => {
               </ScrollArea>
 
               {/* Message Input */}
-              <form onSubmit={handleSendMessage} className="border-t p-3 flex gap-2">
+              <form onSubmit={handleSendMessage} className="border-t border-border p-3 flex gap-2">
                 <Input
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
@@ -275,7 +297,7 @@ const Chat = () => {
                   type="submit"
                   size="icon"
                   disabled={!message.trim() || !selectedUser || !webRTCService.isConnectedToPeer(selectedUser)}
-                  className="bg-whisper-purple hover:bg-whisper-purple/90"
+                  className="bg-primary hover:bg-primary/90"
                 >
                   <Send className="h-5 w-5" />
                 </Button>
