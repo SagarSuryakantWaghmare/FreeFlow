@@ -1,0 +1,7 @@
+FROM maven:3.9.9-jdk-20-slim AS build
+COPY . .
+RUN mvn clean package -DskipTests
+FROM eclipse-temurin:20-jre
+COPY --from=build /target/*.jar p2p-chat.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/p2p-chat.jar"]
