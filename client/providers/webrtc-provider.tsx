@@ -27,7 +27,7 @@ export const WebRTCProvider: React.FC<{
       if (typeof window !== 'undefined') {
         const isSupported = !!(
           navigator.mediaDevices &&
-          navigator.mediaDevices.getUserMedia &&
+          typeof navigator.mediaDevices.getUserMedia === 'function' &&
           window.RTCPeerConnection
         );
         setIsWebRTCSupported(isSupported);
