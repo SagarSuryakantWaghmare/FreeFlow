@@ -118,9 +118,9 @@ class WebRTCService {
     try {
       const peerConnection = this.createPeerConnection(remoteUserId);
       const dataChannel = peerConnection.createDataChannel('messageChannel');
-      
+
       this.setupDataChannel(remoteUserId, dataChannel);
-      
+
       this.peers.set(remoteUserId, { peerConnection, dataChannel });
 
       const offer = await peerConnection.createOffer();
@@ -201,13 +201,13 @@ class WebRTCService {
    * Create a new RTCPeerConnection
    */
   private createPeerConnection(remoteUserId: string): RTCPeerConnection {
-    const peerConnection = new RTCPeerConnection({ 
-      iceServers: this.iceServers 
+    const peerConnection = new RTCPeerConnection({
+      iceServers: this.iceServers
     });
 
     peerConnection.addEventListener('icecandidate', event => {
       if (!this.localUserId) return;
-      
+
       if (event.candidate) {
         webSocketService.sendMessage({
           type: 'ice-candidate',
@@ -265,7 +265,7 @@ class WebRTCService {
    */
   sendMessage(remoteUserId: string, message: Omit<Message, 'isSelf'>): boolean {
     const peer = this.peers.get(remoteUserId);
-    
+
     if (peer && peer.dataChannel && peer.dataChannel.readyState === 'open') {
       try {
         peer.dataChannel.send(JSON.stringify(message));
