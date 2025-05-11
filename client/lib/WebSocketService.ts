@@ -63,10 +63,10 @@ class WebSocketService {
           this.attemptReconnect();
         };
 
-        this.socket.onerror = (error) => {
-          console.error("WebSocket error:", error);
-          reject(error);
-        };
+        // this.socket.onerror = (error) => {
+        //   console.error("WebSocket error:", error);
+        //   reject(error);
+        // };
       } catch (error) {
         console.error("Failed to create WebSocket:", error);
         reject(error);
