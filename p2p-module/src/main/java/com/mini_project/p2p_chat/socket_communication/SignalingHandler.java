@@ -21,6 +21,7 @@ public class SignalingHandler extends TextWebSocketHandler {
 
     private final ConcurrentHashMap<String, WebSocketSession> onlineUsers = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> sessionIdToUserId = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, String> userIdToName = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -28,6 +29,7 @@ public class SignalingHandler extends TextWebSocketHandler {
         String userId = sessionIdToUserId.remove(session.getId());
         if (userId != null) {
             onlineUsers.remove(userId);
+            userIdToName.remove(userId);
         }
 
         // Broadcast updated user list after a user disconnects
@@ -77,17 +79,16 @@ public class SignalingHandler extends TextWebSocketHandler {
 
     private void handleUserOnline(WebSocketSession session, JsonNode jsonNode) throws IOException {
         String userId = jsonNode.get("userId").asText();
+        String userName = jsonNode.get("userName").asText();
         onlineUsers.put(userId, session);
         sessionIdToUserId.put(session.getId(), userId);
+        userIdToName.put(userId, userName);
 
         // Broadcast updated list of online users to all connected clients
         broadcastOnlineUsers();
     }
 
     private void broadcastOnlineUsers() throws IOException {
-        // Get the list of online users
-        List<String> onlineUserList = new ArrayList<>(onlineUsers.keySet());
-
         // Create a new message to send to all connected clients
         ObjectNode onlineUsersMessage = objectMapper.createObjectNode();
         onlineUsersMessage.put("type", "online_users");
@@ -95,9 +96,12 @@ public class SignalingHandler extends TextWebSocketHandler {
         // Create a new ArrayNode to hold the user list as JsonNode
         ArrayNode usersArray = objectMapper.createArrayNode();
 
-        // Add each user as a JsonNode to the array
-        for (String user : onlineUserList) {
-            usersArray.add(user);
+        // Add each user as a JsonNode to the array with both ID and name
+        for (String userId : onlineUsers.keySet()) {
+            ObjectNode userNode = objectMapper.createObjectNode();
+            userNode.put("id", userId);
+            userNode.put("name", userIdToName.get(userId));
+            usersArray.add(userNode);
         }
 
         // Attach the array to the message
@@ -108,7 +112,6 @@ public class SignalingHandler extends TextWebSocketHandler {
             try {
                 webSocketSession.sendMessage(new TextMessage(onlineUsersMessage.toString()));
             } catch (IOException e) {
-                // Log the error and continue broadcasting to other sessions
                 e.printStackTrace();
             }
         }
