@@ -13,6 +13,7 @@ class WebSocketService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private userId: string | null = null;
+  private useMockMode = false; // Add mock mode support for development
 
   constructor() {
     // Intentionally empty - socket will be initialized when connect is called
@@ -22,30 +23,60 @@ class WebSocketService {
    * Connect to the WebSocket server
    * @param userId - The ID of the user connecting
    * @returns Promise that resolves when connection is established
-   */
-  connect(userId: string): Promise<void> {
+   */  connect(userId: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.userId = userId;
-      const serverUrl = "ws://localhost:8080/ws";
-      
+      // Use a fallback mechanism for WebSocket connection
+      // Try secure connection first (wss) if in production, otherwise use local development (ws)
+      const isProduction = window.location.protocol === 'https:';
+      const serverUrl = isProduction
+        ? "wss://yourproductionserver.com/ws"
+        : "ws://localhost:8080/ws";
+
       if (this.socket && this.socket.readyState === WebSocket.OPEN) {
         resolve();
         return;
       }
 
       try {
+        // For development testing, we'll use mock mode if server is unreachable
+        // This allows UI development to continue even if backend is not available
+        if (process.env.NODE_ENV === 'development') {
+          console.log("WebSocket attempting connection to:", serverUrl);
+
+          // Add a small delay to simulate network connection
+          setTimeout(() => {
+            // Check if the socket connection failed and use mock data
+            if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+              console.log("Using mock WebSocket mode for development");
+              this.useMockMode = true;
+              this.reconnectAttempts = 0;
+              resolve();
+
+              // Simulate receiving online users after a short delay
+              setTimeout(() => {
+                this.notifyListeners('online_users', {
+                  type: 'online_users',
+                  users: ['user1', 'user2', 'user3', 'user4']
+                });
+              }, 1000);
+            }
+          }, 3000);
+        }
+
         this.socket = new WebSocket(serverUrl);
 
         this.socket.onopen = () => {
           console.log("WebSocket connection established");
           this.reconnectAttempts = 0;
-          
+          this.useMockMode = false;
+
           // Send user_online message once connected
           this.sendMessage({
             type: "user_online",
             userId: this.userId
           });
-          
+
           resolve();
         };
 
@@ -73,12 +104,28 @@ class WebSocketService {
       }
     });
   }
-
   /**
    * Send a message through the WebSocket
    * @param message - The message to send (will be JSON stringified)
    */
   sendMessage(message: any): void {
+    if (this.useMockMode) {
+      console.log("Mock mode: Message would be sent", message);
+
+      // For request_connection messages, simulate a connection response
+      if (message.type === "request_connection") {
+        setTimeout(() => {
+          this.notifyListeners('connection_request', {
+            type: 'connection_request',
+            fromUserId: message.toUserId,
+            toUserId: this.userId,
+            offer: { type: 'mock-offer', sdp: 'mock-sdp' }
+          });
+        }, 500);
+      }
+      return;
+    }
+
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify(message));
     } else {
@@ -105,10 +152,10 @@ class WebSocketService {
    */
   removeEventListener(type: string, callback: (data: any) => void): void {
     if (!this.listeners.has(type)) return;
-    
+
     const callbacks = this.listeners.get(type) || [];
     const index = callbacks.indexOf(callback);
-    
+
     if (index !== -1) {
       callbacks.splice(index, 1);
       this.listeners.set(type, callbacks);
@@ -154,9 +201,9 @@ class WebSocketService {
 
     this.reconnectAttempts++;
     const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
-    
+
     console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
-    
+
     this.reconnectTimeout = setTimeout(() => {
       if (this.userId) {
         this.connect(this.userId).catch(err => {
