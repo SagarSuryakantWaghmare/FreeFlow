@@ -31,7 +31,7 @@ export const WebRTCProvider: React.FC<{
           window.RTCPeerConnection
         );
         setIsWebRTCSupported(isSupported);
-        
+
         if (!isSupported) {
           console.warn('WebRTC is not supported in this browser. Some features may not work.');
         }
