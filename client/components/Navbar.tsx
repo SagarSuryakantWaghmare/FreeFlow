@@ -95,7 +95,7 @@ const Navbar: React.FC = () => {
               <Button
                 variant="outline"
                 onClick={handleLogout}
-                className="bg-whisper-purple hover:bg-whisper-purple/90 text-white"
+                className="bg-whisper-purple cursor-pointer hover:bg-whisper-purple/90"
               >
                 Logout
               </Button>
