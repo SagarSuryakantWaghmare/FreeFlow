@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, User, Users, HelpCircle, Menu, X, ArrowLeft } from 'lucide-react';
+import { Send, User, Users, HelpCircle, Menu, X, ArrowLeft, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import UserList from '@/components/User/UserList';
 import ChatMessage from '@/components/User/ChatMessage';
@@ -126,7 +126,7 @@ const Chat = () => {
       setUsers(onlineUsers);
     }
   };
-  
+
   // Handle received WebRTC messages
   const handleRTCMessage = (message: any) => {
     const newMessage = {
@@ -136,24 +136,24 @@ const Chat = () => {
       timestamp: message.timestamp,
       isSelf: false
     };
-    
+
     // Check if we already have this message (to avoid duplicates from sync)
     const messageExists = messages.some(msg => msg.id === newMessage.id);
-    
+
     if (!messageExists) {
       // Add message to local state
       setMessages(prevMessages => {
         // Create a new array with the new message
         const updatedMessages = [...prevMessages, newMessage];
-        
+
         // Sort messages by timestamp to ensure correct order
-        updatedMessages.sort((a, b) => 
+        updatedMessages.sort((a, b) =>
           new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
         );
-        
+
         return updatedMessages;
       });
-      
+
       // Save message to localStorage if we have a selected user
       if (selectedUser) {
         chatStorageService.saveMessage(selectedUser, newMessage);
@@ -169,7 +169,7 @@ const Chat = () => {
       // Set selected user if not already set
       if (!selectedUser) {
         setSelectedUser(remoteUserId);
-        
+
         // Load chat history for this user
         const chatHistory = chatStorageService.getMessages(remoteUserId);
         setMessages(chatHistory);
@@ -199,10 +199,10 @@ const Chat = () => {
 
     // Add message to local state
     setMessages(prevMessages => [...prevMessages, newMessage]);
-    
+
     // Save message to localStorage
     chatStorageService.saveMessage(selectedUser, newMessage);
-    
+
     setMessage('');
 
     // Send message via WebRTC
@@ -250,53 +250,49 @@ const Chat = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
+    <div className="h-[calc(100vh-4rem)] flex flex-col bg-gray-50 dark:bg-black text-foreground dark:text-white overflow-hidden">
       <div className="flex flex-1 overflow-hidden max-h-full">
-        {/* Sidebar - Online Users (hidden on mobile when closed) */}
-        <aside 
-          className={`bg-sidebar flex flex-col border-r h-full overflow-hidden transition-all duration-300 
+        {/* Sidebar - Online Users (hidden on mobile when closed) */}        <aside
+          className={`bg-white dark:bg-zinc-900 flex flex-col border-r border-gray-200 dark:border-zinc-800 h-full overflow-hidden transition-all duration-300 
             md:w-64 md:relative md:translate-x-0 md:shadow-none
-            ${sidebarOpen 
-              ? 'w-full absolute z-20 translate-x-0 shadow-xl' 
+            ${sidebarOpen
+              ? 'w-full absolute z-20 translate-x-0 shadow-xl'
               : 'w-64 absolute z-20 -translate-x-full shadow-xl'}`}
-        >
-          <div className="p-4 bg-sidebar shrink-0">
+        >          <div className="p-4 bg-white dark:bg-zinc-900 shrink-0">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                <h2 className="font-medium">Online Users</h2>
+                <Users className="h-5 w-5 text-slate-700 dark:text-purple-400" />
+                <h2 className="font-medium text-slate-900 dark:text-white">Online Users</h2>
               </div>
               <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
+                  size="icon" className="h-8 w-8"
                   onClick={() => setShowHelp(!showHelp)}
                   title="Help & Information"
                 >
-                  <HelpCircle className="h-4 w-4" />
+                  <HelpCircle className="h-4 w-4 text-slate-700 dark:text-purple-400" />
                 </Button>
                 <Button
                   variant="destructive"
                   size="sm"
                   onClick={handleLogout}
                   title="Logout"
-                  className="h-8"
+                  className="h-8 bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
                 >
-                  Logout
+                  <LogOut className="h-4 w-4" />
                 </Button>
                 {/* Close button for mobile */}
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 md:hidden"
+                  size="icon" className="h-8 w-8 md:hidden"
                   onClick={() => setSidebarOpen(false)}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-4 w-4 text-slate-700 dark:text-purple-400" />
                 </Button>
               </div>
             </div>
-            <Separator className="my-2" />
+            <Separator className="my-2 bg-gray-200 dark:bg-zinc-700" />
           </div>
 
           {showHelp ? (
@@ -314,56 +310,49 @@ const Chat = () => {
 
         {/* Overlay for mobile when sidebar is open */}
         {sidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-black/20 z-10 md:hidden" 
+          <div
+            className="fixed inset-0 bg-black/20 z-10 md:hidden"
             onClick={() => setSidebarOpen(false)}
           />
-        )}
-
-        {/* Main Chat Area */}
-        <main className="flex-1 flex flex-col h-full overflow-hidden relative">
+        )}        {/* Main Chat Area */}
+        <main className="flex-1 flex flex-col h-full overflow-hidden relative bg-white dark:bg-zinc-950">
           {/* Mobile header with menu button */}
-          <div className="p-3 border-b flex items-center gap-2 shrink-0 md:hidden">
+          <div className="p-3 border-b border-gray-200 dark:border-zinc-800 flex items-center gap-2 shrink-0 md:hidden bg-white dark:bg-zinc-900">
             <Button
               variant="ghost"
-              size="icon"
-              className="h-8 w-8 mr-1"
+              size="icon" className="h-8 w-8 mr-1"
               onClick={() => setSidebarOpen(true)}
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-5 w-5 text-slate-700 dark:text-purple-400" />
             </Button>
             {selectedUser && (
               <>
-                <User className="h-5 w-5 text-whisper-blue" />
-                <span className="font-medium truncate">
+                <User className="h-5 w-5 text-blue-600 dark:text-purple-400" />
+                <span className="font-medium truncate text-slate-900 dark:text-white">
                   {users.find(u => u.id === selectedUser)?.name || selectedUser}
-                </span>
-                <span className="text-xs ml-auto">
+                </span>                <span className="text-xs ml-auto">
                   {webRTCService.isConnectedToPeer(selectedUser)
-                    ? '(Connected)'
-                    : '(Connecting...)'}
+                    ? <span className="text-green-600 dark:text-green-400">(Connected)</span>
+                    : <span className="text-amber-600 dark:text-yellow-400">(Connecting...)</span>}
                 </span>
               </>
             )}
           </div>
 
           {selectedUser ? (
-            <>
-              {/* Chat Header (desktop only) */}
-              <div className="p-3 border-b hidden md:flex items-center gap-2 shrink-0">
-                <User className="h-5 w-5 text-whisper-blue" />
-                <span className="font-medium">
+            <>              {/* Chat Header (desktop only) */}
+              <div className="p-3 border-b border-gray-200 dark:border-zinc-800 hidden md:flex items-center gap-2 shrink-0 bg-white dark:bg-zinc-900">
+                <User className="h-5 w-5 text-blue-600 dark:text-purple-400" />
+                <span className="font-medium text-slate-900 dark:text-white">
                   {users.find(u => u.id === selectedUser)?.name || selectedUser}
                 </span>
                 <span className="text-xs ml-2">
                   {selectedUser && webRTCService.isConnectedToPeer(selectedUser)
-                    ? '(Connected)'
-                    : '(Connecting...)'}
+                    ? <span className="text-green-600 dark:text-green-400">(Connected)</span>
+                    : <span className="text-amber-600 dark:text-yellow-400">(Connecting...)</span>}
                 </span>
-              </div>
-
-              {/* Messages */}
-              <ScrollArea className="flex-1 p-2 sm:p-4 overflow-y-auto">
+              </div>              {/* Messages */}
+              <ScrollArea className="flex-1 p-2 sm:p-4 overflow-y-auto bg-gray-50 dark:bg-zinc-950">
                 <div className="flex flex-col gap-3 min-h-full">
                   {messages.length > 0 ? (
                     messages.map(msg => (
@@ -373,46 +362,43 @@ const Chat = () => {
                       />
                     ))
                   ) : (
-                    <div className="text-center text-muted-foreground py-8">
+                    <div className="text-center text-slate-500 dark:text-zinc-400 py-8">
                       Start a conversation with {users.find(u => u.id === selectedUser)?.name || selectedUser}
                     </div>
                   )}
                   <div ref={messagesEndRef} />
                 </div>
-              </ScrollArea>
-
-              {/* Message Input */}
-              <form onSubmit={handleSendMessage} className="border-t p-2 sm:p-3 flex gap-2 shrink-0 bg-background">
+              </ScrollArea>              {/* Message Input */}
+              <form onSubmit={handleSendMessage} className="border-t border-gray-200 dark:border-zinc-800 p-2 sm:p-3 flex gap-2 shrink-0 bg-white dark:bg-zinc-900">
                 <Input
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Type a message..."
-                  className="flex-1"
+                  className="flex-1 bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-slate-900 dark:text-white focus-visible:ring-blue-500 dark:focus-visible:ring-purple-500"
                   disabled={!selectedUser || !webRTCService.isConnectedToPeer(selectedUser)}
                 />
                 <Button
                   type="submit"
                   size="sm"
                   disabled={!message.trim() || !selectedUser || !webRTCService.isConnectedToPeer(selectedUser)}
-                  className="bg-whisper-purple hover:bg-whisper-purple/90 min-w-9 sm:min-w-10 h-10 flex items-center justify-center"
-                >
-                  <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+                  className="bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white min-w-9 sm:min-w-10 h-10 flex items-center justify-center"
+                >                  <Send className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
               </form>
             </>
           ) : (
             <>
               {/* Mobile header when no chat is selected */}
-              <div className="p-3 border-b flex items-center gap-2 shrink-0 md:hidden">
+              <div className="p-3 border-b border-gray-200 dark:border-zinc-800 flex items-center gap-2 shrink-0 md:hidden bg-white dark:bg-zinc-900">
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 mr-1"
                   onClick={() => setSidebarOpen(true)}
                 >
-                  <Menu className="h-5 w-5" />
+                  <Menu className="h-5 w-5 text-slate-700 dark:text-purple-400" />
                 </Button>
-                <span className="font-medium">Select a chat</span>
+                <span className="font-medium text-slate-900 dark:text-white">Select a chat</span>
               </div>
               <EmptyChat />
             </>

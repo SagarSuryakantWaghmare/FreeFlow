@@ -14,16 +14,14 @@ interface UserListProps {
   onSelectUser: (userId: string) => void;
 }
 
-const UserList: React.FC<UserListProps> = ({ users, selectedUserId, onSelectUser }) => {
-  if (users.length === 0) {
+const UserList: React.FC<UserListProps> = ({ users, selectedUserId, onSelectUser }) => {  if (users.length === 0) {
     return (
-      <div className="p-4 text-center text-muted-foreground">
+      <div className="p-4 text-center text-slate-500 dark:text-zinc-400">
         No users online
       </div>
     );
   } else {
-    console.log("UserList", users);
-  }
+    console.log("UserList", users);  }
 
   return (
     <div className="px-2">
@@ -36,20 +34,20 @@ const UserList: React.FC<UserListProps> = ({ users, selectedUserId, onSelectUser
             className={cn(
               "w-full text-left px-3 py-2 rounded-md mb-1 flex items-center gap-2 transition-colors",
               selectedUserId === user.id 
-                ? "bg-sidebar-primary text-sidebar-primary-foreground" 
-                : "hover:bg-sidebar-accent"
+                ? "bg-blue-600 dark:bg-purple-800 text-white" 
+                : "text-slate-900 dark:text-white hover:bg-gray-100 dark:hover:bg-zinc-800"
             )}
             onClick={() => onSelectUser(user.id)}
           >
             <span 
               className={cn(
                 "h-2 w-2 rounded-full", 
-                isConnected ? "bg-green-500" : user.online ? "bg-yellow-500" : "bg-gray-400"
+                isConnected ? "bg-green-500" : user.online ? "bg-amber-500 dark:bg-yellow-500" : "bg-gray-400"
               )} 
             />
             <span>{user.name}</span>
             {isConnected && (
-              <span className="ml-auto text-xs text-green-500">Connected</span>
+              <span className="ml-auto text-xs text-green-500 dark:text-green-400">Connected</span>
             )}
           </button>
         );

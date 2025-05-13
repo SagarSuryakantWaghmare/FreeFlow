@@ -14,11 +14,11 @@ interface HelpInfoProps {
 }
 
 const HelpInfo: React.FC<HelpInfoProps> = ({ className }) => {
-  return (    <Card className={`${className} max-h-full`}>
+  return (    <Card className={`${className} max-h-full bg-white dark:bg-zinc-900`}>
       <CardContent className="pt-3 sm:pt-6 max-h-[calc(100vh-10rem)] overflow-auto px-2 sm:px-6">
         <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value="item-1">            <AccordionTrigger className="text-xs sm:text-sm font-medium flex items-center py-2 sm:py-4">
-              <Shield className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-whisper-purple" />
+          <AccordionItem value="item-1">            <AccordionTrigger className="text-xs sm:text-sm font-medium flex items-center py-2 sm:py-4 text-slate-900 dark:text-white">
+              <Shield className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-blue-600 dark:text-purple-400" />
               How P2P Messaging Works
             </AccordionTrigger>
             <AccordionContent>
@@ -30,33 +30,30 @@ const HelpInfo: React.FC<HelpInfoProps> = ({ className }) => {
               <p className="text-xs sm:text-sm text-muted-foreground">
                 Our signaling server only helps establish the initial connection, but does not
                 process or store your messages.
-              </p>
-            </AccordionContent>
+              </p>            </AccordionContent>
           </AccordionItem>
-          
-          <AccordionItem value="item-2">
-            <AccordionTrigger className="text-sm font-medium flex items-center">
-              <Lock className="h-4 w-4 mr-2 text-whisper-purple" />
+            <AccordionItem value="item-2">
+            <AccordionTrigger className="text-xs sm:text-sm font-medium flex items-center py-2 sm:py-4 text-slate-900 dark:text-white">
+              <Lock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-blue-600 dark:text-purple-400" />
               Privacy & Security
             </AccordionTrigger>
             <AccordionContent>
-              <p className="text-sm text-muted-foreground mb-2">
+              <p className="text-xs sm:text-sm text-muted-foreground mb-2">
                 All messages are end-to-end encrypted, meaning only you and your contact can
                 read them. We cannot access your messages even if we wanted to.
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Messages are now stored locally in your browser to maintain conversations between page refreshes,
                 but are automatically cleared when you log out for privacy.
-              </p>
-            </AccordionContent>
+              </p>            </AccordionContent>
           </AccordionItem>
-          
+
           <AccordionItem value="item-new">
-            <AccordionTrigger className="text-sm font-medium flex items-center">
-              <MessageSquare className="h-4 w-4 mr-2 text-whisper-purple" />
+            <AccordionTrigger className="text-xs sm:text-sm font-medium flex items-center py-2 sm:py-4 text-slate-900 dark:text-white">
+              <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-blue-600 dark:text-purple-400" />
               Persistent Chat
             </AccordionTrigger>
-            <AccordionContent>              <p className="text-sm text-muted-foreground mb-2">
+            <AccordionContent><p className="text-sm text-muted-foreground mb-2">
                 <strong>✨ New Feature:</strong> Your chat messages now persist between page refreshes 
                 and browser restarts, so you won't lose your conversations accidentally.
               </p>
@@ -71,12 +68,11 @@ const HelpInfo: React.FC<HelpInfoProps> = ({ className }) => {
               <p className="text-sm text-muted-foreground">
                 For maximum privacy, always log out when using a shared or public computer.
               </p>
-            </AccordionContent>
-          </AccordionItem>
+            </AccordionContent>          </AccordionItem>
           
           <AccordionItem value="item-3">
-            <AccordionTrigger className="text-sm font-medium flex items-center">
-              <AlertTriangle className="h-4 w-4 mr-2 text-yellow-500" />
+            <AccordionTrigger className="text-xs sm:text-sm font-medium flex items-center py-2 sm:py-4 text-slate-900 dark:text-white">
+              <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-amber-600 dark:text-yellow-500" />
               Troubleshooting
             </AccordionTrigger>
             <AccordionContent>
