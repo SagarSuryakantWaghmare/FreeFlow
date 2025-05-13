@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, User, Users, HelpCircle } from 'lucide-react';
+import { Send, User, Users, HelpCircle, Menu, X, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import UserList from '@/components/User/UserList';
 import ChatMessage from '@/components/User/ChatMessage';
@@ -13,6 +13,7 @@ import EmptyChat from '@/components/User/EmptyChat';
 import HelpInfo from '@/components/User/HelpInfo';
 import webSocketService from '@/lib/WebSocketService';
 import webRTCService from '@/lib/WebRTCService';
+import chatStorageService from '@/lib/ChatStorageService';
 
 const Chat = () => {
   const router = useRouter();
@@ -32,6 +33,7 @@ const Chat = () => {
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const username = useRef<string>('');
   const userId = useRef<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -124,19 +126,39 @@ const Chat = () => {
       setUsers(onlineUsers);
     }
   };
-
+  
   // Handle received WebRTC messages
   const handleRTCMessage = (message: any) => {
-    setMessages(prevMessages => [
-      ...prevMessages,
-      {
-        id: message.id,
-        sender: message.sender,
-        content: message.content,
-        timestamp: message.timestamp,
-        isSelf: false
+    const newMessage = {
+      id: message.id,
+      sender: message.sender,
+      content: message.content,
+      timestamp: message.timestamp,
+      isSelf: false
+    };
+    
+    // Check if we already have this message (to avoid duplicates from sync)
+    const messageExists = messages.some(msg => msg.id === newMessage.id);
+    
+    if (!messageExists) {
+      // Add message to local state
+      setMessages(prevMessages => {
+        // Create a new array with the new message
+        const updatedMessages = [...prevMessages, newMessage];
+        
+        // Sort messages by timestamp to ensure correct order
+        updatedMessages.sort((a, b) => 
+          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        );
+        
+        return updatedMessages;
+      });
+      
+      // Save message to localStorage if we have a selected user
+      if (selectedUser) {
+        chatStorageService.saveMessage(selectedUser, newMessage);
       }
-    ]);
+    }
   };
 
   // Handle WebRTC connection state changes
@@ -147,6 +169,10 @@ const Chat = () => {
       // Set selected user if not already set
       if (!selectedUser) {
         setSelectedUser(remoteUserId);
+        
+        // Load chat history for this user
+        const chatHistory = chatStorageService.getMessages(remoteUserId);
+        setMessages(chatHistory);
       }
     } else {
       toast.info(`Disconnected from ${remoteUserId}`);
@@ -173,6 +199,10 @@ const Chat = () => {
 
     // Add message to local state
     setMessages(prevMessages => [...prevMessages, newMessage]);
+    
+    // Save message to localStorage
+    chatStorageService.saveMessage(selectedUser, newMessage);
+    
     setMessage('');
 
     // Send message via WebRTC
@@ -192,9 +222,12 @@ const Chat = () => {
 
   const handleSelectUser = (userId: string) => {
     setSelectedUser(userId);
+    // Close sidebar on mobile after selecting a user
+    setSidebarOpen(false);
 
-    // Clear messages when selecting a new user
-    setMessages([]);
+    // Load chat history for this user
+    const chatHistory = chatStorageService.getMessages(userId);
+    setMessages(chatHistory);
 
     // If not already connected to this peer, request a connection
     if (!webRTCService.isConnectedToPeer(userId)) {
@@ -207,6 +240,9 @@ const Chat = () => {
     webSocketService.disconnect();
     webRTCService.closeAllConnections();
 
+    // Clear all chat messages from localStorage
+    chatStorageService.clearAllMessages();
+
     localStorage.removeItem('username');
     localStorage.removeItem('userId');
     toast.success('Logged out successfully');
@@ -214,33 +250,59 @@ const Chat = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col bg-gray-50 dark:bg-gray-900">
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar - Online Users */}
-        <aside className="w-64 bg-sidebar flex flex-col border-r">
-          <div className="p-4 bg-sidebar">
+    <div className="h-[calc(100vh-4rem)] flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden max-h-full">
+        {/* Sidebar - Online Users (hidden on mobile when closed) */}
+        <aside 
+          className={`bg-sidebar flex flex-col border-r h-full overflow-hidden transition-all duration-300 
+            md:w-64 md:relative md:translate-x-0 md:shadow-none
+            ${sidebarOpen 
+              ? 'w-full absolute z-20 translate-x-0 shadow-xl' 
+              : 'w-64 absolute z-20 -translate-x-full shadow-xl'}`}
+        >
+          <div className="p-4 bg-sidebar shrink-0">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
                 <h2 className="font-medium">Online Users</h2>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setShowHelp(!showHelp)}
-                title="Help & Information"
-              >
-                <HelpCircle className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setShowHelp(!showHelp)}
+                  title="Help & Information"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleLogout}
+                  title="Logout"
+                  className="h-8"
+                >
+                  Logout
+                </Button>
+                {/* Close button for mobile */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 md:hidden"
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             <Separator className="my-2" />
           </div>
 
           {showHelp ? (
-            <HelpInfo className="mx-2 mb-4" />
+            <HelpInfo className="mx-2 mb-4 overflow-y-auto" />
           ) : (
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1 overflow-hidden">
               <UserList
                 users={users}
                 selectedUserId={selectedUser}
@@ -250,12 +312,45 @@ const Chat = () => {
           )}
         </aside>
 
+        {/* Overlay for mobile when sidebar is open */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/20 z-10 md:hidden" 
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Main Chat Area */}
-        <main className="flex-1 flex flex-col">
+        <main className="flex-1 flex flex-col h-full overflow-hidden relative">
+          {/* Mobile header with menu button */}
+          <div className="p-3 border-b flex items-center gap-2 shrink-0 md:hidden">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 mr-1"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            {selectedUser && (
+              <>
+                <User className="h-5 w-5 text-whisper-blue" />
+                <span className="font-medium truncate">
+                  {users.find(u => u.id === selectedUser)?.name || selectedUser}
+                </span>
+                <span className="text-xs ml-auto">
+                  {webRTCService.isConnectedToPeer(selectedUser)
+                    ? '(Connected)'
+                    : '(Connecting...)'}
+                </span>
+              </>
+            )}
+          </div>
+
           {selectedUser ? (
             <>
-              {/* Chat Header */}
-              <div className="p-3 border-b flex items-center gap-2">
+              {/* Chat Header (desktop only) */}
+              <div className="p-3 border-b hidden md:flex items-center gap-2 shrink-0">
                 <User className="h-5 w-5 text-whisper-blue" />
                 <span className="font-medium">
                   {users.find(u => u.id === selectedUser)?.name || selectedUser}
@@ -268,8 +363,8 @@ const Chat = () => {
               </div>
 
               {/* Messages */}
-              <ScrollArea className="flex-1 p-4">
-                <div className="flex flex-col gap-3">
+              <ScrollArea className="flex-1 p-2 sm:p-4 overflow-y-auto">
+                <div className="flex flex-col gap-3 min-h-full">
                   {messages.length > 0 ? (
                     messages.map(msg => (
                       <ChatMessage
@@ -287,7 +382,7 @@ const Chat = () => {
               </ScrollArea>
 
               {/* Message Input */}
-              <form onSubmit={handleSendMessage} className="border-t p-3 flex gap-2">
+              <form onSubmit={handleSendMessage} className="border-t p-2 sm:p-3 flex gap-2 shrink-0 bg-background">
                 <Input
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
@@ -297,20 +392,34 @@ const Chat = () => {
                 />
                 <Button
                   type="submit"
-                  size="icon"
+                  size="sm"
                   disabled={!message.trim() || !selectedUser || !webRTCService.isConnectedToPeer(selectedUser)}
-                  className="bg-whisper-purple hover:bg-whisper-purple/90"
-                ></Button>
-                <Send className="h-5 w-5" />
-                {/* </Button> */}
+                  className="bg-whisper-purple hover:bg-whisper-purple/90 min-w-9 sm:min-w-10 h-10 flex items-center justify-center"
+                >
+                  <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+                </Button>
               </form>
             </>
           ) : (
-            <EmptyChat />
+            <>
+              {/* Mobile header when no chat is selected */}
+              <div className="p-3 border-b flex items-center gap-2 shrink-0 md:hidden">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 mr-1"
+                  onClick={() => setSidebarOpen(true)}
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+                <span className="font-medium">Select a chat</span>
+              </div>
+              <EmptyChat />
+            </>
           )}
         </main>
       </div>
-    </div >
+    </div>
   );
 };
 

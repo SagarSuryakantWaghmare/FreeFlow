@@ -1,6 +1,8 @@
 "use client";
 
 import webSocketService from "./WebSocketService";
+import { SyncRequest, SyncResponse } from "./types";
+import chatStorageService from "./ChatStorageService";
 
 interface RTCPeerData {
   peerConnection: RTCPeerConnection;
@@ -231,11 +233,15 @@ class WebRTCService {
 
   /**
    * Set up a data channel for messaging
-   */
-  private setupDataChannel(remoteUserId: string, dataChannel: RTCDataChannel): void {
+   */  private setupDataChannel(remoteUserId: string, dataChannel: RTCDataChannel): void {
     dataChannel.addEventListener('open', () => {
       console.log(`Data channel opened with ${remoteUserId}`);
       this.notifyConnectionStateChange(remoteUserId, 'connected');
+      
+      // Request message sync when connection is established
+      setTimeout(() => {
+        this.requestMessageSync(remoteUserId);
+      }, 500); // Small delay to ensure connection is stable
     });
 
     dataChannel.addEventListener('close', () => {
@@ -246,6 +252,116 @@ class WebRTCService {
     dataChannel.addEventListener('message', event => {
       try {
         const message = JSON.parse(event.data);
+
+        if (message.type === 'sync_request') {
+          this.handleSyncRequest(remoteUserId, message);
+        } else if (message.type === 'sync_response') {
+          this.handleSyncResponse(remoteUserId, message);
+        } else {
+          const formattedMessage: Message = {
+            id: message.id,
+            sender: message.sender,
+            content: message.content,
+            timestamp: new Date(message.timestamp),
+            isSelf: false
+          };
+          this.notifyMessageReceived(formattedMessage);
+        }
+      } catch (error) {
+        console.error('Error parsing message:', error);
+      }
+    });
+  }
+
+  /**
+   * Request message synchronization from a peer
+   * This is called when a connection is established to get any messages
+   * that were sent while the user was offline
+   */
+  requestMessageSync(remoteUserId: string): void {
+    const peer = this.peers.get(remoteUserId);
+    if (!peer || !peer.dataChannel || peer.dataChannel.readyState !== 'open') {
+      console.warn(`Cannot request message sync - data channel not open for ${remoteUserId}`);
+      return;
+    }
+
+    // Get the timestamp of the last message we have for this peer
+    const messages = chatStorageService.getMessages(remoteUserId);
+    const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+    
+    const syncRequest: SyncRequest = {
+      type: 'sync_request',
+      lastMessageTimestamp: lastMessage ? new Date(lastMessage.timestamp).getTime() : null
+    };
+
+    try {
+      peer.dataChannel.send(JSON.stringify(syncRequest));
+      console.log(`Sent sync request to ${remoteUserId}`);
+    } catch (error) {
+      console.error('Error sending sync request:', error);
+    }
+  }
+
+  /**
+   * Handle an incoming message sync request
+   */
+  private handleSyncRequest(remoteUserId: string, data: SyncRequest): void {
+    const peer = this.peers.get(remoteUserId);
+    if (!peer || !peer.dataChannel || peer.dataChannel.readyState !== 'open') {
+      console.warn(`Cannot handle sync request - data channel not open for ${remoteUserId}`);
+      return;
+    }
+
+    // Get all messages for this peer
+    const allMessages = chatStorageService.getMessages(remoteUserId);
+    
+    // Filter messages newer than the timestamp provided in the request
+    let messagesToSync = allMessages;
+    if (data.lastMessageTimestamp !== null) {
+      messagesToSync = allMessages.filter(msg => 
+        new Date(msg.timestamp).getTime() > data.lastMessageTimestamp!
+      );
+    }
+
+    // Only send messages that originated from the current user (isSelf === true)
+    // since the other user already has their own messages
+    const messagesToSend = messagesToSync
+      .filter(msg => msg.isSelf)
+      .map(msg => ({
+        id: msg.id,
+        sender: msg.sender,
+        content: msg.content,
+        timestamp: msg.timestamp
+      }));
+
+    // Send sync response
+    const syncResponse: SyncResponse = {
+      type: 'sync_response',
+      messages: messagesToSend
+    };
+
+    try {
+      peer.dataChannel.send(JSON.stringify(syncResponse));
+      console.log(`Sent ${messagesToSend.length} messages in sync response to ${remoteUserId}`);
+    } catch (error) {
+      console.error('Error sending sync response:', error);
+    }
+  }
+
+  /**
+   * Handle an incoming message sync response
+   */
+  private handleSyncResponse(remoteUserId: string, data: SyncResponse): void {
+    console.log(`Received sync response from ${remoteUserId} with ${data.messages.length} messages`);
+    
+    // Process each synced message
+    data.messages.forEach(message => {
+      // Check if we already have this message (based on ID)
+      const existingMessages = chatStorageService.getMessages(remoteUserId);
+      const messageExists = existingMessages.some(msg => msg.id === message.id);
+      
+      if (!messageExists) {
+        // Format the message and notify listeners
         const formattedMessage: Message = {
           id: message.id,
           sender: message.sender,
@@ -253,9 +369,12 @@ class WebRTCService {
           timestamp: new Date(message.timestamp),
           isSelf: false
         };
+        
+        // Store the message
+        chatStorageService.saveMessage(remoteUserId, formattedMessage);
+        
+        // Notify listeners
         this.notifyMessageReceived(formattedMessage);
-      } catch (error) {
-        console.error('Error parsing message:', error);
       }
     });
   }

@@ -44,11 +44,19 @@ const Navbar: React.FC = () => {
       };
     }
   }, [isChatPage]);
-
   const handleLogout = () => {
     if (webSocketService) {
       webSocketService.disconnect();
     }
+    
+    // Clear all chat messages from localStorage
+    // Find and remove all chat storage keys
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('chat_messages_')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
     localStorage.removeItem('username');
     localStorage.removeItem('userId');
     router.push('/');
