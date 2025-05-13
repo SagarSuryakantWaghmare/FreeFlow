@@ -278,9 +278,9 @@ const Chat = () => {
                   size="sm"
                   onClick={handleLogout}
                   title="Logout"
-                  className="h-8 bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
+                  className="h-8 cursor-pointer bg-transparent hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent text-slate-700 dark:text-purple-400"
                 >
-                  <LogOut className="h-4 w-4" />
+                  <LogOut className="h-4 w-4 text-slate-700 dark:text-purple-400" />
                 </Button>
                 {/* Close button for mobile */}
                 <Button
@@ -374,15 +374,16 @@ const Chat = () => {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Type a message..."
-                  className="flex-1 bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-slate-900 dark:text-white focus-visible:ring-blue-500 dark:focus-visible:ring-purple-500"
+                  className="flex-1 bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-slate-900 dark:text-white focus-visible:ring-purple-500 dark:focus-visible:ring-purple-500"
                   disabled={!selectedUser || !webRTCService.isConnectedToPeer(selectedUser)}
                 />
                 <Button
                   type="submit"
                   size="sm"
                   disabled={!message.trim() || !selectedUser || !webRTCService.isConnectedToPeer(selectedUser)}
-                  className="bg-blue-600 hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white min-w-9 sm:min-w-10 h-10 flex items-center justify-center"
-                >                  <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+                  className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white min-w-9 sm:min-w-10 h-10 flex items-center justify-center"
+                >
+                  <Send className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
               </form>
             </>
