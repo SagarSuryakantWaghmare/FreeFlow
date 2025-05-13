@@ -45,7 +45,7 @@ export function HeroSection() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Button size="lg" asChild>
-                <Link href="/sign-up">Get Started Free</Link>
+                <Link href="/p2p">Go Private Now</Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
                 <Link href="/#features">Learn More</Link>
