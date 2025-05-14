@@ -1,9 +1,37 @@
 import React from "react";
+import Image from "next/image";
 
 const HeroSection = () => {
   return (
     <>
       <section className="h-screen flex flex-col items-center justify-center text-center px-4">
+
+        <div className="absolute inset-0 hidden md:block z-0">
+          <Image
+            src="/Home/Hero/blob-scene-horizontal.jpg" // Replace with your desktop image filename
+            alt="Hero background"
+            fill
+            priority
+            className="object-cover"
+            sizes="100vw"
+          />
+        </div>
+
+        {/* Mobile Background */}
+        <div className="absolute inset-0 block md:hidden z-0">
+          <Image
+            src="/Home/Hero/blob-scene-vertical.jpg" // Replace with your mobile image filename
+            alt="Hero background"
+            fill
+            priority
+            className="object-cover"
+            sizes="100vw"
+          />
+        </div>
+
+        {/* Dark Overlay for better text readability */}
+        <div className="absolute inset-0 bg-black/50 z-0"></div>
+
         <span className="bg-purple-600/20 text-white py-2 px-4 rounded-full text-sm">
           🔗 Connect Seamlessly, Securely
         </span>

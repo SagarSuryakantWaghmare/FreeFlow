@@ -15,7 +15,6 @@ class WebSocketService {
   private userId: string | null = null;
 
   constructor() {
-    // Intentionally empty - socket will be initialized when connect is called
   }
 
   /**

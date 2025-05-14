@@ -237,7 +237,7 @@ class WebRTCService {
     dataChannel.addEventListener('open', () => {
       console.log(`Data channel opened with ${remoteUserId}`);
       this.notifyConnectionStateChange(remoteUserId, 'connected');
-      
+
       // Request message sync when connection is established
       setTimeout(() => {
         this.requestMessageSync(remoteUserId);
@@ -288,7 +288,7 @@ class WebRTCService {
     // Get the timestamp of the last message we have for this peer
     const messages = chatStorageService.getMessages(remoteUserId);
     const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
-    
+
     const syncRequest: SyncRequest = {
       type: 'sync_request',
       lastMessageTimestamp: lastMessage ? new Date(lastMessage.timestamp).getTime() : null
@@ -314,11 +314,11 @@ class WebRTCService {
 
     // Get all messages for this peer
     const allMessages = chatStorageService.getMessages(remoteUserId);
-    
+
     // Filter messages newer than the timestamp provided in the request
     let messagesToSync = allMessages;
     if (data.lastMessageTimestamp !== null) {
-      messagesToSync = allMessages.filter(msg => 
+      messagesToSync = allMessages.filter(msg =>
         new Date(msg.timestamp).getTime() > data.lastMessageTimestamp!
       );
     }
@@ -353,13 +353,13 @@ class WebRTCService {
    */
   private handleSyncResponse(remoteUserId: string, data: SyncResponse): void {
     console.log(`Received sync response from ${remoteUserId} with ${data.messages.length} messages`);
-    
+
     // Process each synced message
     data.messages.forEach(message => {
       // Check if we already have this message (based on ID)
       const existingMessages = chatStorageService.getMessages(remoteUserId);
       const messageExists = existingMessages.some(msg => msg.id === message.id);
-      
+
       if (!messageExists) {
         // Format the message and notify listeners
         const formattedMessage: Message = {
@@ -369,10 +369,10 @@ class WebRTCService {
           timestamp: new Date(message.timestamp),
           isSelf: false
         };
-        
+
         // Store the message
         chatStorageService.saveMessage(remoteUserId, formattedMessage);
-        
+
         // Notify listeners
         this.notifyMessageReceived(formattedMessage);
       }

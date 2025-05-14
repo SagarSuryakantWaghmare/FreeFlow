@@ -40,7 +40,6 @@ const Chat = () => {
 
   // Initialize WebSocket when component mounts
   useEffect(() => {
-    // Check if user is logged in
     const storedUsername = localStorage.getItem('username');
     const storedUserId = localStorage.getItem('userId');
 
@@ -52,7 +51,6 @@ const Chat = () => {
     username.current = storedUsername;
     userId.current = storedUserId;
 
-    // Initialize WebRTC service with the user's ID
     webRTCService.initialize(userId.current);
 
     // Connection status event handler
