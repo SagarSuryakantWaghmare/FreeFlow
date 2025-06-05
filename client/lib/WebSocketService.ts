@@ -1,5 +1,13 @@
 "use client";
 
+let backendUrl: string;
+
+if (process.env.NODE_ENV === 'production') {
+  backendUrl = "https://freeflow-server.onrender.com/ws";
+} else {
+  backendUrl = "ws://localhost:8080/ws";
+}
+
 /**
  * WebSocketService.ts - Handles WebSocket connections to the signaling server
  * This service is responsible for establishing and maintaining the WebSocket 
@@ -25,7 +33,7 @@ class WebSocketService {
   connect(userId: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.userId = userId;
-      const serverUrl = "https://freeflow-server.onrender.com/ws";
+      const serverUrl = backendUrl; // Use the backendUrl defined above
 
       if (this.socket && this.socket.readyState === WebSocket.OPEN) {
         resolve();
