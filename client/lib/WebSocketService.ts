@@ -25,7 +25,7 @@ class WebSocketService {
   connect(userId: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.userId = userId;
-      const serverUrl = "ws://localhost:8080/ws";
+      const serverUrl = "https://freeflow-server.onrender.com/ws";
 
       if (this.socket && this.socket.readyState === WebSocket.OPEN) {
         resolve();
