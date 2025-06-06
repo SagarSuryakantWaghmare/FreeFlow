@@ -1,8 +1,6 @@
 package com.mini_project.p2p_chat.socket_communication;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Component;
