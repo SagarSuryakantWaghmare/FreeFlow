@@ -109,14 +109,21 @@ const Navbar: React.FC = () => {
               </Button>
               <ThemeToggle />
             </>
-          ) : (
-            <>
+          ) : (            <>
               <Link
                 href="/p2p"
                 className="text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-sm transition-colors"
               >
                 Go Private
               </Link>
+              <SignedIn>
+                <Link
+                  href="/group-chat"
+                  className="text-white bg-[rgb(76,175,80)] hover:bg-[rgb(56,155,60)] px-4 py-2 rounded-md text-sm transition-colors"
+                >
+                  Group Chat
+                </Link>
+              </SignedIn>
               <ThemeToggle />
               <SignedOut>
                 <Button variant="outline">
@@ -150,8 +157,7 @@ const Navbar: React.FC = () => {
                   Logout
                 </Button>
               </>
-            ) : (
-              <>
+            ) : (              <>
                 <Link
                   href="/p2p"
                   className="block text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-center"
@@ -159,6 +165,15 @@ const Navbar: React.FC = () => {
                 >
                   Go Private
                 </Link>
+                <SignedIn>
+                  <Link
+                    href="/group-chat"
+                    className="block text-white bg-[rgb(76,175,80)] hover:bg-[rgb(56,155,60)] px-4 py-2 rounded-md text-center mt-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Group Chat
+                  </Link>
+                </SignedIn>
                 <div className="flex justify-between items-center mt-2">
                   <ThemeToggle />
                   <SignedOut>

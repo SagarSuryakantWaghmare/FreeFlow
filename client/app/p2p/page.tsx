@@ -80,11 +80,43 @@ export default function P2PLanding() {
       >
         <h2 className="text-3xl md:text-4xl lg:text-5xl text-center font-bold mb-4 md:mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70 dark:from-primary dark:to-purple-300">
           Secure Peer-to-Peer Communication
-        </h2>
-        <p className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-5xl mb-8 md:mb-12 mx-auto">
+        </h2>        <p className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-5xl mb-8 md:mb-12 mx-auto">
           Experience truly private conversations with direct peer-to-peer technology.
           No servers storing your messages, no third parties—just you and the people you chat with.
         </p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-8 md:mb-12 px-4"
+        >
+          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-card border border-border rounded-lg p-6 text-left">
+              <h3 className="text-xl font-semibold mb-3 text-primary">One-on-One P2P Chat</h3>
+              <p className="text-muted-foreground mb-4">
+                Direct encrypted communication between two users. No servers, maximum privacy.
+              </p>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Complete anonymity</li>
+                <li>• No message history stored</li>
+                <li>• Real-time direct connection</li>
+              </ul>
+            </div>
+            
+            <div className="bg-card border border-border rounded-lg p-6 text-left">
+              <h3 className="text-xl font-semibold mb-3 text-green-600">Group Chat</h3>
+              <p className="text-muted-foreground mb-4">
+                Secure group conversations with multiple participants. Create or join existing groups.
+              </p>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Multiple participants</li>
+                <li>• Create custom groups</li>
+                <li>• Join existing conversations</li>
+              </ul>
+            </div>
+          </div>
+        </motion.div>
       </motion.div>
         <motion.div
           ref={featureRef}
@@ -123,11 +155,11 @@ export default function P2PLanding() {
               Peer-to-peer technology creates direct channels between users for maximum privacy
             </p>
           </motion.div>
-        </motion.div>
-        <motion.div
+        </motion.div>        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
           transition={{ duration: 0.6, delay: 0.4 }}
+          className="flex flex-col sm:flex-row gap-4 items-center justify-center"
         >
           <motion.div
             variants={buttonVariants}
@@ -141,7 +173,7 @@ export default function P2PLanding() {
               onClick={() => router.push('/simple-sign-in')}
               className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm md:text-base lg:text-lg px-4 md:px-6 lg:px-8 py-3 md:py-4 lg:py-6 h-auto cursor-pointer rounded-lg shadow-lg transition-all duration-200 ease-in-out"
             >
-              Start Secure Chatting
+              Start P2P Chatting
               <motion.div
                 initial={{ x: 0 }}
                 animate={{ x: isButtonHovered ? 5 : 0 }}
@@ -149,6 +181,22 @@ export default function P2PLanding() {
               >
                 <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5" />
               </motion.div>
+            </Button>
+          </motion.div>
+
+          <motion.div
+            variants={buttonVariants}
+            whileHover="hover"
+            whileTap="tap"
+          >
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => router.push('/group-chat')}
+              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground text-sm md:text-base lg:text-lg px-4 md:px-6 lg:px-8 py-3 md:py-4 lg:py-6 h-auto cursor-pointer rounded-lg shadow-lg transition-all duration-200 ease-in-out"
+            >
+              Join Group Chat
+              <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5" />
             </Button>
           </motion.div>
         </motion.div>
