@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
+import { WebRTCProvider } from '@/providers/webrtc-provider';
 import { Toaster } from '@/components/ui/toaster';
 import Navbar from '@/components/Navbar';
 import {
@@ -29,24 +30,25 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className={inter.className}>
-        <ClerkProvider
+      <body className={inter.className}>        <ClerkProvider
           appearance={{
             baseTheme: dark,
           }}
         >
-          <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-            <div className="flex min-h-screen flex-col max-w-[1620px] mx-auto">
-              <Navbar />
-              <main className="flex-1">{children}</main>
-            </div>
-            <Toaster />
-          </ThemeProvider>
+          <WebRTCProvider>
+            <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+              <div className="flex min-h-screen flex-col max-w-[1620px] mx-auto">
+                <Navbar />
+                <main className="flex-1">{children}</main>
+              </div>
+              <Toaster />
+            </ThemeProvider>
+          </WebRTCProvider>
         </ClerkProvider>
       </body>
     </html>
