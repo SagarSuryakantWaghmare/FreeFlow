@@ -3,9 +3,9 @@
 let backendUrl: string;
 
 if (process.env.NODE_ENV === 'production') {
-  backendUrl = "https://freeflow-server.onrender.com/ws";
+  backendUrl = "https://freeflow-server.onrender.com/ws/p2p";
 } else {
-  backendUrl = "ws://localhost:8080/ws";
+  backendUrl = "ws://localhost:8080/ws/p2p";
 }
 
 /**

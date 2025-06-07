@@ -15,11 +15,9 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     public WebSocketConfig(SignalingHandler signalingHandler) {
         this.signalingHandler = signalingHandler;
-    }
-
-    @Override
+    }    @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(signalingHandler, "/ws")
+        registry.addHandler(signalingHandler, "/ws/p2p")
                 .setAllowedOrigins("*"); // allow all origins for now
     }
 }

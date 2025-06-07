@@ -19,13 +19,11 @@ public class StompWebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // Designate the "/app" prefix for messages that are bound to methods
         // annotated with @MessageMapping
         config.setApplicationDestinationPrefixes("/app");
-    }
-
-    @Override
+    }    @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Register the "/ws" endpoint for WebSocket connections
+        // Register the "/ws/group" endpoint for WebSocket connections
         // Enable SockJS fallback options so that alternate transports can be used
-        registry.addEndpoint("/ws")
+        registry.addEndpoint("/ws/group")
                 .setAllowedOriginPatterns("*") // Allow all origins for development
                 .withSockJS();
     }

@@ -37,7 +37,7 @@ class GroupChatService {
   }
 
   private initializeStompClient(): void {
-    const socket = new SockJS(`${this.baseUrl}/ws`);
+    const socket = new SockJS(`${this.baseUrl}/ws/group`);
     this.stompClient = new Client({
       webSocketFactory: () => socket,
       debug: (str) => {

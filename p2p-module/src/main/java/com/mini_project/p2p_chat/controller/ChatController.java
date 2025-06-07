@@ -1,7 +1,7 @@
 package com.mini_project.p2p_chat.controller;
 
-import com.mini_project.p2p_chat.model.GroupMessage;
-import com.mini_project.p2p_chat.service.GroupService;
+import com.mini_project.p2p_chat.group_chat.DTO.ChatMessage;
+import com.mini_project.p2p_chat.group_chat.Service.GroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -18,7 +18,7 @@ public class ChatController {
     private GroupService groupService;
     
     @MessageMapping("/chat/send")
-    public void sendMessage(@Payload GroupMessage message) {
+    public void sendMessage(@Payload ChatMessage message) {
         try {
             // Verify that the sender is a member of the group
             if (groupService.isUserInGroup(message.getGroupId(), message.getSenderId())) {

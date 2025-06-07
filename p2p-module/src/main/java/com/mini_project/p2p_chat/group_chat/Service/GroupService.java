@@ -50,10 +50,16 @@ public class GroupService {
 
         return true;
     }
-
-
     public Optional<ChatGroup> getGroupByToken(String token) {
         return groupRepo.findByToken(token);
+    }
+
+    public boolean isUserInGroup(Long groupId, String userId) {
+        Optional<ChatGroup> groupOpt = groupRepo.findById(groupId);
+        if (groupOpt.isEmpty()) return false;
+        
+        ChatGroup group = groupOpt.get();
+        return group.getMembers().contains(userId);
     }
 }
 
