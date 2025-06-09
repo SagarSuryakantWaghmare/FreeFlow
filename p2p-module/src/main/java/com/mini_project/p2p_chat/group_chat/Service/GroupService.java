@@ -4,6 +4,7 @@ import com.mini_project.p2p_chat.group_chat.Repo.ChatGroupRepository;
 import com.mini_project.p2p_chat.group_chat.model.ChatGroup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -14,6 +15,7 @@ public class GroupService {
     @Autowired
     private ChatGroupRepository groupRepo;
 
+    @Transactional
     public ChatGroup createGroup(String groupName, String creatorId) {
         ChatGroup group = new ChatGroup();
         group.setGroupName(groupName);
@@ -25,6 +27,7 @@ public class GroupService {
         return cg;
     }
 
+    @Transactional
     public boolean joinGroup(String token, String userId) {
         Optional<ChatGroup> groupOpt = groupRepo.findByToken(token);
         if (groupOpt.isEmpty()) return false;
@@ -35,6 +38,7 @@ public class GroupService {
         return true;
     }
 
+    @Transactional
     public boolean leaveGroupById(Long groupId, String userId) {
         Optional<ChatGroup> groupOpt = groupRepo.findById(groupId);
         if (groupOpt.isEmpty()) return false;
@@ -52,14 +56,8 @@ public class GroupService {
     }
     public Optional<ChatGroup> getGroupByToken(String token) {
         return groupRepo.findByToken(token);
-    }
-
-    public boolean isUserInGroup(Long groupId, String userId) {
-        Optional<ChatGroup> groupOpt = groupRepo.findById(groupId);
-        if (groupOpt.isEmpty()) return false;
-        
-        ChatGroup group = groupOpt.get();
-        return group.getMembers().contains(userId);
+    }    public boolean isUserInGroup(Long groupId, String userId) {
+        return groupRepo.isUserMemberOfGroup(groupId, userId);
     }
 }
 

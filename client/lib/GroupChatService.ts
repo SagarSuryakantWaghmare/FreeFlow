@@ -198,7 +198,7 @@ class GroupChatService {
           groupId: String(receivedMessage.groupId), // Convert number to string for frontend
           senderId: receivedMessage.senderId,
           content: receivedMessage.content,
-          timestamp: new Date()
+          timestamp: receivedMessage.timestamp ? new Date(receivedMessage.timestamp) : new Date()
         };
         
         console.log('Processed message:', groupMessage);

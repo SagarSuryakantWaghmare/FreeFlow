@@ -8,6 +8,8 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+import java.time.LocalDateTime;
+
 @Controller
 public class ChatController {
     
@@ -16,10 +18,12 @@ public class ChatController {
     
     @Autowired
     private GroupService groupService;
-    
-    @MessageMapping("/chat/send")
+      @MessageMapping("/chat/send")
     public void sendMessage(@Payload ChatMessage message) {
         try {
+            // Set timestamp when message is received by server
+            message.setTimestamp(LocalDateTime.now());
+            
             // Verify that the sender is a member of the group
             if (groupService.isUserInGroup(message.getGroupId(), message.getSenderId())) {
                 // Send message to all subscribers of the group topic
@@ -27,13 +31,15 @@ public class ChatController {
                 messagingTemplate.convertAndSend(destination, message);
                 
                 System.out.println("Message sent to group " + message.getGroupId() + 
-                                 " from " + message.getSenderId() + ": " + message.getContent());
+                                 " from " + message.getSenderId() + ": " + message.getContent() +
+                                 " at " + message.getTimestamp());
             } else {
                 System.err.println("User " + message.getSenderId() + 
                                  " is not a member of group " + message.getGroupId());
             }
         } catch (Exception e) {
             System.err.println("Error sending message: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

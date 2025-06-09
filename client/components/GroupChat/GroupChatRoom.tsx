@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import groupChatService, { GroupMessage } from '@/lib/GroupChatService';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Users, LogOut, Send, ArrowLeft } from 'lucide-react';
+import { Copy, Users, LogOut, Send, ArrowLeft, User } from 'lucide-react';
 
 interface GroupChatRoomProps {
   groupId: string;
@@ -124,12 +124,33 @@ export default function GroupChatRoom({
       });
     }
   };
-
   const formatTime = (timestamp: Date) => {
     return new Date(timestamp).toLocaleTimeString([], { 
       hour: '2-digit', 
       minute: '2-digit' 
-    });  };
+    });
+  };
+  const getUserDisplayName = (senderId: string) => {
+    if (senderId === userId) return 'You';
+    // You can extend this to map user IDs to display names
+    return senderId;
+  };
+
+  const getUserInitials = (senderId: string) => {
+    if (senderId === userId) return 'Y';
+    return senderId.charAt(0).toUpperCase();
+  };
+
+  const shouldShowAvatar = (currentIndex: number) => {
+    if (currentIndex === 0) return true;
+    const currentMessage = messages[currentIndex];
+    const previousMessage = messages[currentIndex - 1];
+    return currentMessage.senderId !== previousMessage.senderId;
+  };
+
+  const shouldShowSenderName = (currentIndex: number) => {
+    return shouldShowAvatar(currentIndex);
+  };
 
   return (
     <div className="w-full max-w-4xl mx-auto">
@@ -198,35 +219,57 @@ export default function GroupChatRoom({
                 <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No messages yet. Start the conversation!</p>
               </div>
-            ) : (
-              messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex ${
-                    message.senderId === userId ? 'justify-end' : 'justify-start'
-                  }`}
-                >
+            ) : (              messages.map((message, index) => {
+                const showAvatar = shouldShowAvatar(index);
+                const showSenderName = shouldShowSenderName(index);
+                
+                return (
                   <div
-                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                      message.senderId === userId
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
-                    }`}
+                    key={index}
+                    className={`flex items-end space-x-2 ${
+                      message.senderId === userId ? 'justify-end' : 'justify-start'
+                    } ${showAvatar ? 'mb-4' : 'mb-1'}`}
                   >
+                    {/* Avatar for other users */}
                     {message.senderId !== userId && (
-                      <div className="text-xs font-medium mb-1 opacity-70">
-                        {message.senderId}
+                      <div className={`flex-shrink-0 w-8 h-8 ${showAvatar ? 'bg-secondary' : 'bg-transparent'} rounded-full flex items-center justify-center text-xs font-medium`}>
+                        {showAvatar && getUserInitials(message.senderId)}
                       </div>
                     )}
-                    <div className="text-sm">{message.content}</div>
-                    {message.timestamp && (
-                      <div className="text-xs opacity-70 mt-1">
-                        {formatTime(message.timestamp)}
+                    
+                    <div
+                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                        message.senderId === userId
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted'
+                      }`}
+                    >
+                      {showSenderName && (
+                        <div className={`text-xs font-medium mb-1 ${
+                          message.senderId === userId ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                        }`}>
+                          {getUserDisplayName(message.senderId)}
+                        </div>
+                      )}
+                      <div className="text-sm">{message.content}</div>
+                      {message.timestamp && (
+                        <div className={`text-xs mt-1 ${
+                          message.senderId === userId ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                        }`}>
+                          {formatTime(message.timestamp)}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Avatar for your own messages */}
+                    {message.senderId === userId && (
+                      <div className={`flex-shrink-0 w-8 h-8 ${showAvatar ? 'bg-primary' : 'bg-transparent'} rounded-full flex items-center justify-center text-xs font-medium text-primary-foreground`}>
+                        {showAvatar && getUserInitials(message.senderId)}
                       </div>
                     )}
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
             <div ref={messagesEndRef} />
           </div>
