@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import groupChatService, { GroupMessage } from '@/lib/GroupChatService';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Users, LogOut, Send } from 'lucide-react';
+import { Copy, Users, LogOut, Send, ArrowLeft } from 'lucide-react';
 
 interface GroupChatRoomProps {
   groupId: string;
@@ -42,10 +42,14 @@ export default function GroupChatRoom({
         }
         
         setIsConnected(true);
-        
-        // Subscribe to group messages
+          // Subscribe to group messages
         groupChatService.subscribeToGroup(groupId, (message: GroupMessage) => {
-          setMessages(prev => [...prev, message]);
+          console.log('GroupChatRoom received message:', message);
+          setMessages(prev => {
+            const newMessages = [...prev, message];
+            console.log('Updated messages state:', newMessages);
+            return newMessages;
+          });
         });
         
         toast({
@@ -77,12 +81,11 @@ export default function GroupChatRoom({
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-
   const handleSendMessage = () => {
     if (!newMessage.trim() || !isConnected) return;
 
     const message: GroupMessage = {
-      groupId,
+      groupId: groupId, // This should be a string, matching the backend
       senderId: userId,
       content: newMessage.trim(),
     };
@@ -126,11 +129,24 @@ export default function GroupChatRoom({
     return new Date(timestamp).toLocaleTimeString([], { 
       hour: '2-digit', 
       minute: '2-digit' 
-    });
-  };
+    });  };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto h-[600px] flex flex-col">
+    <div className="w-full max-w-4xl mx-auto">
+      {/* Back button */}
+      <div className="mb-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onLeaveGroup}
+          className="flex items-center space-x-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back to Groups</span>
+        </Button>
+      </div>
+
+      <Card className="h-[600px] flex flex-col">
       <CardHeader className="flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -234,9 +250,9 @@ export default function GroupChatRoom({
             >
               <Send className="h-4 w-4" />
             </Button>
-          </div>
-        </div>
+          </div>        </div>
       </CardContent>
     </Card>
+    </div>
   );
 }

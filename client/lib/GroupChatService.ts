@@ -31,12 +31,17 @@ class GroupChatService {
   private subscriptions: Map<string, StompSubscription> = new Map();
   private messageListeners: Map<string, ((message: GroupMessage) => void)[]> = new Map();
   private baseUrl = 'http://localhost:8080'; 
+  private connectionState = false;
 
   constructor() {
-    this.initializeStompClient();
+    // Initialize when needed, not immediately
   }
 
   private initializeStompClient(): void {
+    if (this.stompClient) {
+      return; // Already initialized
+    }
+
     const socket = new SockJS(`${this.baseUrl}/ws/group`);
     this.stompClient = new Client({
       webSocketFactory: () => socket,
@@ -49,51 +54,62 @@ class GroupChatService {
     });
 
     this.stompClient.onConnect = () => {
-      console.log('Connected to STOMP server');
+      console.log('Connected to STOMP server for group chat');
+      this.connectionState = true;
     };
 
     this.stompClient.onDisconnect = () => {
       console.log('Disconnected from STOMP server');
+      this.connectionState = false;
     };
 
     this.stompClient.onStompError = (frame) => {
       console.error('STOMP error:', frame);
+      this.connectionState = false;
     };
-  }
-
-  async connect(): Promise<void> {
+  }  async connect(): Promise<void> {
     return new Promise((resolve, reject) => {
+      this.initializeStompClient();
+      
       if (!this.stompClient) {
         reject(new Error('STOMP client not initialized'));
         return;
       }
 
       if (this.stompClient.connected) {
+        this.connectionState = true;
         resolve();
         return;
       }
 
       this.stompClient.onConnect = () => {
-        console.log('Connected to STOMP server');
+        console.log('Connected to STOMP server for group chat');
+        this.connectionState = true;
         resolve();
       };
 
       this.stompClient.onStompError = (frame) => {
         console.error('STOMP connection error:', frame);
-        reject(new Error('Failed to connect to STOMP server'));
+        this.connectionState = false;
+        reject(new Error(`Failed to connect to STOMP server: ${frame.headers['message'] || 'Unknown error'}`));
       };
 
-      this.stompClient.activate();
+      try {
+        this.stompClient.activate();
+      } catch (error) {
+        console.error('Error activating STOMP client:', error);
+        this.connectionState = false;
+        reject(error);
+      }
     });
-  }
-
-  disconnect(): void {
+  }  disconnect(): void {
     if (this.stompClient) {
       this.subscriptions.forEach((subscription) => {
         subscription.unsubscribe();
       });
       this.subscriptions.clear();
       this.stompClient.deactivate();
+      this.connectionState = false;
     }
   }
 
@@ -172,12 +188,20 @@ class GroupChatService {
     // Unsubscribe if already subscribed
     if (this.subscriptions.has(groupId)) {
       this.subscriptions.get(groupId)?.unsubscribe();
-    }
-
-    const subscription = this.stompClient.subscribe(destination, (message) => {
+    }    const subscription = this.stompClient.subscribe(destination, (message) => {
       try {
-        const groupMessage: GroupMessage = JSON.parse(message.body);
-        groupMessage.timestamp = new Date();
+        const receivedMessage = JSON.parse(message.body);
+        console.log('Received raw message:', receivedMessage);
+        
+        // Convert backend message format to frontend format
+        const groupMessage: GroupMessage = {
+          groupId: String(receivedMessage.groupId), // Convert number to string for frontend
+          senderId: receivedMessage.senderId,
+          content: receivedMessage.content,
+          timestamp: new Date()
+        };
+        
+        console.log('Processed message:', groupMessage);
         onMessage(groupMessage);
       } catch (error) {
         console.error('Error parsing group message:', error);
@@ -195,22 +219,27 @@ class GroupChatService {
       this.subscriptions.delete(groupId);
       console.log(`Unsubscribed from group ${groupId}`);
     }
-  }
-
-  sendMessage(message: GroupMessage): void {
+  }  sendMessage(message: GroupMessage): void {
     if (!this.stompClient || !this.stompClient.connected) {
       console.warn('STOMP client not connected');
       return;
     }
 
+    // Convert frontend message format to backend format
+    const backendMessage = {
+      groupId: parseInt(message.groupId), // Convert string to number for backend
+      senderId: message.senderId,
+      content: message.content
+    };
+
+    console.log('Sending message:', backendMessage);
     this.stompClient.publish({
       destination: '/app/chat/send',
-      body: JSON.stringify(message),
+      body: JSON.stringify(backendMessage),
     });
   }
-
   isConnected(): boolean {
-    return this.stompClient?.connected || false;
+    return this.connectionState && (this.stompClient?.connected || false);
   }
 }
 

@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface GroupCreatorProps {
   userId: string;
-  onGroupCreated: (groupId: string, inviteLink: string) => void;
+  onGroupCreated: (groupId: string, inviteLink: string, groupName?: string) => void;
 }
 
 export default function GroupCreator({ userId, onGroupCreated }: GroupCreatorProps) {
@@ -41,7 +41,7 @@ export default function GroupCreator({ userId, onGroupCreated }: GroupCreatorPro
         description: `Group "${groupName}" created successfully!`,
       });
 
-      onGroupCreated(response.groupId, response.inviteLink);
+      onGroupCreated(response.groupId, response.inviteLink, groupName.trim());
       setGroupName('');
     } catch (error) {
       console.error('Error creating group:', error);

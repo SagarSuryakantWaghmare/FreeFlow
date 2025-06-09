@@ -7,6 +7,7 @@ com\mini_project\p2p_chat\controller\SignalingController.class
 com\mini_project\p2p_chat\controller\ChatController.class
 com\mini_project\p2p_chat\group_chat\DTO\ChatMessage.class
 com\mini_project\p2p_chat\socket_communication\SignalingHandler.class
+com\mini_project\p2p_chat\config\CorsConfig.class
 com\mini_project\p2p_chat\model\GroupMessage.class
 com\mini_project\p2p_chat\group_chat\Service\GroupService.class
 com\mini_project\p2p_chat\group_chat\Repo\ChatGroupRepository.class

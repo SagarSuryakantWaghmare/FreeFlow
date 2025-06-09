@@ -26,22 +26,10 @@ interface ActiveGroup {
 export default function GroupChatMain({ userId, groupId }: GroupChatMainProps) {
   const [activeGroup, setActiveGroup] = useState<ActiveGroup | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
-  const { groups } = useWebRTC();
   const { toast } = useToast();
 
-  useEffect(() => {
-    // If groupId is provided, automatically join that group
-    if (groupId && groups.length > 0) {
-      const group = groups.find(g => g.id === groupId);
-      if (group) {
-        setActiveGroup({
-          groupId: group.id,
-          groupName: group.name,
-          inviteLink: undefined
-        });
-      }
-    }
-  }, [groupId, groups]);
+  // Remove dependency on WebRTC provider for groups since we're using backend
+  // const { groups } = useWebRTC();
 
   useEffect(() => {
     // Initialize connection when component mounts
@@ -55,7 +43,7 @@ export default function GroupChatMain({ userId, groupId }: GroupChatMainProps) {
           console.error('Failed to connect to group chat service:', error);
           toast({
             title: "Connection Error",
-            description: "Failed to connect to chat service",
+            description: "Failed to connect to chat service. Please check if the server is running.",
             variant: "destructive",
           });
         } finally {
@@ -72,12 +60,12 @@ export default function GroupChatMain({ userId, groupId }: GroupChatMainProps) {
         groupChatService.unsubscribeFromGroup(activeGroup.groupId);
       }
     };
-  }, [toast, activeGroup]);
+  }, [toast]);
 
-  const handleGroupCreated = (groupId: string, inviteLink: string) => {
+  const handleGroupCreated = (groupId: string, inviteLink: string, groupName?: string) => {
     setActiveGroup({
       groupId,
-      groupName: `Group ${groupId}`, // You might want to store the actual name
+      groupName: groupName || `Group ${groupId}`,
       inviteLink,
     });
   };
@@ -137,9 +125,7 @@ export default function GroupChatMain({ userId, groupId }: GroupChatMainProps) {
               <UserPlus className="h-4 w-4" />
               <span>Join Group</span>
             </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="create" className="mt-6">
+          </TabsList>          <TabsContent value="create" className="mt-6">
             <GroupCreator
               userId={userId}
               onGroupCreated={handleGroupCreated}
