@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import groupChatService, { GroupMessage } from '@/lib/GroupChatService';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Users, LogOut, Send, ArrowLeft, User } from 'lucide-react';
+import { Copy, Users, LogOut, Send, ArrowLeft, User, Sparkles, MessageCircle } from 'lucide-react';
 
 interface GroupChatRoomProps {
   groupId: string;
@@ -53,8 +53,8 @@ export default function GroupChatRoom({
         });
         
         toast({
-          title: "Connected",
-          description: `Connected to group "${groupName}"`,
+          title: "Connected ✨",
+          description: `Welcome to "${groupName}"`,
         });
       } catch (error) {
         console.error('Error initializing chat:', error);
@@ -81,11 +81,12 @@ export default function GroupChatRoom({
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
   const handleSendMessage = () => {
     if (!newMessage.trim() || !isConnected) return;
 
     const message: GroupMessage = {
-      groupId: groupId, // This should be a string, matching the backend
+      groupId: groupId,
       senderId: userId,
       content: newMessage.trim(),
     };
@@ -100,7 +101,7 @@ export default function GroupChatRoom({
       await groupChatService.leaveGroup(groupId, userId);
       toast({
         title: "Left Group",
-        description: `You have left the group "${groupName}"`,
+        description: `You have left "${groupName}"`,
       });
       onLeaveGroup();
     } catch (error) {
@@ -119,20 +120,21 @@ export default function GroupChatRoom({
     if (inviteLink) {
       navigator.clipboard.writeText(inviteLink);
       toast({
-        title: "Copied",
+        title: "Copied! 📋",
         description: "Invite link copied to clipboard",
       });
     }
   };
+
   const formatTime = (timestamp: Date) => {
     return new Date(timestamp).toLocaleTimeString([], { 
       hour: '2-digit', 
       minute: '2-digit' 
     });
   };
+
   const getUserDisplayName = (senderId: string) => {
     if (senderId === userId) return 'You';
-    // You can extend this to map user IDs to display names
     return senderId;
   };
 
@@ -153,149 +155,215 @@ export default function GroupChatRoom({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      {/* Back button */}
-      <div className="mb-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onLeaveGroup}
-          className="flex items-center space-x-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Back to Groups</span>
-        </Button>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-[hsl(263.4,70%,50.4%)/0.05] p-4">
+      {/* Background decorative elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-[hsl(263.4,70%,50.4%)/0.1] rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[hsl(263.4,70%,50.4%)/0.1] rounded-full blur-3xl" />
       </div>
 
-      <Card className="h-[600px] flex flex-col">
-      <CardHeader className="flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Users className="h-5 w-5" />
-            <CardTitle>{groupName}</CardTitle>
-            <Badge variant={isConnected ? "default" : "secondary"}>
-              {isConnected ? "Connected" : "Connecting..."}
-            </Badge>
-          </div>
-          <div className="flex space-x-2">
-            {inviteLink && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={copyInviteLink}
-                className="flex items-center space-x-1"
-              >
-                <Copy className="h-4 w-4" />
-                <span>Copy Invite</span>
-              </Button>
-            )}
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleLeaveGroup}
-              disabled={isLeaving}
-              className="flex items-center space-x-1"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>{isLeaving ? 'Leaving...' : 'Leave'}</span>
-            </Button>
-          </div>
+      <div className="container mx-auto max-w-5xl relative z-10">
+        {/* Header with back button */}
+        <div className="mb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onLeaveGroup}
+            className="text-muted-foreground hover:text-foreground hover:bg-[hsl(263.4,70%,50.4%)/0.1] transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Groups
+          </Button>
         </div>
-        {inviteLink && (
-          <div className="text-sm text-muted-foreground">
-            <span className="font-medium">Invite Token: </span>
-            <code className="bg-muted px-2 py-1 rounded text-xs">{inviteLink}</code>
-          </div>
-        )}
-        <Separator />
-      </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col p-0">
-        {/* Messages Area */}
-        <ScrollArea className="flex-1 px-4">
-          <div className="space-y-4 py-4">
-            {messages.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">
-                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No messages yet. Start the conversation!</p>
-              </div>
-            ) : (              messages.map((message, index) => {
-                const showAvatar = shouldShowAvatar(index);
-                const showSenderName = shouldShowSenderName(index);
-                
-                return (
-                  <div
-                    key={index}
-                    className={`flex items-end space-x-2 ${
-                      message.senderId === userId ? 'justify-end' : 'justify-start'
-                    } ${showAvatar ? 'mb-4' : 'mb-1'}`}
+        {/* Chat Container */}
+        <Card className="h-[calc(100vh-120px)] flex flex-col bg-card/50 backdrop-blur-sm border-2 border-[hsl(263.4,70%,50.4%)/0.1] shadow-2xl">
+          {/* Chat Header */}
+          <CardHeader className="flex-shrink-0 bg-gradient-to-r from-[hsl(263.4,70%,50.4%)/0.05] to-[hsl(263.4,70%,50.4%)/0.1] border-b">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-[hsl(263.4,70%,50.4%)] to-[hsl(263.4,70%,60.4%)] rounded-xl flex items-center justify-center">
+                  <MessageCircle className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle 
+                    className="text-2xl font-bold bg-gradient-to-r from-foreground to-[hsl(263.4,70%,50.4%)] bg-clip-text text-transparent"
+                    style={{ fontFamily: "'Bebas Neue', sans-serif" }}
                   >
-                    {/* Avatar for other users */}
-                    {message.senderId !== userId && (
-                      <div className={`flex-shrink-0 w-8 h-8 ${showAvatar ? 'bg-secondary' : 'bg-transparent'} rounded-full flex items-center justify-center text-xs font-medium`}>
-                        {showAvatar && getUserInitials(message.senderId)}
-                      </div>
-                    )}
-                    
-                    <div
-                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                        message.senderId === userId
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
+                    {groupName}
+                  </CardTitle>
+                  <div className="flex items-center space-x-2">
+                    <Badge 
+                      variant={isConnected ? "default" : "secondary"} 
+                      className={`text-xs ${
+                        isConnected 
+                          ? "bg-[hsl(263.4,70%,50.4%)] text-primary-foreground" 
+                          : "bg-muted text-muted-foreground"
                       }`}
                     >
-                      {showSenderName && (
-                        <div className={`text-xs font-medium mb-1 ${
-                          message.senderId === userId ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                        }`}>
-                          {getUserDisplayName(message.senderId)}
-                        </div>
-                      )}
-                      <div className="text-sm">{message.content}</div>
-                      {message.timestamp && (
-                        <div className={`text-xs mt-1 ${
-                          message.senderId === userId ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                        }`}>
-                          {formatTime(message.timestamp)}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Avatar for your own messages */}
-                    {message.senderId === userId && (
-                      <div className={`flex-shrink-0 w-8 h-8 ${showAvatar ? 'bg-primary' : 'bg-transparent'} rounded-full flex items-center justify-center text-xs font-medium text-primary-foreground`}>
-                        {showAvatar && getUserInitials(message.senderId)}
-                      </div>
-                    )}
+                      <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isConnected ? 'bg-green-400' : 'bg-gray-400'}`} />
+                      {isConnected ? 'Connected' : 'Connecting...'}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">Group Chat</span>
                   </div>
-                );
-              })
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                {inviteLink && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={copyInviteLink}
+                    className="border-[hsl(263.4,70%,50.4%)/0.3 text-[hsl(263.4,70%,50.4%)] hover:bg-[hsl(263.4,70%,50.4%)] hover:text-white transition-all duration-300"
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy Invite
+                  </Button>
+                )}
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleLeaveGroup}
+                  disabled={isLeaving}
+                  className="bg-red-500/10 text-red-600 border-red-500/20 hover:bg-red-500 hover:text-white transition-all duration-300"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  {isLeaving ? 'Leaving...' : 'Leave'}
+                </Button>
+              </div>
+            </div>
+            
+            {inviteLink && (
+              <div className="mt-3 p-3 bg-[hsl(263.4,70%,50.4%)/0.05] rounded-lg border border-[hsl(263.4,70%,50.4%)/0.1">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-sm font-medium text-foreground">Invite Token: </span>
+                    <code className="bg-[hsl(263.4,70%,50.4%)/0.1 text-[hsl(263.4,70%,50.4%)] px-2 py-1 rounded text-xs font-mono">
+                      {inviteLink}
+                    </code>
+                  </div>
+                  <Sparkles className="h-4 w-4 text-[hsl(263.4,70%,50.4%)]" />
+                </div>
+              </div>
             )}
-            <div ref={messagesEndRef} />
-          </div>
-        </ScrollArea>
+          </CardHeader>
 
-        {/* Message Input */}
-        <div className="border-t p-4">
-          <div className="flex space-x-2">
-            <Input
-              placeholder="Type your message..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              disabled={!isConnected}
-              className="flex-1"
-            />
-            <Button
-              onClick={handleSendMessage}
-              disabled={!newMessage.trim() || !isConnected}
-              size="sm"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>        </div>
-      </CardContent>
-    </Card>
+          <CardContent className="flex-1 flex flex-col p-0">
+            {/* Messages Area */}
+            <ScrollArea className="flex-1 px-6">
+              <div className="py-6">
+                {messages.length === 0 ? (
+                  <div className="text-center py-16">
+                    <div className="w-24 h-24 bg-gradient-to-br from-[hsl(263.4,70%,50.4%)] to-[hsl(263.4,70%,60.4%)] rounded-full flex items-center justify-center mx-auto mb-6">
+                      <MessageCircle className="h-12 w-12 text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold mb-2" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
+                      No messages yet
+                    </h3>
+                    <p className="text-muted-foreground">Start the conversation! 💬</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {messages.map((message, index) => {
+                      const showAvatar = shouldShowAvatar(index);
+                      const showSenderName = shouldShowSenderName(index);
+                      const isOwnMessage = message.senderId === userId;
+                      
+                      return (
+                        <div
+                          key={index}
+                          className={`flex items-end space-x-3 ${
+                            isOwnMessage ? 'justify-end' : 'justify-start'
+                          } ${showAvatar ? 'mb-6' : 'mb-2'}`}
+                        >
+                          {/* Avatar for other users */}
+                          {!isOwnMessage && (
+                            <div className={`flex-shrink-0 w-10 h-10 ${
+                              showAvatar 
+                                ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' 
+                                : 'bg-transparent'
+                            } rounded-xl flex items-center justify-center text-sm font-bold text-white`}>
+                              {showAvatar && getUserInitials(message.senderId)}
+                            </div>
+                          )}
+                          
+                          <div className={`max-w-sm lg:max-w-md ${isOwnMessage ? 'order-first' : ''}`}>
+                            {showSenderName && (
+                              <div className={`text-xs font-medium mb-2 px-1 ${
+                                isOwnMessage ? 'text-right text-[hsl(263.4,70%,50.4%)]' : 'text-left text-emerald-600'
+                              }`}>
+                                {getUserDisplayName(message.senderId)}
+                              </div>
+                            )}
+                            
+                            <div className={`px-4 py-3 rounded-2xl shadow-lg ${
+                              isOwnMessage
+                                ? 'bg-gradient-to-br from-[hsl(263.4,70%,50.4%)] to-[hsl(263.4,70%,60.4%)] text-white'
+                                : 'bg-card border border-border'
+                            } ${showAvatar ? 'rounded-bl-md' : ''}`}>
+                              <div className="text-sm leading-relaxed">{message.content}</div>
+                              {message.timestamp && (
+                                <div className={`text-xs mt-2 ${
+                                  isOwnMessage ? 'text-white/70' : 'text-muted-foreground'
+                                }`}>
+                                  {formatTime(message.timestamp)}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Avatar for your own messages */}
+                          {isOwnMessage && (
+                            <div className={`flex-shrink-0 w-10 h-10 ${
+                              showAvatar 
+                                ? 'bg-gradient-to-br from-[hsl(263.4,70%,50.4%)] to-[hsl(263.4,70%,60.4%)]' 
+                                : 'bg-transparent'
+                            } rounded-xl flex items-center justify-center text-sm font-bold text-white`}>
+                              {showAvatar && getUserInitials(message.senderId)}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    <div ref={messagesEndRef} />
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+
+            {/* Message Input */}
+            <div className="border-t bg-gradient-to-r from-background to-[hsl(263.4,70%,50.4%)/0.02] p-6">
+              <div className="flex space-x-3">
+                <div className="flex-1 relative">
+                  <Input
+                    placeholder="Type your message..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+                    disabled={!isConnected}
+                    className="h-12 pr-12 bg-background/50 border-2 border-[hsl(263.4,70%,50.4%)/0.2 focus:border-[hsl(263.4,70%,50.4%)] transition-colors rounded-xl"
+                  />
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={!newMessage.trim() || !isConnected}
+                    size="sm"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-[hsl(263.4,70%,50.4%)] to-[hsl(263.4,70%,60.4%)] hover:from-[hsl(263.4,70%,45.4%)] hover:to-[hsl(263.4,70%,55.4%)] text-white border-0 rounded-lg h-8 w-8 p-0"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              {!isConnected && (
+                <div className="text-center mt-3">
+                  <span className="text-xs text-muted-foreground">Connecting to chat...</span>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
