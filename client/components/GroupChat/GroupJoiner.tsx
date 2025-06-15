@@ -6,14 +6,15 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import groupChatService from '@/lib/GroupChatService';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, LogIn, Key, Users } from 'lucide-react';
+import { Loader2, LogIn, Key, Users, ArrowLeft } from 'lucide-react';
 
 interface GroupJoinerProps {
   userId: string;
   onGroupJoined: (groupId: string, groupName: string) => void;
+  onBack?: () => void;
 }
 
-export default function GroupJoiner({ userId, onGroupJoined }: GroupJoinerProps) {
+export default function GroupJoiner({ userId, onGroupJoined, onBack }: GroupJoinerProps) {
   const [inviteToken, setInviteToken] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const { toast } = useToast();
@@ -50,9 +51,21 @@ export default function GroupJoiner({ userId, onGroupJoined }: GroupJoinerProps)
       setIsJoining(false);
     }
   };
-
   return (
     <div className="space-y-6">
+      {/* Back button */}
+      {onBack && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBack}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Groups
+        </Button>
+      )}
+      
       {/* Decorative header */}
       <div className="text-center">
         <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">

@@ -5,6 +5,7 @@ import { useUser } from '@clerk/nextjs';
 import { useSearchParams } from 'next/navigation';
 import { redirect } from 'next/navigation';
 import GroupChatMain from '@/components/GroupChat/GroupChatMain';
+import MultiGroupChatInterface from '@/components/GroupChat/MultiGroupChatInterface';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, MessageCircle, Sparkles } from 'lucide-react';
 
@@ -50,9 +51,8 @@ function GroupChatContent() {
     redirect('/sign-in');
     return null; // This won't be reached but TypeScript needs it
   }
-
-  // Show the group chat interface without additional wrapper since GroupChatMain handles its own layout
-  return <GroupChatMain userId={userId} groupId={groupId || undefined} />;
+  // Show the enhanced multi-group chat interface
+  return <MultiGroupChatInterface userId={userId} />;
 }
 
 function LoadingFallback() {

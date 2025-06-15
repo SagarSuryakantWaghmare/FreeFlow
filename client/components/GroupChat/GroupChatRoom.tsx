@@ -21,6 +21,7 @@ interface GroupChatRoomProps {
   userId: string;
   inviteLink?: string;
   onLeaveGroup: () => void;
+  isMultiChat?: boolean;
 }
 
 
@@ -29,7 +30,8 @@ export default function GroupChatRoom({
   groupName,
   userId,
   inviteLink,
-  onLeaveGroup
+  onLeaveGroup,
+  isMultiChat = false
 }: GroupChatRoomProps) {
   const [messages, setMessages] = useState<GroupMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -50,31 +52,62 @@ export default function GroupChatRoom({
       // You can access user data here
       // user.firstName, user.lastName, user.emailAddresses[0]?.emailAddress, etc.
     }
-  }, [user, isLoaded]);
-
-  useEffect(() => {
+  }, [user, isLoaded]);  useEffect(() => {
     const initializeChat = async () => {
       try {
+        // Initialize service with userId
+        groupChatService.initialize(userId);
+        
         // Ensure connection
         if (!groupChatService.isConnected()) {
           await groupChatService.connect();
         }
 
         setIsConnected(true);
-        // Subscribe to group messages
+        
+        // Load existing messages from storage first
+        const storedMessages = groupChatService.getGroupMessages(groupId);
+        const convertedMessages = storedMessages.map(msg => ({
+          groupId: msg.groupId,
+          senderId: msg.senderId,
+          senderName: msg.senderName || msg.senderId,
+          content: msg.content,
+          timestamp: msg.timestamp
+        }));
+        setMessages(convertedMessages);
+        
+        // Mark group as active (for unread count management)
+        groupChatService.setGroupActive(groupId);
+        
+        // Subscribe to group messages for real-time updates
         groupChatService.subscribeToGroup(groupId, (message: GroupMessage) => {
           console.log('GroupChatRoom received message:', message);
           setMessages(prev => {
-            const newMessages = [...prev, message];
-            console.log('Updated messages state:', newMessages);
-            return newMessages;
+            // Check if message already exists to avoid duplicates
+            const exists = prev.some(msg => 
+              msg.senderId === message.senderId && 
+              msg.content === message.content && 
+              Math.abs((msg.timestamp?.getTime() || 0) - (message.timestamp?.getTime() || 0)) < 1000
+            );
+            
+            if (!exists) {
+              return [...prev, message];
+            }
+            return prev;
           });
         });
 
-        toast({
-          title: "Connected ✨",
-          description: `Welcome to "${groupName}"`,
-        });
+        // Auto-reconnect to previously connected groups
+        if (!isMultiChat) {
+          await groupChatService.autoReconnectGroups();
+        }
+
+        if (!isMultiChat) {
+          toast({
+            title: "Connected ✨",
+            description: `Welcome to "${groupName}"`,
+          });
+        }
       } catch (error) {
         console.error('Error initializing chat:', error);
         toast({
@@ -89,9 +122,46 @@ export default function GroupChatRoom({
 
     // Cleanup on unmount
     return () => {
-      groupChatService.unsubscribeFromGroup(groupId);
+      if (!isMultiChat) {
+        // Only unsubscribe if not in multi-chat mode
+        groupChatService.unsubscribeFromGroup(groupId);
+      } else {
+        // In multi-chat mode, just mark as inactive
+        groupChatService.setGroupInactive(groupId);
+      }
     };
-  }, [groupId, groupName, toast]);
+  }, [groupId, groupName, userId, toast, isMultiChat]);
+
+  // Add effect to load messages on group change and handle persistence
+  useEffect(() => {
+    // Load messages whenever groupId changes
+    const storedMessages = groupChatService.getGroupMessages(groupId);
+    const convertedMessages = storedMessages.map(msg => ({
+      groupId: msg.groupId,
+      senderId: msg.senderId,
+      senderName: msg.senderName || getUserDisplayName(msg.senderId),
+      content: msg.content,
+      timestamp: msg.timestamp
+    }));
+    setMessages(convertedMessages);
+    
+    // Scroll to bottom when messages load
+    setTimeout(() => scrollToBottom(), 100);
+  }, [groupId]);
+
+  // Handle window reload/refresh persistence
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Ensure any pending state is saved
+      if (messages.length > 0) {
+        // Mark group as inactive when user leaves
+        groupChatService.setGroupInactive(groupId);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [groupId, messages.length]);
 
   useEffect(() => {
     scrollToBottom();
@@ -100,16 +170,18 @@ export default function GroupChatRoom({
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-
   const handleSendMessage = () => {
     if (!newMessage.trim() || !isConnected) return;
 
     const message: GroupMessage = {
       groupId: groupId,
       senderId: userId,
+      senderName: getUserDisplayName(userId),
       content: newMessage.trim(),
+      timestamp: new Date()
     };
-    console.log('sender id', userId);
+    
+    console.log('Sending message with user info:', message);
     groupChatService.sendMessage(message);
     setNewMessage('');
   };
@@ -150,17 +222,28 @@ export default function GroupChatRoom({
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
-  const getUserDisplayName = (senderId: string) => {
+  };  const getUserDisplayName = (senderId: string) => {
     if (senderId === userId) {
       // Use the actual user's name if available, otherwise fallback to 'You'
       if (user?.firstName) {
         return user.firstName + (user.lastName ? ` ${user.lastName}` : '');
       }
+      // Try to get username from localStorage
+      const username = localStorage.getItem('username');
+      if (username) return username;
       return 'You';
     }
-    // For other users, you could implement a user lookup system
-    // For now, just return the senderId
+    
+    // For other users, try to extract meaningful name from email
+    if (senderId.includes('@')) {
+      const emailPart = senderId.split('@')[0];
+      // Convert dot notation to space and capitalize
+      return emailPart.split('.').map(part => 
+        part.charAt(0).toUpperCase() + part.slice(1)
+      ).join(' ');
+    }
+    
+    // Fallback to senderId
     return senderId;
   };
 
@@ -196,22 +279,23 @@ export default function GroupChatRoom({
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[hsl(263.4,70%,50.4%)/0.1] rounded-full blur-3xl" />
       </div>
 
-      <div className="container mx-auto max-w-5xl relative z-10">
-        {/* Header with back button */}
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onLeaveGroup}
-            className="text-muted-foreground hover:text-foreground hover:bg-[hsl(263.4,70%,50.4%)/0.1] transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Groups
-          </Button>
-        </div>
+      <div className="container mx-auto max-w-5xl relative z-10">        {/* Header with back button */}
+        {!isMultiChat && (
+          <div className="mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onLeaveGroup}
+              className="text-muted-foreground hover:text-foreground hover:bg-[hsl(263.4,70%,50.4%)/0.1] transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Groups
+            </Button>
+          </div>
+        )}
 
         {/* Chat Container */}
-        <Card className="h-[calc(100vh-120px)] flex flex-col bg-card/50 backdrop-blur-sm border-2 border-[hsl(263.4,70%,50.4%)/0.1] shadow-2xl">
+        <Card className="h-[calc(100vh-150px)] flex flex-col bg-card/50 backdrop-blur-sm border-2 border-[hsl(263.4,70%,50.4%)/0.1] shadow-2xl overflow-hidden">{/* Chat Header */}
           {/* Chat Header */}
           <CardHeader className="flex-shrink-0 bg-gradient-to-r from-[hsl(263.4,70%,50.4%)/0.05] to-[hsl(263.4,70%,50.4%)/0.1] border-b">
             <div className="flex items-center justify-between">
@@ -280,12 +364,10 @@ export default function GroupChatRoom({
                 </div>
               </div>
             )}
-          </CardHeader>
-
-          <CardContent className="flex-1 flex flex-col p-0">
+          </CardHeader>          <CardContent className="flex-1 flex flex-col p-0 min-h-0">
             {/* Messages Area */}
-            <ScrollArea className="flex-1 px-6">
-              <div className="py-6">
+            <ScrollArea className="flex-1 px-6 max-h-full">
+              <div className="py-6 space-y-4">
                 {messages.length === 0 ? (
                   <div className="text-center py-16">
                     <div className="w-24 h-24 bg-gradient-to-br from-[hsl(263.4,70%,50.4%)] to-[hsl(263.4,70%,60.4%)] rounded-full flex items-center justify-center mx-auto mb-6">
@@ -297,7 +379,7 @@ export default function GroupChatRoom({
                     <p className="text-muted-foreground">Start the conversation! 💬</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <>
                     {messages.map((message, index) => {
                       const showAvatar = shouldShowAvatar(index);
                       const showSenderName = shouldShowSenderName(index);
@@ -307,7 +389,7 @@ export default function GroupChatRoom({
                         <div
                           key={index}
                           className={`flex items-end space-x-3 ${isOwnMessage ? 'justify-end' : 'justify-start'
-                            } ${showAvatar ? 'mb-6' : 'mb-2'}`}
+                            } ${showAvatar ? 'mb-6' : 'mb-2'} w-full`}
                         >
                           {/* Avatar for other users */}
                           {!isOwnMessage && (
@@ -319,7 +401,7 @@ export default function GroupChatRoom({
                             </div>
                           )}
 
-                          <div className={`max-w-sm lg:max-w-md ${isOwnMessage ? 'order-first' : ''}`}>
+                          <div className={`max-w-[70%] sm:max-w-md ${isOwnMessage ? 'order-first' : ''}`}>
                             {showSenderName && (
                               <div className={`text-xs font-medium mb-2 px-1 ${isOwnMessage ? 'text-right text-[hsl(263.4,70%,50.4%)]' : 'text-left text-emerald-600'
                                 }`}>
@@ -327,11 +409,11 @@ export default function GroupChatRoom({
                               </div>
                             )}
 
-                            <div className={`px-4 py-3 rounded-2xl shadow-lg ${isOwnMessage
+                            <div className={`px-4 py-3 rounded-2xl shadow-lg break-words ${isOwnMessage
                                 ? 'bg-gradient-to-br from-[hsl(263.4,70%,50.4%)] to-[hsl(263.4,70%,60.4%)] text-white'
                                 : 'bg-card border border-border'
                               } ${showAvatar ? 'rounded-bl-md' : ''}`}>
-                              <div className="text-sm leading-relaxed">{message.content}</div>
+                              <div className="text-sm leading-relaxed break-words whitespace-pre-wrap">{message.content}</div>
                               {message.timestamp && (
                                 <div className={`text-xs mt-2 ${isOwnMessage ? 'text-white/70' : 'text-muted-foreground'
                                   }`}>
@@ -354,7 +436,7 @@ export default function GroupChatRoom({
                       );
                     })}
                     <div ref={messagesEndRef} />
-                  </div>
+                  </>
                 )}
               </div>
             </ScrollArea>

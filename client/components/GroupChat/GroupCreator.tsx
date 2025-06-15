@@ -6,14 +6,15 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import groupChatService from '@/lib/GroupChatService';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Sparkles, Users } from 'lucide-react';
+import { Loader2, Sparkles, Users, ArrowLeft } from 'lucide-react';
 
 interface GroupCreatorProps {
   userId: string;
   onGroupCreated: (groupId: string, inviteLink: string, groupName?: string) => void;
+  onBack?: () => void;
 }
 
-export default function GroupCreator({ userId, onGroupCreated }: GroupCreatorProps) {
+export default function GroupCreator({ userId, onGroupCreated, onBack }: GroupCreatorProps) {
   const [groupName, setGroupName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
@@ -50,9 +51,21 @@ export default function GroupCreator({ userId, onGroupCreated }: GroupCreatorPro
       setIsCreating(false);
     }
   };
-
   return (
     <div className="space-y-6">
+      {/* Back button */}
+      {onBack && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBack}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Groups
+        </Button>
+      )}
+      
       {/* Decorative header */}
       <div className="text-center">
         <div className="w-16 h-16 bg-gradient-to-br from-[hsl(263.4,70%,50.4%)] to-[hsl(263.4,70%,60.4%)] rounded-full flex items-center justify-center mx-auto mb-4">
