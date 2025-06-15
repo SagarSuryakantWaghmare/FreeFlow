@@ -44,8 +44,8 @@ export default function SimpleSignIn() {
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: {
         duration: 0.6,
@@ -56,15 +56,15 @@ export default function SimpleSignIn() {
 
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: { duration: 0.4 }
     }
   };
 
   const inputVariants = {
-    focus: { 
+    focus: {
       scale: 1.02,
       boxShadow: "0 0 0 2px rgba(124, 58, 237, 0.5)",
       transition: { duration: 0.2 }
@@ -78,7 +78,7 @@ export default function SimpleSignIn() {
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
-      <motion.div 
+      <motion.div
         className="w-full max-w-md rounded-xl bg-card p-8 shadow-lg border border-border"
         variants={containerVariants}
         initial="hidden"
@@ -127,8 +127,8 @@ export default function SimpleSignIn() {
         </motion.form>
 
         <motion.div variants={itemVariants} className="mt-6 text-center">
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="inline-flex items-center text-muted-foreground hover:text-primary transition-colors"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />

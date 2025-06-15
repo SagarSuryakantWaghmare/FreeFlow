@@ -29,20 +29,18 @@ const WebRTCContext = createContext<WebRTCContextType>({
   isWebRTCSupported: false,
   groups: [],
   activeGroup: null,
-  createGroup: () => {},
-  joinGroup: () => {},
-  leaveGroup: () => {},
-  setActiveGroup: () => {},
-  openGroupChat: () => {},
+  createGroup: () => { },
+  joinGroup: () => { },
+  leaveGroup: () => { },
+  setActiveGroup: () => { },
+  openGroupChat: () => { },
 });
 
 // Hook for components to use the WebRTC context
 export const useWebRTC = () => useContext(WebRTCContext);
 
 // Provider component that will wrap parts of our app that need WebRTC
-export const WebRTCProvider: React.FC<{
-  children: React.ReactNode;
-}> = ({ children }) => {
+export const WebRTCProvider: React.FC<{ children: React.ReactNode; }> = ({ children }) => {
   const [isWebRTCSupported, setIsWebRTCSupported] = useState(false);
   const [groups, setGroups] = useState<Group[]>([]);
   const [activeGroup, setActiveGroup] = useState<Group | null>(null);
@@ -113,8 +111,8 @@ export const WebRTCProvider: React.FC<{
 
   // Function to join a group
   const joinGroup = (groupId: string) => {
-    setGroups(prev => prev.map(group => 
-      group.id === groupId 
+    setGroups(prev => prev.map(group =>
+      group.id === groupId
         ? { ...group, members: group.members + 1, isActive: true, lastActivity: new Date() }
         : group
     ));
@@ -122,12 +120,12 @@ export const WebRTCProvider: React.FC<{
 
   // Function to leave a group
   const leaveGroup = (groupId: string) => {
-    setGroups(prev => prev.map(group => 
-      group.id === groupId 
+    setGroups(prev => prev.map(group =>
+      group.id === groupId
         ? { ...group, members: Math.max(0, group.members - 1) }
         : group
     ));
-    
+
     // If leaving the active group, set active group to null
     if (activeGroup?.id === groupId) {
       setActiveGroup(null);

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, User, Users, HelpCircle, Menu, X, ArrowLeft, LogOut } from 'lucide-react';
+import { Send, User, Users, HelpCircle, Menu, X, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import UserList from '@/components/User/UserList';
 import ChatMessage from '@/components/User/ChatMessage';
@@ -18,6 +18,7 @@ import chatStorageService from '@/lib/ChatStorageService';
 const Chat = () => {
   const router = useRouter();
   const [message, setMessage] = useState('');
+  
   const [messages, setMessages] = useState<{
     id: string;
     sender: string;
@@ -25,11 +26,13 @@ const Chat = () => {
     timestamp: Date;
     isSelf: boolean;
   }[]>([]);
+
   const [users, setUsers] = useState<{
     id: string;
     name: string;
     online: boolean;
   }[]>([]);
+
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
