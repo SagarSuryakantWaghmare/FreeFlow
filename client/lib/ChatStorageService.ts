@@ -271,6 +271,18 @@ class ChatStorageService {
     // Also clear all unread counts
     const unreadKeys = this.getAllUnreadCountKeys();
     unreadKeys.forEach(key => localStorage.removeItem(key));
+  }  /**
+   * Clear all messages and unread counts for a specific user (when they log out)
+   */
+  clearMessagesForUser(userId: string): void {
+    const messageKey = this.getStorageKey(userId);
+    const unreadKey = this.getUnreadCountKey(userId);
+    
+    localStorage.removeItem(messageKey);
+    localStorage.removeItem(unreadKey);
+    
+    // Trigger UI refresh by notifying about count change
+    this.notifyUnreadCountChange(userId, 0);
   }
 
   /**

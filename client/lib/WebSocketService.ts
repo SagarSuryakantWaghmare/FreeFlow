@@ -82,7 +82,6 @@ class WebSocketService {
       }
     });
   }
-
   /**
    * Send a message through the WebSocket
    * @param message - The message to send (will be JSON stringified)
@@ -93,6 +92,22 @@ class WebSocketService {
     } else {
       console.error("WebSocket is not connected. Message not sent:", message);
     }
+  }
+
+  /**
+   * Send logout notification to all connected peers
+   * @param userId - The user ID that is logging out
+   * @param connectedUserIds - Array of user IDs to notify
+   */
+  sendLogoutNotification(userId: string, connectedUserIds: string[]): void {
+    connectedUserIds.forEach(targetUserId => {
+      this.sendMessage({
+        type: 'logout_notification',
+        fromUserId: userId,
+        toUserId: targetUserId,
+        timestamp: new Date().toISOString()
+      });
+    });
   }
 
   /**

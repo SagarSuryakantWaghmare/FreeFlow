@@ -73,13 +73,37 @@ const Chat = () => {
         setIsConnected(false);
         toast.error('Using mock mode - server connection failed');
       }
-    };
-
-    // Connection request handler
+    };    // Connection request handler
     const handleConnectionRequest = (request: { fromUserId: string; fromUserName: string; timestamp: Date }) => {
       setConnectionRequest(request);
       toast.info(`Connection request from ${request.fromUserName}`);
-    };    // Setup connection manager listeners
+    };    // Logout notification handler
+    const handleLogoutNotification = (data: any) => {
+      if (data.fromUserId && data.fromUserId !== userId.current) {
+        console.log(`User ${data.fromUserId} logged out, clearing their chat data`);
+        
+        // Clear all messages and unread counts for this user
+        chatStorageService.clearMessagesForUser(data.fromUserId);
+        
+        // Close WebRTC connection if exists
+        webRTCService.closePeerConnection(data.fromUserId);
+        
+        // Update connection status in connection manager
+        connectionManagerService.updateConnectionStatus(data.fromUserId, 'disconnected');
+        
+        // If we were chatting with this user, close the chat and go back to user list
+        if (selectedUser === data.fromUserId) {
+          setSelectedUser(null);
+          setMessages([]);
+          // Find the user's name from users list for toast
+          const loggedOutUser = users.find(user => user.id === data.fromUserId);
+          toast.info(`${loggedOutUser?.name || 'User'} has logged out. Chat closed.`);
+        }
+        
+        // Remove from users list
+        setUsers(prev => prev.filter(user => user.id !== data.fromUserId));
+      }
+    };// Setup connection manager listeners
     connectionManagerService.onConnectionRequest(handleConnectionRequest);    // Auto-reconnect to previously connected peers
     const autoReconnectToPeers = () => {
       const existingConnections = connectionManagerService.getAllConnections();
@@ -116,11 +140,10 @@ const Chat = () => {
       .then(() => {
         clearTimeout(connectionTimeout);
         setIsConnected(true);
-        toast.success('Connected to the server');
-
-        // Add WebSocket event listeners
+        toast.success('Connected to the server');        // Add WebSocket event listeners
         webSocketService.addEventListener('online_users', handleOnlineUsers);
         webSocketService.addEventListener('connection_status', handleConnectionStatus);
+        webSocketService.addEventListener('logout_notification', handleLogoutNotification);
       })
       .catch((error) => {
         clearTimeout(connectionTimeout);
@@ -134,12 +157,11 @@ const Chat = () => {
     webRTCService.onConnectionStateChange(handleConnectionStateChange);
 
     // Set up background message handler
-    chatStorageService.onNewMessage(handleBackgroundMessage);
-
-    // Clean up on unmount
+    chatStorageService.onNewMessage(handleBackgroundMessage);    // Clean up on unmount
     return () => {
       webSocketService.removeEventListener('online_users', handleOnlineUsers);
       webSocketService.removeEventListener('connection_status', handleConnectionStatus);
+      webSocketService.removeEventListener('logout_notification', handleLogoutNotification);
       connectionManagerService.removeConnectionRequestCallback(handleConnectionRequest);
       chatStorageService.removeNewMessageCallback(handleBackgroundMessage);
       webSocketService.disconnect();
@@ -339,17 +361,27 @@ const Chat = () => {
         chatStorageService.removeNewMessageCallback(handleNewMessage);
       };
     }
-  }, [selectedUser]);
-  const handleLogout = () => {
-    webSocketService.disconnect();
+  }, [selectedUser]);  const handleLogout = () => {
+    // Get connected users before clearing everything
+    const connectedUserIds = connectionManagerService.getConnectedUserIds();
+    
+    // Send logout notification to all connected peers
+    if (connectedUserIds.length > 0 && userId.current) {
+      webSocketService.sendLogoutNotification(userId.current, connectedUserIds);
+    }
+    
+    // Close all WebRTC connections
     webRTCService.closeAllConnections();
-    connectionManagerService.clearAll();
-
-    // Clear all chat messages from localStorage
+    
+    // Disconnect from WebSocket
+    webSocketService.disconnect();
+    
+    // Clear all user-specific data from localStorage
+    connectionManagerService.clearAllUserData();
+    
+    // Clear all chat messages from localStorage (already handled by clearAllUserData)
     chatStorageService.clearAllMessages();
 
-    localStorage.removeItem('username');
-    localStorage.removeItem('userId');
     toast.success('Logged out successfully');
     router.push('/');
   };
@@ -370,12 +402,18 @@ const Chat = () => {
       setConnectionRequest(null);
     }
   };
-
   const handleIgnoreConnection = () => {
     if (connectionRequest) {
       connectionManagerService.ignoreConnectionRequest(connectionRequest.fromUserId);
       setConnectionRequest(null);
     }
+  };
+
+  // Close current chat window
+  const handleCloseChat = () => {
+    setSelectedUser(null);
+    setMessages([]);
+    toast.info('Chat closed');
   };
 
   return (
@@ -454,17 +492,28 @@ const Chat = () => {
               onClick={() => setSidebarOpen(true)}
             >
               <Menu className="h-5 w-5 text-slate-700 dark:text-purple-400" />
-            </Button>
-            {selectedUser && (
+            </Button>            {selectedUser && (
               <>
                 <User className="h-5 w-5 text-blue-600 dark:text-purple-400" />
                 <span className="font-medium truncate text-slate-900 dark:text-white">
                   {users.find(u => u.id === selectedUser)?.name || selectedUser}
-                </span>                <span className="text-xs ml-auto">
+                </span>                
+                <span className="text-xs ml-auto mr-2">
                   {webRTCService.isConnectedToPeer(selectedUser)
                     ? <span className="text-green-600 dark:text-green-400">(Connected)</span>
                     : <span className="text-amber-600 dark:text-yellow-400">(Connecting...)</span>}
                 </span>
+                
+                {/* Close chat button for mobile */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={handleCloseChat}
+                  title="Close chat"
+                >
+                  <X className="h-4 w-4 text-slate-700 dark:text-purple-400" />
+                </Button>
               </>
             )}
           </div>
@@ -481,7 +530,18 @@ const Chat = () => {
                     ? <span className="text-green-600 dark:text-green-400">(Connected)</span>
                     : <span className="text-amber-600 dark:text-yellow-400">(Connecting...)</span>}
                 </span>
-              </div>              {/* Messages */}
+                
+                {/* Close chat button for desktop */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 ml-auto"
+                  onClick={handleCloseChat}
+                  title="Close chat"
+                >
+                  <X className="h-4 w-4 text-slate-700 dark:text-purple-400" />
+                </Button>
+              </div>{/* Messages */}
               <ScrollArea className="flex-1 p-2 sm:p-4 overflow-y-auto bg-gray-50 dark:bg-zinc-950">
                 <div className="flex flex-col gap-3 min-h-full">
                   {messages.length > 0 ? (

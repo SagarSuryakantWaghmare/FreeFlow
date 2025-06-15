@@ -43,22 +43,31 @@ const Navbar: React.FC = () => {
         clearInterval(interval);
       };
     }
-  }, [isChatPage]);
-  const handleLogout = () => {
+  }, [isChatPage]);  const handleLogout = () => {
     if (webSocketService) {
       webSocketService.disconnect();
     }
     
-    // Clear all chat messages from localStorage
-    // Find and remove all chat storage keys
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('chat_messages_')) {
-        localStorage.removeItem(key);
-      }
-    });
+    // Clear all localStorage data completely
+    const keysToRemove: string[] = [];
     
-    localStorage.removeItem('username');
-    localStorage.removeItem('userId');
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (
+        key.startsWith('chat_messages_') ||
+        key.startsWith('unread_count_') ||
+        key.startsWith('freeflow_blacklist_') ||
+        key.startsWith('freeflow_connections_') ||
+        key === 'username' ||
+        key === 'userId'
+      )) {
+        keysToRemove.push(key);
+      }
+    }
+    
+    // Remove all identified keys
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    
     router.push('/');
   };
 

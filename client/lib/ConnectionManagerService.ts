@@ -64,13 +64,13 @@ class ConnectionManagerService {
     } catch (error) {
       console.error('Error saving blacklist:', error);
     }
-  }
-  /**
+  }  /**
    * Load connections from localStorage
    */
   private loadConnections(): void {
     try {
-      const stored = localStorage.getItem(this.CONNECTIONS_KEY);
+      const key = this.getConnectionsKey();
+      const stored = localStorage.getItem(key);
       if (stored) {
         const connectionsArray = JSON.parse(stored);
         this.connections = new Map(
@@ -92,6 +92,7 @@ class ConnectionManagerService {
    */
   private saveConnections(): void {
     try {
+      const key = this.getConnectionsKey();
       const connectionsArray = Array.from(this.connections.entries()).map(([userId, conn]) => [
         userId,
         {
@@ -101,7 +102,7 @@ class ConnectionManagerService {
             : new Date().toISOString() // Fallback to current date if invalid
         }
       ]);
-      localStorage.setItem(this.CONNECTIONS_KEY, JSON.stringify(connectionsArray));
+      localStorage.setItem(key, JSON.stringify(connectionsArray));
     } catch (error) {
       console.error('Error saving connections:', error);
     }
@@ -334,8 +335,7 @@ class ConnectionManagerService {
     if (index > -1) {
       this.onConnectionStatusChangeCallbacks.splice(index, 1);
     }
-  }
-  /**
+  }  /**
    * Clear all connections, pending requests, and blacklist (for logout)
    */
   clearAll(): void {
@@ -344,6 +344,47 @@ class ConnectionManagerService {
     this.blacklistedUsers.clear();
     this.saveConnections();
     this.saveBlacklist();
+  }
+
+  /**
+   * Clear all localStorage keys related to this user (complete cleanup on logout)
+   */
+  clearAllUserData(): void {
+    if (!this.currentUserId) return;
+
+    // Clear all localStorage keys that belong to this user
+    const keysToRemove: string[] = [];
+    
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (
+        key.includes(this.currentUserId) || 
+        key.startsWith('chat_messages_') ||
+        key.startsWith('unread_count_') ||
+        key.startsWith('freeflow_blacklist_') ||
+        key.startsWith('freeflow_connections_') ||
+        key === 'username' ||
+        key === 'userId'
+      )) {
+        keysToRemove.push(key);
+      }
+    }
+
+    // Remove all identified keys
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+
+    // Clear in-memory data
+    this.clearAll();
+  }
+
+  /**
+   * Get all connected user IDs
+   */
+  getConnectedUserIds(): string[] {
+    return Array.from(this.connections.keys()).filter(userId => {
+      const connection = this.connections.get(userId);
+      return connection && connection.status === 'connected';
+    });
   }
   /**
    * Notify connection status change
