@@ -2,14 +2,14 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { SafeLocalStorage } from '@/lib/utils/SafeLocalStorage';
 
 export default function UserRedirect() {
   const router = useRouter();
   
-  useEffect(() => {
-    // Check if user is already logged in
-    const username = localStorage.getItem('username');
-    const userId = localStorage.getItem('userId');
+  useEffect(() => {    // Check if user is already logged in
+    const username = SafeLocalStorage.getItem('username');
+    const userId = SafeLocalStorage.getItem('userId');
     
     if (username && userId) {
       // If logged in, redirect to chat

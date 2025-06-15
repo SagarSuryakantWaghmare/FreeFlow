@@ -1,5 +1,7 @@
 "use client";
 
+import { SafeLocalStorage } from './utils/SafeLocalStorage';
+
 interface GroupMessage {
   id: string;
   groupId: string;
@@ -111,7 +113,7 @@ class GroupStorageService {
   private saveMessages(groupId: string, messages: GroupMessage[]): void {
     try {
       const key = this.getGroupMessagesKey(groupId);
-      localStorage.setItem(key, JSON.stringify(messages));
+      SafeLocalStorage.setItem(key, JSON.stringify(messages));
     } catch (error) {
       console.error('Error saving group messages to localStorage:', error);
     }
@@ -123,7 +125,7 @@ class GroupStorageService {
   getMessages(groupId: string): GroupMessage[] {
     try {
       const key = this.getGroupMessagesKey(groupId);
-      const storedMessages = localStorage.getItem(key);
+      const storedMessages = SafeLocalStorage.getItem(key);
       
       if (!storedMessages) {
         return [];
@@ -149,14 +151,13 @@ class GroupStorageService {
     this.saveMessages(groupId, updatedMessages);
     this.setUnreadCount(groupId, 0);
   }
-
   /**
    * Get unread message count for a group
    */
   getUnreadCount(groupId: string): number {
     try {
       const key = this.getGroupUnreadKey(groupId);
-      const stored = localStorage.getItem(key);
+      const stored = SafeLocalStorage.getItem(key);
       return stored ? parseInt(stored, 10) : 0;
     } catch (error) {
       console.error('Error getting group unread count:', error);
@@ -170,7 +171,7 @@ class GroupStorageService {
   setUnreadCount(groupId: string, count: number): void {
     try {
       const key = this.getGroupUnreadKey(groupId);
-      localStorage.setItem(key, count.toString());
+      SafeLocalStorage.setItem(key, count.toString());
       this.notifyUnreadCountChange(groupId, count);
     } catch (error) {
       console.error('Error setting group unread count:', error);
@@ -191,7 +192,7 @@ class GroupStorageService {
   saveGroupInfo(groupInfo: GroupInfo): void {
     try {
       const key = this.getGroupInfoKey(groupInfo.groupId);
-      localStorage.setItem(key, JSON.stringify({
+      SafeLocalStorage.setItem(key, JSON.stringify({
         ...groupInfo,
         joinedAt: groupInfo.joinedAt.toISOString(),
         lastActivity: groupInfo.lastActivity.toISOString(),
@@ -209,14 +210,13 @@ class GroupStorageService {
       console.error('Error saving group info:', error);
     }
   }
-
   /**
    * Get group information
    */
   getGroupInfo(groupId: string): GroupInfo | null {
     try {
       const key = this.getGroupInfoKey(groupId);
-      const stored = localStorage.getItem(key);
+      const stored = SafeLocalStorage.getItem(key);
       
       if (!stored) {
         return null;
@@ -318,15 +318,15 @@ class GroupStorageService {
     try {
       // Remove group info
       const infoKey = this.getGroupInfoKey(groupId);
-      localStorage.removeItem(infoKey);
+      SafeLocalStorage.removeItem(infoKey);
       
       // Remove messages
       const messagesKey = this.getGroupMessagesKey(groupId);
-      localStorage.removeItem(messagesKey);
+      SafeLocalStorage.removeItem(messagesKey);
       
       // Remove unread count
       const unreadKey = this.getGroupUnreadKey(groupId);
-      localStorage.removeItem(unreadKey);
+      SafeLocalStorage.removeItem(unreadKey);
       
       // Remove from user's group list
       this.removeFromUserGroups(groupId);
@@ -349,7 +349,7 @@ class GroupStorageService {
       
       // Clear user groups list
       if (this.currentUserId) {
-        localStorage.removeItem(this.getUserGroupsKey());
+        SafeLocalStorage.removeItem(this.getUserGroupsKey());
       }
     } catch (error) {
       console.error('Error clearing all groups:', error);
@@ -374,7 +374,7 @@ class GroupStorageService {
     const groupIds = this.getUserGroupIds();
     if (!groupIds.includes(groupId)) {
       groupIds.push(groupId);
-      localStorage.setItem(this.getUserGroupsKey(), JSON.stringify(groupIds));
+      SafeLocalStorage.setItem(this.getUserGroupsKey(), JSON.stringify(groupIds));
     }
   }
 
@@ -384,7 +384,7 @@ class GroupStorageService {
   private removeFromUserGroups(groupId: string): void {
     const groupIds = this.getUserGroupIds();
     const updatedIds = groupIds.filter(id => id !== groupId);
-    localStorage.setItem(this.getUserGroupsKey(), JSON.stringify(updatedIds));
+    SafeLocalStorage.setItem(this.getUserGroupsKey(), JSON.stringify(updatedIds));
   }
 
   /**
@@ -392,7 +392,7 @@ class GroupStorageService {
    */
   private getUserGroupIds(): string[] {
     try {
-      const stored = localStorage.getItem(this.getUserGroupsKey());
+      const stored = SafeLocalStorage.getItem(this.getUserGroupsKey());
       return stored ? JSON.parse(stored) : [];
     } catch (error) {
       console.error('Error getting user group IDs:', error);

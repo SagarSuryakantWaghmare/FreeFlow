@@ -11,6 +11,7 @@ import groupChatService, { GroupMessage } from '@/lib/GroupChatService';
 import { useToast } from '@/hooks/use-toast';
 import { Copy, Users, LogOut, Send, ArrowLeft, User, Sparkles, MessageCircle } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
+import { SafeLocalStorage } from '@/lib/utils/SafeLocalStorage';
 
 
 
@@ -227,9 +228,8 @@ export default function GroupChatRoom({
       // Use the actual user's name if available, otherwise fallback to 'You'
       if (user?.firstName) {
         return user.firstName + (user.lastName ? ` ${user.lastName}` : '');
-      }
-      // Try to get username from localStorage
-      const username = localStorage.getItem('username');
+      }      // Try to get username from localStorage
+      const username = SafeLocalStorage.getItem('username');
       if (username) return username;
       return 'You';
     }

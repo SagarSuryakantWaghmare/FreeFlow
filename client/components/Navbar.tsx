@@ -13,6 +13,7 @@ import {
 } from "@clerk/nextjs";
 import { Button } from "./ui/button";
 import ConnectionStatus from "@/components/User/ConnectionStatus";
+import { SafeLocalStorage } from "@/lib/utils/SafeLocalStorage";
 import webSocketService from "@/lib/WebSocketService";
 import groupChatService from "@/lib/GroupChatService";
 import { useClerkLogoutDetection } from "@/hooks/use-clerk-logout";
@@ -29,7 +30,7 @@ const Navbar: React.FC = () => {
 
   useEffect(() => {
     if (isChatPage) {
-      const storedUsername = localStorage.getItem('username');
+      const storedUsername = SafeLocalStorage.getItem('username');
       if (storedUsername) {
         setUsername(storedUsername);
       }

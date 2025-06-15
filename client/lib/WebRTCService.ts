@@ -4,6 +4,7 @@ import webSocketService from "./WebSocketService";
 import { SyncRequest, SyncResponse } from "./types";
 import chatStorageService from "./ChatStorageService";
 import connectionManagerService from "./ConnectionManagerService";
+import { SafeLocalStorage } from './utils/SafeLocalStorage';
 
 interface RTCPeerData {
   peerConnection: RTCPeerConnection;
@@ -115,10 +116,8 @@ class WebRTCService {
     if (existingConnection && existingConnection.status === 'connecting') {
       console.log(`Connection already in progress with ${remoteUserId}`);
       return;
-    }
-
-    // Add to connection manager
-    const username = localStorage.getItem('username') || this.localUserId;
+    }    // Add to connection manager
+    const username = SafeLocalStorage.getItem('username') || this.localUserId;
     connectionManagerService.addConnection(remoteUserId, remoteUserId); // We don't know their username yet
 
     // Send connection request

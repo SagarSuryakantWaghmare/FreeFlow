@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import webSocketService from '@/lib/WebSocketService';
 import groupChatService from '@/lib/GroupChatService';
+import { SafeLocalStorage } from '@/lib/utils/SafeLocalStorage';
 
 /**
  * Custom hook to detect Clerk logout and perform cleanup
@@ -19,13 +20,11 @@ export const useClerkLogoutDetection = () => {
     }
 
     // Clear all group chat data (subscriptions, in-memory state)
-    groupChatService.clearAllData();
-
-    // Clear all localStorage data completely
+    groupChatService.clearAllData();    // Clear all localStorage data completely
     const keysToRemove: string[] = [];
 
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
+    for (let i = 0; i < SafeLocalStorage.getLength(); i++) {
+      const key = SafeLocalStorage.key(i);
       if (key && (
         // Single chat related keys
         key.startsWith('chat_messages_') ||
@@ -51,7 +50,7 @@ export const useClerkLogoutDetection = () => {
     }
 
     // Remove all identified keys
-    keysToRemove.forEach(key => localStorage.removeItem(key));
+    keysToRemove.forEach(key => SafeLocalStorage.removeItem(key));
   };
   useEffect(() => {
     // Initialize wasSignedIn on first render

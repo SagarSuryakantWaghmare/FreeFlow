@@ -1,5 +1,7 @@
 "use client";
 
+import { SafeLocalStorage } from './utils/SafeLocalStorage';
+
 interface ChatMessage {
   id: string;
   sender: string;
@@ -79,7 +81,7 @@ class ChatStorageService {
   saveMessages(peerId: string, messages: ChatMessage[]): void {
     try {
       const key = this.getStorageKey(peerId);
-      localStorage.setItem(key, JSON.stringify(messages));
+      SafeLocalStorage.setItem(key, JSON.stringify(messages));
     } catch (error) {
       console.error('Error saving messages to localStorage:', error);
       
@@ -91,7 +93,7 @@ class ChatStorageService {
         const reducedMessages = messages.slice(-Math.floor(this.MAX_MESSAGES_PER_PEER / 2));
         try {
           const storageKey = this.getStorageKey(peerId);
-          localStorage.setItem(storageKey, JSON.stringify(reducedMessages));
+          SafeLocalStorage.setItem(storageKey, JSON.stringify(reducedMessages));
         } catch (innerError) {
           console.error('Still unable to save messages after reduction:', innerError);
         }
@@ -105,7 +107,7 @@ class ChatStorageService {
   getMessages(peerId: string): ChatMessage[] {
     try {
       const key = this.getStorageKey(peerId);
-      const storedMessages = localStorage.getItem(key);
+      const storedMessages = SafeLocalStorage.getItem(key);
       
       if (!storedMessages) {
         return [];
@@ -139,7 +141,7 @@ class ChatStorageService {
   getUnreadCount(peerId: string): number {
     try {
       const key = this.getUnreadCountKey(peerId);
-      const stored = localStorage.getItem(key);
+      const stored = SafeLocalStorage.getItem(key);
       return stored ? parseInt(stored, 10) : 0;
     } catch (error) {
       console.error('Error getting unread count:', error);
@@ -153,7 +155,7 @@ class ChatStorageService {
   setUnreadCount(peerId: string, count: number): void {
     try {
       const key = this.getUnreadCountKey(peerId);
-      localStorage.setItem(key, count.toString());
+      SafeLocalStorage.setItem(key, count.toString());
       this.notifyUnreadCountChange(peerId, count);
     } catch (error) {
       console.error('Error setting unread count:', error);
@@ -257,7 +259,7 @@ class ChatStorageService {
    */
   clearMessages(peerId: string): void {
     const key = this.getStorageKey(peerId);
-    localStorage.removeItem(key);
+    SafeLocalStorage.removeItem(key);
     this.setUnreadCount(peerId, 0);
   }
 
@@ -266,20 +268,19 @@ class ChatStorageService {
    */
   clearAllMessages(): void {
     const keys = this.getAllChatKeys();
-    keys.forEach(key => localStorage.removeItem(key));
+    keys.forEach(key => SafeLocalStorage.removeItem(key));
     
     // Also clear all unread counts
     const unreadKeys = this.getAllUnreadCountKeys();
-    unreadKeys.forEach(key => localStorage.removeItem(key));
+    unreadKeys.forEach(key => SafeLocalStorage.removeItem(key));
   }  /**
    * Clear all messages and unread counts for a specific user (when they log out)
    */
   clearMessagesForUser(userId: string): void {
     const messageKey = this.getStorageKey(userId);
     const unreadKey = this.getUnreadCountKey(userId);
-    
-    localStorage.removeItem(messageKey);
-    localStorage.removeItem(unreadKey);
+      SafeLocalStorage.removeItem(messageKey);
+    SafeLocalStorage.removeItem(unreadKey);
     
     // Trigger UI refresh by notifying about count change
     this.notifyUnreadCountChange(userId, 0);
@@ -298,35 +299,33 @@ class ChatStorageService {
   getTotalStorageSize(): number {
     let totalSize = 0;
     this.getAllChatKeys().forEach(key => {
-      const value = localStorage.getItem(key);
+      const value = SafeLocalStorage.getItem(key);
       if (value) {
         totalSize += value.length * 2; // Approximate size in bytes (2 bytes per character)
       }
     });
     return totalSize;
   }
-
   /**
    * Get all chat storage keys
    */
   private getAllChatKeys(): string[] {
     const keys: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
+    for (let i = 0; i < SafeLocalStorage.getLength(); i++) {
+      const key = SafeLocalStorage.key(i);
       if (key && key.startsWith(this.PREFIX)) {
         keys.push(key);
       }
     }
     return keys;
   }
-
   /**
    * Get all unread count storage keys
    */
   private getAllUnreadCountKeys(): string[] {
     const keys: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
+    for (let i = 0; i < SafeLocalStorage.getLength(); i++) {
+      const key = SafeLocalStorage.key(i);
       if (key && key.startsWith(this.UNREAD_PREFIX)) {
         keys.push(key);
       }

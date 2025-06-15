@@ -5,14 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Shield, Lock, Zap, Globe, Users, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { SafeLocalStorage } from '@/lib/utils/SafeLocalStorage';
 
 const StartPage = () => {
   const router = useRouter();
   const [username, setUsername] = useState('');
   
-  useEffect(() => {
-    // Check if user is already logged in
-    const storedUsername = localStorage.getItem('username');
+  useEffect(() => {    // Check if user is already logged in
+    const storedUsername = SafeLocalStorage.getItem('username');
     if (storedUsername) {
       setUsername(storedUsername);
     } else {

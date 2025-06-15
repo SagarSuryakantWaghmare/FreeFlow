@@ -1,5 +1,7 @@
 "use client";
 
+import { SafeLocalStorage } from './utils/SafeLocalStorage';
+
 interface ConnectionRequest {
   fromUserId: string;
   fromUserName: string;
@@ -23,12 +25,14 @@ class ConnectionManagerService {
   private currentUserId: string | null = null;
   
   // Callbacks
-  private onConnectionRequestCallbacks: ((request: ConnectionRequest) => void)[] = [];
-  private onConnectionStatusChangeCallbacks: ((userId: string, status: string) => void)[] = [];
+  private onConnectionRequestCallbacks: ((request: ConnectionRequest) => void)[] = [];  private onConnectionStatusChangeCallbacks: ((userId: string, status: string) => void)[] = [];
 
   constructor() {
-    this.loadBlacklist();
-    this.loadConnections();
+    // Only load data if we're in the browser
+    if (SafeLocalStorage.isClientSide()) {
+      this.loadBlacklist();
+      this.loadConnections();
+    }
   }
 
   /**
@@ -41,11 +45,15 @@ class ConnectionManagerService {
   }
   /**
    * Load blacklisted users from localStorage
-   */
-  private loadBlacklist(): void {
+   */  private loadBlacklist(): void {
+    // Ensure we're in the browser environment
+    if (!SafeLocalStorage.isClientSide()) {
+      return;
+    }
+    
     try {
       const key = this.getBlacklistKey();
-      const stored = localStorage.getItem(key);
+      const stored = SafeLocalStorage.getItem(key);
       if (stored) {
         this.blacklistedUsers = new Set(JSON.parse(stored));
       }
@@ -60,17 +68,21 @@ class ConnectionManagerService {
   private saveBlacklist(): void {
     try {
       const key = this.getBlacklistKey();
-      localStorage.setItem(key, JSON.stringify([...this.blacklistedUsers]));
+      SafeLocalStorage.setItem(key, JSON.stringify([...this.blacklistedUsers]));
     } catch (error) {
       console.error('Error saving blacklist:', error);
     }
   }  /**
    * Load connections from localStorage
-   */
-  private loadConnections(): void {
+   */  private loadConnections(): void {
+    // Ensure we're in the browser environment
+    if (!SafeLocalStorage.isClientSide()) {
+      return;
+    }
+    
     try {
       const key = this.getConnectionsKey();
-      const stored = localStorage.getItem(key);
+      const stored = SafeLocalStorage.getItem(key);
       if (stored) {
         const connectionsArray = JSON.parse(stored);
         this.connections = new Map(
@@ -102,7 +114,7 @@ class ConnectionManagerService {
             : new Date().toISOString() // Fallback to current date if invalid
         }
       ]);
-      localStorage.setItem(key, JSON.stringify(connectionsArray));
+      SafeLocalStorage.setItem(key, JSON.stringify(connectionsArray));
     } catch (error) {
       console.error('Error saving connections:', error);
     }
@@ -350,19 +362,19 @@ class ConnectionManagerService {
    * Clear all localStorage keys related to this user (complete cleanup on logout)
    */
   clearAllUserData(): void {
-    if (!this.currentUserId) return;
-
-    // Clear all localStorage keys that belong to this user
+    if (!this.currentUserId) return;    // Clear all localStorage keys that belong to this user
     const keysToRemove: string[] = [];
     
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);      if (key && (
+    for (let i = 0; i < SafeLocalStorage.getLength(); i++) {
+      const key = SafeLocalStorage.key(i);
+      if (key && (
         key.includes(this.currentUserId) || 
         // Single chat related keys
         key.startsWith('chat_messages_') ||
         key.startsWith('unread_count_') ||
         key.startsWith('freeflow_blacklist_') ||
-        key.startsWith('freeflow_connections_') ||        // Group chat related keys
+        key.startsWith('freeflow_connections_') ||
+        // Group chat related keys
         key.startsWith('group_messages_') ||
         key.startsWith('group_unread_') ||
         key.startsWith('group_info_') ||
@@ -381,7 +393,7 @@ class ConnectionManagerService {
     }
 
     // Remove all identified keys
-    keysToRemove.forEach(key => localStorage.removeItem(key));
+    keysToRemove.forEach(key => SafeLocalStorage.removeItem(key));
 
     // Clear in-memory data
     this.clearAll();

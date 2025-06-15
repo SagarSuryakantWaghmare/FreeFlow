@@ -1,5 +1,7 @@
 "use client";
 
+import { SafeLocalStorage } from './utils/SafeLocalStorage';
+
 interface GroupConnection {
   groupId: string;
   groupName: string;
@@ -13,17 +15,22 @@ class GroupConnectionManagerService {
   private readonly STORAGE_KEY = 'group_connections';
   private connections: Map<string, GroupConnection> = new Map();
   private statusChangeCallbacks: ((groupId: string, status: GroupConnection['status']) => void)[] = [];
-
   constructor() {
-    this.loadConnections();
+    // Only load data if we're in the browser
+    if (SafeLocalStorage.isClientSide()) {
+      this.loadConnections();
+    }
   }
-
   /**
    * Load connections from localStorage
-   */
-  private loadConnections(): void {
+   */  private loadConnections(): void {
+    // Ensure we're in the browser environment
+    if (!SafeLocalStorage.isClientSide()) {
+      return;
+    }
+    
     try {
-      const stored = localStorage.getItem(this.STORAGE_KEY);
+      const stored = SafeLocalStorage.getItem(this.STORAGE_KEY);
       if (stored) {
         const data = JSON.parse(stored);
         Object.entries(data).forEach(([groupId, conn]: [string, any]) => {
@@ -37,7 +44,6 @@ class GroupConnectionManagerService {
       console.error('Error loading group connections:', error);
     }
   }
-
   /**
    * Save connections to localStorage
    */
@@ -47,7 +53,7 @@ class GroupConnectionManagerService {
       this.connections.forEach((connection, groupId) => {
         data[groupId] = connection;
       });
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+      SafeLocalStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
     } catch (error) {
       console.error('Error saving group connections:', error);
     }
@@ -198,13 +204,12 @@ class GroupConnectionManagerService {
       }
     });
   }
-
   /**
    * Clear all connections (for logout)
    */
   clearAllConnections(): void {
     this.connections.clear();
-    localStorage.removeItem(this.STORAGE_KEY);
+    SafeLocalStorage.removeItem(this.STORAGE_KEY);
   }
 
   /**

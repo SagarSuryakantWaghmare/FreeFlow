@@ -1,5 +1,7 @@
 "use client";
 
+import { SafeLocalStorage } from './utils/SafeLocalStorage';
+
 interface GroupNotification {
   id: string;
   type: 'message' | 'join_request' | 'member_joined' | 'member_left' | 'ownership_transfer' | 'group_created' | 'group_updated';
@@ -17,19 +19,25 @@ class GroupNotificationService {
   private readonly MAX_NOTIFICATIONS = 100;
   
   private notifications: GroupNotification[] = [];
-  private notificationCallbacks: ((notification: GroupNotification) => void)[] = [];
-  private unreadCountCallbacks: ((count: number) => void)[] = [];
+  private notificationCallbacks: ((notification: GroupNotification) => void)[] = [];  private unreadCountCallbacks: ((count: number) => void)[] = [];
 
   constructor() {
-    this.loadNotifications();
+    // Only load data if we're in the browser
+    if (SafeLocalStorage.isClientSide()) {
+      this.loadNotifications();
+    }
   }
 
   /**
    * Load notifications from localStorage
-   */
-  private loadNotifications(): void {
+   */  private loadNotifications(): void {
+    // Ensure we're in the browser environment
+    if (!SafeLocalStorage.isClientSide()) {
+      return;
+    }
+    
     try {
-      const stored = localStorage.getItem(this.STORAGE_KEY);
+      const stored = SafeLocalStorage.getItem(this.STORAGE_KEY);
       if (stored) {
         const data = JSON.parse(stored);
         this.notifications = data.map((notif: any) => ({
@@ -47,7 +55,7 @@ class GroupNotificationService {
    */
   private saveNotifications(): void {
     try {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.notifications));
+      SafeLocalStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.notifications));
     } catch (error) {
       console.error('Error saving group notifications:', error);
     }
@@ -201,7 +209,7 @@ class GroupNotificationService {
    */
   clearAll(): void {
     this.notifications = [];
-    localStorage.removeItem(this.STORAGE_KEY);
+    SafeLocalStorage.removeItem(this.STORAGE_KEY);
     this.notifyUnreadCountChange();
   }
 

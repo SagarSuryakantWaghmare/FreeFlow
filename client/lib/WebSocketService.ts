@@ -1,5 +1,7 @@
 "use client";
 
+import { SafeLocalStorage } from './utils/SafeLocalStorage';
+
 let backendUrl: string;
 
 if (process.env.NODE_ENV === 'production') {
@@ -45,10 +47,8 @@ class WebSocketService {
 
         this.socket.onopen = () => {
           console.log("WebSocket connection established");
-          this.reconnectAttempts = 0;
-
-          // Send user_online message with username
-          const username = localStorage.getItem('username');
+          this.reconnectAttempts = 0;          // Send user_online message with username
+          const username = SafeLocalStorage.getItem('username');
           this.sendMessage({
             type: "user_online",
             userId: this.userId,

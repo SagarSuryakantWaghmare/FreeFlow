@@ -6,6 +6,7 @@ import groupStorageService, { GroupMessage as StorageGroupMessage, GroupInfo, Gr
 import groupManagerService from './GroupManagerService';
 import groupConnectionManagerService from './GroupConnectionManagerService';
 import groupNotificationService from './GroupNotificationService';
+import { SafeLocalStorage } from './utils/SafeLocalStorage';
 
 export interface GroupMessage {
   groupId: string;
@@ -501,13 +502,12 @@ class GroupChatService {
     
     groupStorageService.saveMessage(groupId, storageMessage);
   }
-
   /**
    * Get user display name (enhanced)
    */
   private getUserDisplayName(userId: string): string {
     // Try to get real username from localStorage
-    const username = localStorage.getItem('username');
+    const username = SafeLocalStorage.getItem('username');
     if (userId === this.currentUserId && username) {
       return username;
     }
