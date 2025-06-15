@@ -128,8 +128,7 @@ class WebRTCService {
       fromUserName: username,
       toUserId: remoteUserId
     });
-  }
-  /**
+  }  /**
    * Handle incoming connection request - now routes through ConnectionManagerService
    */
   private handleConnectionRequest(data: any): void {
@@ -138,7 +137,25 @@ class WebRTCService {
     // Get username from the request or use userId as fallback
     const fromUserName = data.fromUserName || data.fromUserId;
     
-    // Let ConnectionManagerService handle the request (including blacklist check)
+    // Check if this user was previously connected (auto-accept for reconnections)
+    const existingConnection = connectionManagerService.getConnection(data.fromUserId);
+    if (existingConnection && existingConnection.status === 'connected') {
+      // Auto-accept reconnection from previously connected user
+      console.log(`Auto-accepting reconnection from previously connected user: ${data.fromUserId}`);
+      
+      // Update connection manager
+      connectionManagerService.acceptConnectionRequest(data.fromUserId);
+      
+      // Send acceptance immediately
+      webSocketService.sendMessage({
+        type: 'connection_accepted',
+        fromUserId: this.localUserId,
+        toUserId: data.fromUserId
+      });
+      return;
+    }
+    
+    // Let ConnectionManagerService handle new requests (including blacklist check)
     const shouldProcess = connectionManagerService.handleConnectionRequest(data.fromUserId, fromUserName);
     
     if (!shouldProcess) {
@@ -350,11 +367,11 @@ class WebRTCService {
           
           // Save message to storage (handles background messages automatically)
           chatStorageService.saveMessage(remoteUserId, formattedMessage);
-          
-          // Create a message object with sender info for the callback
+            // Create a message object with proper sender identification
           const messageWithSender = {
             ...formattedMessage,
-            fromUserId: remoteUserId // Add the sender's user ID
+            fromUserId: remoteUserId, // Add the sender's user ID
+            originalSender: message.sender // Keep original sender name
           };
           
           // Notify listeners (active chat windows)

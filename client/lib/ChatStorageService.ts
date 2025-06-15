@@ -21,7 +21,6 @@ class ChatStorageService {
   // Callbacks for real-time updates
   private onNewMessageCallbacks: ((peerId: string, message: ChatMessage) => void)[] = [];
   private onUnreadCountChangeCallbacks: ((peerId: string, count: number) => void)[] = [];
-
   /**
    * Save a message to localStorage
    */
@@ -56,7 +55,7 @@ class ChatStorageService {
       this.incrementUnreadCount(peerId);
     }
     
-    // Notify listeners about new message
+    // Always notify listeners about new message (for real-time updates)
     this.notifyNewMessage(peerId, messageToSave);
   }
   

@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import webRTCService from '@/lib/WebRTCService';
 import chatStorageService from '@/lib/ChatStorageService';
 import connectionManagerService from '@/lib/ConnectionManagerService';
+import { toast } from 'sonner';
 
 interface User {
   id: string;
@@ -49,7 +50,6 @@ const UserList: React.FC<UserListProps> = ({ users, selectedUserId, onSelectUser
       connectionManagerService.removeConnectionStatusChangeCallback(handleConnectionStatusChange);
     };
   }, [users]);
-
   const handleUserClick = (user: User) => {
     // Check if user is blacklisted
     if (connectionManagerService.isBlacklisted(user.id)) {
@@ -57,15 +57,26 @@ const UserList: React.FC<UserListProps> = ({ users, selectedUserId, onSelectUser
       return;
     }
 
-    // If not connected, request connection first
-    if (!webRTCService.isConnectedToPeer(user.id)) {
+    // Check if already connected
+    if (webRTCService.isConnectedToPeer(user.id)) {
+      // If connected, open chat and mark messages as read
+      chatStorageService.markMessagesAsRead(user.id);
+      onSelectUser(user.id);
+      return;
+    }    // Check if there's an existing connection record (for auto-reconnection)
+    const existingConnection = connectionManagerService.getConnection(user.id);
+    if (existingConnection && existingConnection.status === 'connected') {
+      // Try to re-establish the connection automatically
+      console.log(`Attempting to reconnect to previously connected user: ${user.id}`);
       webRTCService.requestConnection(user.id);
-      return; // Don't open chat yet
+      
+      // Show feedback to user
+      toast.info(`Reconnecting to ${user.name}...`);
+      return;
     }
 
-    // If connected, open chat and mark messages as read
-    chatStorageService.markMessagesAsRead(user.id);
-    onSelectUser(user.id);
+    // If not connected and no previous connection, request new connection
+    webRTCService.requestConnection(user.id);
   };
 
   const getConnectionStatus = (userId: string) => {

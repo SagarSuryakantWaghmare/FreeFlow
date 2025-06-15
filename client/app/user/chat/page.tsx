@@ -80,19 +80,21 @@ const Chat = () => {
       setConnectionRequest(request);
       toast.info(`Connection request from ${request.fromUserName}`);
     };    // Setup connection manager listeners
-    connectionManagerService.onConnectionRequest(handleConnectionRequest);
-
-    // Auto-reconnect to previously connected peers
+    connectionManagerService.onConnectionRequest(handleConnectionRequest);    // Auto-reconnect to previously connected peers
     const autoReconnectToPeers = () => {
       const existingConnections = connectionManagerService.getAllConnections();
+      console.log('Found existing connections for auto-reconnect:', existingConnections);
+      
       existingConnections.forEach(connection => {
         // Only auto-reconnect if they were previously connected and not blacklisted
         if (connection.status === 'connected' && !connectionManagerService.isBlacklisted(connection.userId)) {
           console.log(`Auto-reconnecting to ${connection.userId}`);
           // Set timeout to ensure WebSocket is connected first
           setTimeout(() => {
+            // Update status to connecting first
+            connectionManagerService.updateConnectionStatus(connection.userId, 'connecting');
             webRTCService.requestConnection(connection.userId);
-          }, 2000);
+          }, 2000 + Math.random() * 1000); // Add small random delay to avoid conflicts
         }
       });
     };
@@ -192,8 +194,10 @@ const Chat = () => {
     }
   };  // Handle received WebRTC messages (simplified - storage is now handled in WebRTCService)
   const handleRTCMessage = (message: any) => {
-    // Only update UI if this message is for the currently selected user
-    if (selectedUser && (message.fromUserId === selectedUser || message.sender === username.current)) {
+    // Update UI if this message is relevant to the current chat
+    const messageFromUser = message.fromUserId || message.sender; // Get the actual sender
+    
+    if (selectedUser && messageFromUser === selectedUser) {
       const newMessage = {
         id: message.id,
         sender: message.sender,
@@ -241,12 +245,17 @@ const Chat = () => {
     }
     // For other users, the message is already saved by ChatStorageService
     // and unread count is updated automatically
-  };
-  // Handle WebRTC connection state changes
+  };  // Handle WebRTC connection state changes
   const handleConnectionStateChange = (remoteUserId: string, state: 'connected' | 'disconnected') => {
     if (state === 'connected') {
       toast.success(`Connected to ${remoteUserId}`);
-      // Don't automatically open chat - user must click to open
+      
+      // If this is the user we're trying to chat with, open the chat automatically
+      if (selectedUser === remoteUserId) {
+        // Refresh messages to load any new ones
+        const chatHistory = chatStorageService.getMessages(remoteUserId);
+        setMessages(chatHistory);
+      }
     } else {
       toast.info(`Disconnected from ${remoteUserId}`);
 
@@ -292,8 +301,7 @@ const Chat = () => {
       webRTCService.requestConnection(selectedUser);
       toast.error('Not connected to peer. Trying to establish connection...');
     }
-  };
-  const handleSelectUser = (userId: string) => {
+  };  const handleSelectUser = (userId: string) => {
     setSelectedUser(userId);
     setSidebarOpen(false); // Close sidebar on mobile after selecting a user
 
@@ -307,6 +315,31 @@ const Chat = () => {
     // Only request connection if not already connected
     // (The UserList component now handles connection requests)
   };
+  // Add effect to refresh messages when selectedUser changes
+  useEffect(() => {
+    if (selectedUser) {
+      const refreshMessages = () => {
+        const chatHistory = chatStorageService.getMessages(selectedUser);
+        setMessages(chatHistory);
+      };
+
+      // Refresh messages immediately
+      refreshMessages();
+
+      // Listen for new messages from the storage service
+      const handleNewMessage = (peerId: string, message: any) => {
+        if (peerId === selectedUser) {
+          refreshMessages(); // Refresh the entire message list to ensure consistency
+        }
+      };
+
+      chatStorageService.onNewMessage(handleNewMessage);
+
+      return () => {
+        chatStorageService.removeNewMessageCallback(handleNewMessage);
+      };
+    }
+  }, [selectedUser]);
   const handleLogout = () => {
     webSocketService.disconnect();
     webRTCService.closeAllConnections();
