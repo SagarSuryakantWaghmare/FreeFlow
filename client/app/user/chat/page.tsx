@@ -18,6 +18,7 @@ import webSocketService from '@/lib/WebSocketService';
 import webRTCService from '@/lib/WebRTCService';
 import chatStorageService from '@/lib/ChatStorageService';
 import connectionManagerService from '@/lib/ConnectionManagerService';
+import groupChatService from '@/lib/GroupChatService';
 
 const Chat = () => {
   const router = useRouter();
@@ -375,6 +376,9 @@ const Chat = () => {
     
     // Disconnect from WebSocket
     webSocketService.disconnect();
+    
+    // Clear all group chat data (subscriptions, in-memory state)
+    groupChatService.clearAllData();
     
     // Clear all user-specific data from localStorage
     connectionManagerService.clearAllUserData();

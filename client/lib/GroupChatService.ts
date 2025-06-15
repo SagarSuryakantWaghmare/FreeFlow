@@ -527,8 +527,7 @@ class GroupChatService {
 
   /**
    * Clear all group data (for logout)
-   */
-  clearAllData(): void {
+   */  clearAllData(): void {
     // Unsubscribe from all groups
     this.subscriptions.forEach((subscription, groupId) => {
       subscription.unsubscribe();
@@ -536,9 +535,11 @@ class GroupChatService {
     this.subscriptions.clear();
     this.activeGroups.clear();
     
-    // Clear storage
+    // Clear storage and services
     groupStorageService.clearAllGroups();
     groupManagerService.clearAll();
+    groupConnectionManagerService.clearAllConnections();
+    groupNotificationService.clearAll();
   }
 
   /**

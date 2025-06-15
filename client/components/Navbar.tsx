@@ -8,11 +8,13 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   SignedIn,
   SignedOut,
-  UserButton,
+  UserButton
 } from "@clerk/nextjs";
 import { Button } from "./ui/button";
 import ConnectionStatus from "@/components/User/ConnectionStatus";
 import webSocketService from "@/lib/WebSocketService";
+import groupChatService from "@/lib/GroupChatService";
+import { UserCog } from "lucide-react";
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -21,6 +23,7 @@ const Navbar: React.FC = () => {
   const pathname = usePathname();
   const router = useRouter();
   const isChatPage = pathname?.includes('/user/chat');
+  const [navbarHeight, setNavbarHeight] = useState(0);
 
   useEffect(() => {
     if (isChatPage) {
@@ -43,82 +46,118 @@ const Navbar: React.FC = () => {
         clearInterval(interval);
       };
     }
-  }, [isChatPage]);  const handleLogout = () => {
+  }, [isChatPage]); const handleLogout = () => {
     if (webSocketService) {
       webSocketService.disconnect();
     }
-    
+
+    // Clear all group chat data (subscriptions, in-memory state)
+    groupChatService.clearAllData();
+
     // Clear all localStorage data completely
     const keysToRemove: string[] = [];
-    
+
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key && (
+        // Single chat related keys
         key.startsWith('chat_messages_') ||
         key.startsWith('unread_count_') ||
         key.startsWith('freeflow_blacklist_') ||
-        key.startsWith('freeflow_connections_') ||
+        key.startsWith('freeflow_connections_') ||        // Group chat related keys
+        key.startsWith('group_messages_') ||
+        key.startsWith('group_unread_') ||
+        key.startsWith('group_info_') ||
+        key.startsWith('user_groups_') ||
+        key === 'group_join_requests' ||
+        key === 'pending_group_approvals' ||
+        key === 'group_connections' ||
+        key === 'group_notifications' ||
+        // User related keys
         key === 'username' ||
-        key === 'userId'
+        key === 'userId' ||
+        key === 'user_real_name'
       )) {
         keysToRemove.push(key);
       }
     }
-    
+
     // Remove all identified keys
     keysToRemove.forEach(key => localStorage.removeItem(key));
-    
+
     router.push('/');
   };
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
-  }; return (
-    <header className="fixed container top-0 left-0 w-full z-50 border-b border-container backdrop-blur-md">
-      <nav className="flex items-center justify-between px-6 py-3 max-w-7xl mx-auto">
-        {/* Logo Section */}
-        <Link href="/" className="flex items-center">
-          <Image src={logo} alt="FreeFlow Logo" width={40} height={40} />
-          <span className="text-2xl text-gray-600 font-semibold">FreeFlow</span>
-        </Link>
+  };
 
-        {/* Hamburger Icon (Mobile Only) */}
-        <button
-          className="md:hidden text-white"
-          onClick={toggleMenu}
-          aria-label="Toggle navigation menu"
-        >
-          <svg viewBox="0 0 24 24" width={28} height={28}>
-            {isMenuOpen ? (
-              <path
-                fill="currentColor"
-                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-              />
-            ) : (
-              <path
-                fill="currentColor"
-                d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"
-              />
-            )}
-          </svg>
-        </button>
+  useEffect(() => {
+    const updateNavbarHeight = () => {
+      const navElement = document.getElementById('navbar');
+      if (navElement) {
+        const height = navElement.offsetHeight;
+        if (height !== navbarHeight) {
+          setNavbarHeight(height);
+        }
+      }
+    };
 
-        {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-4">
-          {isChatPage ? (
-            <>
-              {username && <span className="text-gray-600">{username}</span>}
-              <ConnectionStatus />
-              <Button
-                variant="outline"
-                onClick={handleLogout}
-                className="bg-whisper-purple cursor-pointer hover:bg-whisper-purple/90"
-              >
-                Logout
-              </Button>
-              <ThemeToggle />
-            </>
-          ) : (            <>
+    // Initial measurement
+    updateNavbarHeight();
+
+    // Listen for resize events
+    window.addEventListener('resize', updateNavbarHeight);
+  }, [navbarHeight]);
+
+
+  return (
+    <>
+      <header id="navbar" className="fixed container top-0 left-0 w-full z-50 border-b border-container backdrop-blur-md">
+        <nav className="flex items-center justify-between px-6 py-3 max-w-7xl mx-auto">
+          {/* Logo Section */}
+          <Link href="/" className="flex items-center">
+            <Image src={logo} alt="FreeFlow Logo" width={40} height={40} />
+            <span className="text-2xl text-gray-600 font-semibold">FreeFlow</span>
+          </Link>
+
+          {/* Hamburger Icon (Mobile Only) */}
+          <button
+            className="md:hidden text-white"
+            onClick={toggleMenu}
+            aria-label="Toggle navigation menu"
+          >
+            <svg viewBox="0 0 24 24" width={28} height={28}>
+              {isMenuOpen ? (
+                <path
+                  fill="currentColor"
+                  d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                />
+              ) : (
+                <path
+                  fill="currentColor"
+                  d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"
+                />
+              )}
+            </svg>
+          </button>
+
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center gap-4">
+            {isChatPage ? (
+              <>
+                {username && <span className="text-gray-600">{username}</span>}
+                <ConnectionStatus />
+                <Button
+                  variant="outline"
+                  onClick={handleLogout}
+                  className="bg-whisper-purple cursor-pointer hover:bg-whisper-purple/90"
+                >
+                  Logout
+                </Button>
+                <ThemeToggle />
+              </>
+            ) : (<>
               <Link
                 href="/p2p"
                 className="text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-sm transition-colors"
@@ -143,30 +182,31 @@ const Navbar: React.FC = () => {
                 <UserButton />
               </SignedIn>
             </>
-          )}
-        </div>
-      </nav>      {/* Mobile Menu Dropdown */}
-      {isMenuOpen && (
-        <>
-          <div className="md:hidden bg-black px-6 py-3 space-y-2">
-            {isChatPage ? (
-              <>
-                {username && <span className="block text-white mb-2">{username}</span>}
-                <div className="mb-2">
-                  <ConnectionStatus />
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    handleLogout();
-                    setIsMenuOpen(false);
-                  }}
-                  className="w-full cursor-pointer bg-whisper-purple hover:bg-whisper-purple/90"
-                >
-                  Logout
-                </Button>
-              </>
-            ) : (              <>
+            )}
+          </div>
+        </nav>
+        {/* Mobile Menu Dropdown */}
+        {isMenuOpen && (
+          <>
+            <div className="md:hidden bg-black px-6 py-3 space-y-2">
+              {isChatPage ? (
+                <>
+                  {username && <span className="block text-white mb-2">{username}</span>}
+                  <div className="mb-2">
+                    <ConnectionStatus />
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      handleLogout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full cursor-pointer bg-whisper-purple hover:bg-whisper-purple/90"
+                  >
+                    Logout
+                  </Button>
+                </>
+              ) : (<>
                 <Link
                   href="/p2p"
                   className="block text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-center"
@@ -195,11 +235,14 @@ const Navbar: React.FC = () => {
                   </SignedIn>
                 </div>
               </>
-            )}
-          </div>
-        </>
-      )}
-    </header>
+              )}
+            </div>
+          </>
+        )}
+      </header>
+      {/* Spacer to prevent content from being hidden behind the fixed header */}
+      <div className="spacer" style={{ height: `${navbarHeight}px` }}></div>
+    </>
   );
 };
 

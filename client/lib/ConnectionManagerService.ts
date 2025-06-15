@@ -356,15 +356,25 @@ class ConnectionManagerService {
     const keysToRemove: string[] = [];
     
     for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (
+      const key = localStorage.key(i);      if (key && (
         key.includes(this.currentUserId) || 
+        // Single chat related keys
         key.startsWith('chat_messages_') ||
         key.startsWith('unread_count_') ||
         key.startsWith('freeflow_blacklist_') ||
-        key.startsWith('freeflow_connections_') ||
+        key.startsWith('freeflow_connections_') ||        // Group chat related keys
+        key.startsWith('group_messages_') ||
+        key.startsWith('group_unread_') ||
+        key.startsWith('group_info_') ||
+        key.startsWith('user_groups_') ||
+        key === 'group_join_requests' ||
+        key === 'pending_group_approvals' ||
+        key === 'group_connections' ||
+        key === 'group_notifications' ||
+        // User related keys
         key === 'username' ||
-        key === 'userId'
+        key === 'userId' ||
+        key === 'user_real_name'
       )) {
         keysToRemove.push(key);
       }
