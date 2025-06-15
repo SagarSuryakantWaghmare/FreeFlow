@@ -128,13 +128,18 @@ const Navbar: React.FC = () => {
                 className="text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-sm transition-colors"
               >
                 Go Private
-              </Link>
-              <SignedIn>
+              </Link>              <SignedIn>
                 <Link
                   href="/group-chat"
                   className="text-white bg-[rgb(76,175,80)] hover:bg-[rgb(56,155,60)] px-4 py-2 rounded-md text-sm transition-colors"
                 >
                   Group Chat
+                </Link>
+                <Link
+                  href="/video-call"
+                  className="text-white bg-[rgb(59,130,246)] hover:bg-[rgb(37,99,235)] px-4 py-2 rounded-md text-sm transition-colors"
+                >
+                  Video Call
                 </Link>
               </SignedIn>
               <ThemeToggle />
@@ -178,14 +183,20 @@ const Navbar: React.FC = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Go Private
-                </Link>
-                <SignedIn>
+                </Link>                <SignedIn>
                   <Link
                     href="/group-chat"
                     className="block text-white bg-[rgb(76,175,80)] hover:bg-[rgb(56,155,60)] px-4 py-2 rounded-md text-center mt-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Group Chat
+                  </Link>
+                  <Link
+                    href="/video-call"
+                    className="block text-white bg-[rgb(59,130,246)] hover:bg-[rgb(37,99,235)] px-4 py-2 rounded-md text-center mt-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Video Call
                   </Link>
                 </SignedIn>
                 <div className="flex justify-between items-center mt-2">

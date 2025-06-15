@@ -1,4 +1,5 @@
 com\mini_project\p2p_chat\config\StompWebSocketConfig.class
+com\mini_project\p2p_chat\socket_communication\SignalingHandler$VideoRoomInfo.class
 com\mini_project\p2p_chat\config\WebSocketConfig.class
 com\mini_project\p2p_chat\group_chat\Controller\GroupController.class
 com\mini_project\p2p_chat\group_chat\model\ChatGroup.class

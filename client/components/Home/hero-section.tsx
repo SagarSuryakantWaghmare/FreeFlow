@@ -42,10 +42,15 @@ export function HeroSection() {
             <p className="text-lg md:text-xl text-[hsl(217.9,10.6%,64.9%)] max-w-xl">
               Connect with anyone, anywhere through secure video calls and text chat –
               no downloads, no hassle, just communication that flows freely.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            </p>            <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Button size="lg" asChild>
                 <Link href="/p2p">Go Private Now</Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link href="/video-call">
+                  <Video className="mr-2 h-5 w-5" />
+                  Video Call
+                </Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
                 <Link href="/#features">Learn More</Link>
