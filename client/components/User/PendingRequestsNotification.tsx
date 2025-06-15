@@ -8,7 +8,6 @@ import connectionManagerService from '@/lib/ConnectionManagerService';
 const PendingRequestsNotification: React.FC = () => {
   const [pendingCount, setPendingCount] = useState(0);
   const [showDetails, setShowDetails] = useState(false);
-
   useEffect(() => {
     const updateCount = () => {
       const requests = connectionManagerService.getPendingRequests();
@@ -17,12 +16,20 @@ const PendingRequestsNotification: React.FC = () => {
 
     updateCount();
 
-    // Listen for connection request changes
+    // Listen for connection request changes and status changes
     const handleRequest = () => updateCount();
+    const handleStatusChange = () => updateCount();
+    
     connectionManagerService.onConnectionRequest(handleRequest);
+    connectionManagerService.onConnectionStatusChange(handleStatusChange);
+
+    // Update every 2 seconds to catch any missed updates
+    const interval = setInterval(updateCount, 2000);
 
     return () => {
+      clearInterval(interval);
       connectionManagerService.removeConnectionRequestCallback(handleRequest);
+      connectionManagerService.removeConnectionStatusChangeCallback(handleStatusChange);
     };
   }, []);
 

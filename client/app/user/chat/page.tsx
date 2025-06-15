@@ -61,12 +61,11 @@ const Chat = () => {
     if (!storedUsername || !storedUserId) {
       router.push('/simple-sign-in');
       return;
-    }
-
-    username.current = storedUsername;
+    }    username.current = storedUsername;
     userId.current = storedUserId;
 
-    webRTCService.initialize(userId.current);    // Connection status event handler
+    webRTCService.initialize(userId.current);
+    connectionManagerService.initialize(userId.current);// Connection status event handler
     const handleConnectionStatus = (data: any) => {
       if (data.status === 'reconnecting') {
         toast.info(`Reconnecting... Attempt ${data.attempt}/${data.maxAttempts}`);
@@ -80,10 +79,26 @@ const Chat = () => {
     const handleConnectionRequest = (request: { fromUserId: string; fromUserName: string; timestamp: Date }) => {
       setConnectionRequest(request);
       toast.info(`Connection request from ${request.fromUserName}`);
+    };    // Setup connection manager listeners
+    connectionManagerService.onConnectionRequest(handleConnectionRequest);
+
+    // Auto-reconnect to previously connected peers
+    const autoReconnectToPeers = () => {
+      const existingConnections = connectionManagerService.getAllConnections();
+      existingConnections.forEach(connection => {
+        // Only auto-reconnect if they were previously connected and not blacklisted
+        if (connection.status === 'connected' && !connectionManagerService.isBlacklisted(connection.userId)) {
+          console.log(`Auto-reconnecting to ${connection.userId}`);
+          // Set timeout to ensure WebSocket is connected first
+          setTimeout(() => {
+            webRTCService.requestConnection(connection.userId);
+          }, 2000);
+        }
+      });
     };
 
-    // Setup connection manager listeners
-    connectionManagerService.onConnectionRequest(handleConnectionRequest);// Connect to WebSocket server with timeout
+    // Set up auto-reconnection after WebSocket connects
+    setTimeout(autoReconnectToPeers, 3000);// Connect to WebSocket server with timeout
     let connectionTimeout: NodeJS.Timeout;
 
     // Set a timeout to handle connection attempts that take too long
@@ -175,11 +190,10 @@ const Chat = () => {
 
       setUsers(onlineUsers);
     }
-  };
-  // Handle received WebRTC messages (simplified - storage is now handled in WebRTCService)
+  };  // Handle received WebRTC messages (simplified - storage is now handled in WebRTCService)
   const handleRTCMessage = (message: any) => {
     // Only update UI if this message is for the currently selected user
-    if (selectedUser && (message.sender === selectedUser || message.sender === username.current)) {
+    if (selectedUser && (message.fromUserId === selectedUser || message.sender === username.current)) {
       const newMessage = {
         id: message.id,
         sender: message.sender,
@@ -188,24 +202,22 @@ const Chat = () => {
         isSelf: message.sender === username.current
       };
 
-      // Check if we already have this message (to avoid duplicates)
-      const messageExists = messages.some(msg => msg.id === newMessage.id);
+      setMessages(prevMessages => {
+        // Check if we already have this message (to avoid duplicates)
+        const messageExists = prevMessages.some(msg => msg.id === newMessage.id);
+        if (messageExists) return prevMessages;
 
-      if (!messageExists) {
-        setMessages(prevMessages => {
-          const updatedMessages = [...prevMessages, newMessage];
-          updatedMessages.sort((a, b) =>
-            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-          );
-          return updatedMessages;
-        });
-      }
+        const updatedMessages = [...prevMessages, newMessage];
+        updatedMessages.sort((a, b) =>
+          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        );
+        return updatedMessages;
+      });
     }
   };
-
   // Handle background messages (when chat window is not active)
   const handleBackgroundMessage = (peerId: string, message: any) => {
-    // If this message is from the currently selected user, add it to the UI
+    // Always add message to UI if it's from the currently selected user
     if (selectedUser === peerId) {
       const newMessage = {
         id: message.id,
@@ -215,16 +227,17 @@ const Chat = () => {
         isSelf: message.isSelf
       };
 
-      const messageExists = messages.some(msg => msg.id === newMessage.id);
-      if (!messageExists) {
-        setMessages(prevMessages => {
-          const updatedMessages = [...prevMessages, newMessage];
-          updatedMessages.sort((a, b) =>
-            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-          );
-          return updatedMessages;
-        });
-      }
+      setMessages(prevMessages => {
+        // Check if message already exists to avoid duplicates
+        const messageExists = prevMessages.some(msg => msg.id === newMessage.id);
+        if (messageExists) return prevMessages;
+
+        const updatedMessages = [...prevMessages, newMessage];
+        updatedMessages.sort((a, b) =>
+          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        );
+        return updatedMessages;
+      });
     }
     // For other users, the message is already saved by ChatStorageService
     // and unread count is updated automatically

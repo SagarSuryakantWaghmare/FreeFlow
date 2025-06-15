@@ -18,24 +18,35 @@ interface UserListProps {
 
 const UserList: React.FC<UserListProps> = ({ users, selectedUserId, onSelectUser }) => {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
-
-  // Load initial unread counts
+  // Load initial unread counts and setup listeners
   useEffect(() => {
-    const counts: Record<string, number> = {};
-    users.forEach(user => {
-      counts[user.id] = chatStorageService.getUnreadCount(user.id);
-    });
-    setUnreadCounts(counts);
+    const updateCounts = () => {
+      const counts: Record<string, number> = {};
+      users.forEach(user => {
+        counts[user.id] = chatStorageService.getUnreadCount(user.id);
+      });
+      setUnreadCounts(counts);
+    };
+
+    updateCounts();
 
     // Listen for unread count changes
     const handleUnreadCountChange = (peerId: string, count: number) => {
       setUnreadCounts(prev => ({ ...prev, [peerId]: count }));
     };
 
+    // Listen for connection status changes to trigger re-render
+    const handleConnectionStatusChange = () => {
+      // Force component to re-render by updating a dummy state
+      setUnreadCounts(prev => ({ ...prev }));
+    };
+
     chatStorageService.onUnreadCountChange(handleUnreadCountChange);
+    connectionManagerService.onConnectionStatusChange(handleConnectionStatusChange);
 
     return () => {
       chatStorageService.removeUnreadCountChangeCallback(handleUnreadCountChange);
+      connectionManagerService.removeConnectionStatusChangeCallback(handleConnectionStatusChange);
     };
   }, [users]);
 

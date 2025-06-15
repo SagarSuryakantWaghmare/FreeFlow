@@ -155,7 +155,6 @@ class WebRTCService {
     // The ConnectionManagerService will trigger a popup for user decision
     // The actual acceptance/rejection will be handled by acceptConnectionRequest/rejectConnectionRequest methods
   }
-
   /**
    * Accept a connection request from another user
    */
@@ -171,6 +170,11 @@ class WebRTCService {
       fromUserId: this.localUserId,
       toUserId: fromUserId
     });
+
+    // Force update the connection status immediately
+    setTimeout(() => {
+      connectionManagerService.updateConnectionStatus(fromUserId, 'connecting');
+    }, 100);
   }
 
   /**
@@ -347,8 +351,14 @@ class WebRTCService {
           // Save message to storage (handles background messages automatically)
           chatStorageService.saveMessage(remoteUserId, formattedMessage);
           
+          // Create a message object with sender info for the callback
+          const messageWithSender = {
+            ...formattedMessage,
+            fromUserId: remoteUserId // Add the sender's user ID
+          };
+          
           // Notify listeners (active chat windows)
-          this.notifyMessageReceived(formattedMessage);
+          this.notifyMessageReceived(messageWithSender);
         }
       } catch (error) {
         console.error('Error parsing message:', error);

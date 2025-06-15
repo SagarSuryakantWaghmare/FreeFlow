@@ -20,6 +20,7 @@ class ConnectionManagerService {
   private blacklistedUsers: Set<string> = new Set();
   private connections: Map<string, Connection> = new Map();
   private pendingRequests: Map<string, ConnectionRequest> = new Map();
+  private currentUserId: string | null = null;
   
   // Callbacks
   private onConnectionRequestCallbacks: ((request: ConnectionRequest) => void)[] = [];
@@ -31,11 +32,20 @@ class ConnectionManagerService {
   }
 
   /**
+   * Initialize with current user ID to make storage user-specific
+   */
+  initialize(userId: string): void {
+    this.currentUserId = userId;
+    this.loadBlacklist();
+    this.loadConnections();
+  }
+  /**
    * Load blacklisted users from localStorage
    */
   private loadBlacklist(): void {
     try {
-      const stored = localStorage.getItem(this.BLACKLIST_KEY);
+      const key = this.getBlacklistKey();
+      const stored = localStorage.getItem(key);
       if (stored) {
         this.blacklistedUsers = new Set(JSON.parse(stored));
       }
@@ -49,12 +59,12 @@ class ConnectionManagerService {
    */
   private saveBlacklist(): void {
     try {
-      localStorage.setItem(this.BLACKLIST_KEY, JSON.stringify([...this.blacklistedUsers]));
+      const key = this.getBlacklistKey();
+      localStorage.setItem(key, JSON.stringify([...this.blacklistedUsers]));
     } catch (error) {
       console.error('Error saving blacklist:', error);
     }
   }
-
   /**
    * Load connections from localStorage
    */
@@ -68,7 +78,7 @@ class ConnectionManagerService {
             conn.userId,
             {
               ...conn,
-              lastActivity: new Date(conn.lastActivity)
+              lastActivity: conn.lastActivity ? new Date(conn.lastActivity) : new Date()
             }
           ])
         );
@@ -77,7 +87,6 @@ class ConnectionManagerService {
       console.error('Error loading connections:', error);
     }
   }
-
   /**
    * Save connections to localStorage
    */
@@ -87,7 +96,9 @@ class ConnectionManagerService {
         userId,
         {
           ...conn,
-          lastActivity: conn.lastActivity.toISOString()
+          lastActivity: conn.lastActivity instanceof Date && !isNaN(conn.lastActivity.getTime()) 
+            ? conn.lastActivity.toISOString() 
+            : new Date().toISOString() // Fallback to current date if invalid
         }
       ]);
       localStorage.setItem(this.CONNECTIONS_KEY, JSON.stringify(connectionsArray));
@@ -324,16 +335,16 @@ class ConnectionManagerService {
       this.onConnectionStatusChangeCallbacks.splice(index, 1);
     }
   }
-
   /**
-   * Clear all connections and pending requests (for logout)
+   * Clear all connections, pending requests, and blacklist (for logout)
    */
   clearAll(): void {
     this.connections.clear();
     this.pendingRequests.clear();
+    this.blacklistedUsers.clear();
     this.saveConnections();
+    this.saveBlacklist();
   }
-
   /**
    * Notify connection status change
    */
@@ -345,6 +356,20 @@ class ConnectionManagerService {
         console.error('Error in connection status change callback:', error);
       }
     });
+  }
+
+  /**
+   * Get user-specific blacklist key
+   */
+  private getBlacklistKey(): string {
+    return this.currentUserId ? `${this.BLACKLIST_KEY}_${this.currentUserId}` : this.BLACKLIST_KEY;
+  }
+
+  /**
+   * Get user-specific connections key
+   */
+  private getConnectionsKey(): string {
+    return this.currentUserId ? `${this.CONNECTIONS_KEY}_${this.currentUserId}` : this.CONNECTIONS_KEY;
   }
 }
 
