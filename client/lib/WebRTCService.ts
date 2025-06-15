@@ -3,6 +3,7 @@
 import webSocketService from "./WebSocketService";
 import { SyncRequest, SyncResponse } from "./types";
 import chatStorageService from "./ChatStorageService";
+import connectionManagerService from "./ConnectionManagerService";
 
 interface RTCPeerData {
   peerConnection: RTCPeerConnection;
@@ -79,10 +80,17 @@ class WebRTCService {
         this.createOffer(data.fromUserId);
       }
     });
-  }
 
+    // Listen for rejected connection requests
+    webSocketService.addEventListener('connection_rejected', data => {
+      if (data.toUserId === this.localUserId) {
+        console.log(`Connection request rejected by ${data.fromUserId}`);
+        // Optionally notify the user
+      }
+    });
+  }
   /**
-   * Initiate a connection with another user
+   * Initiate a connection with another user (updated to check connection status)
    */
   requestConnection(remoteUserId: string): void {
     if (!this.localUserId) {
@@ -90,24 +98,96 @@ class WebRTCService {
       return;
     }
 
+    // Check if user is blacklisted
+    if (connectionManagerService.isBlacklisted(remoteUserId)) {
+      console.log(`Cannot connect to blacklisted user ${remoteUserId}`);
+      return;
+    }
+
+    // Check if already connected
+    if (this.isConnectedToPeer(remoteUserId)) {
+      console.log(`Already connected to ${remoteUserId}`);
+      return;
+    }
+
+    // Check if already have an existing connection
+    const existingConnection = connectionManagerService.getConnection(remoteUserId);
+    if (existingConnection && existingConnection.status === 'connecting') {
+      console.log(`Connection already in progress with ${remoteUserId}`);
+      return;
+    }
+
+    // Add to connection manager
+    const username = localStorage.getItem('username') || this.localUserId;
+    connectionManagerService.addConnection(remoteUserId, remoteUserId); // We don't know their username yet
+
+    // Send connection request
     webSocketService.sendMessage({
       type: 'connection_request',
       fromUserId: this.localUserId,
+      fromUserName: username,
       toUserId: remoteUserId
     });
   }
-
   /**
-   * Handle incoming connection request
+   * Handle incoming connection request - now routes through ConnectionManagerService
    */
   private handleConnectionRequest(data: any): void {
     if (!this.localUserId) return;
 
-    // Accept the connection request automatically
+    // Get username from the request or use userId as fallback
+    const fromUserName = data.fromUserName || data.fromUserId;
+    
+    // Let ConnectionManagerService handle the request (including blacklist check)
+    const shouldProcess = connectionManagerService.handleConnectionRequest(data.fromUserId, fromUserName);
+    
+    if (!shouldProcess) {
+      // Request was blocked (blacklisted or duplicate), send rejection
+      webSocketService.sendMessage({
+        type: 'connection_rejected',
+        fromUserId: this.localUserId,
+        toUserId: data.fromUserId,
+        reason: 'rejected'
+      });
+      return;
+    }
+
+    // The ConnectionManagerService will trigger a popup for user decision
+    // The actual acceptance/rejection will be handled by acceptConnectionRequest/rejectConnectionRequest methods
+  }
+
+  /**
+   * Accept a connection request from another user
+   */
+  acceptConnectionRequest(fromUserId: string): void {
+    if (!this.localUserId) return;
+
+    // Update connection manager
+    connectionManagerService.acceptConnectionRequest(fromUserId);
+
+    // Send acceptance to the requesting user
     webSocketService.sendMessage({
       type: 'connection_accepted',
       fromUserId: this.localUserId,
-      toUserId: data.fromUserId
+      toUserId: fromUserId
+    });
+  }
+
+  /**
+   * Reject and blacklist a connection request from another user
+   */
+  rejectConnectionRequest(fromUserId: string): void {
+    if (!this.localUserId) return;
+
+    // Update connection manager (will blacklist the user)
+    connectionManagerService.rejectAndBlacklistConnectionRequest(fromUserId);
+
+    // Send rejection to the requesting user
+    webSocketService.sendMessage({
+      type: 'connection_rejected',
+      fromUserId: this.localUserId,
+      toUserId: fromUserId,
+      reason: 'rejected_and_blocked'
     });
   }
 
@@ -218,12 +298,12 @@ class WebRTCService {
           candidate: event.candidate
         });
       }
-    });
-
-    peerConnection.addEventListener('connectionstatechange', () => {
+    });    peerConnection.addEventListener('connectionstatechange', () => {
       if (peerConnection.connectionState === 'connected') {
+        connectionManagerService.updateConnectionStatus(remoteUserId, 'connected');
         this.notifyConnectionStateChange(remoteUserId, 'connected');
       } else if (['disconnected', 'failed', 'closed'].includes(peerConnection.connectionState)) {
+        connectionManagerService.updateConnectionStatus(remoteUserId, 'disconnected');
         this.notifyConnectionStateChange(remoteUserId, 'disconnected');
       }
     });
@@ -247,9 +327,7 @@ class WebRTCService {
     dataChannel.addEventListener('close', () => {
       console.log(`Data channel closed with ${remoteUserId}`);
       this.notifyConnectionStateChange(remoteUserId, 'disconnected');
-    });
-
-    dataChannel.addEventListener('message', event => {
+    });    dataChannel.addEventListener('message', event => {
       try {
         const message = JSON.parse(event.data);
 
@@ -265,6 +343,11 @@ class WebRTCService {
             timestamp: new Date(message.timestamp),
             isSelf: false
           };
+          
+          // Save message to storage (handles background messages automatically)
+          chatStorageService.saveMessage(remoteUserId, formattedMessage);
+          
+          // Notify listeners (active chat windows)
           this.notifyMessageReceived(formattedMessage);
         }
       } catch (error) {

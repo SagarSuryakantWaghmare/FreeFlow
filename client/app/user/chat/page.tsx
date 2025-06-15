@@ -11,9 +11,13 @@ import UserList from '@/components/User/UserList';
 import ChatMessage from '@/components/User/ChatMessage';
 import EmptyChat from '@/components/User/EmptyChat';
 import HelpInfo from '@/components/User/HelpInfo';
+import ConnectionRequestDialog from '@/components/User/ConnectionRequestDialog';
+import ConnectionStats from '@/components/User/ConnectionStats';
+import PendingRequestsNotification from '@/components/User/PendingRequestsNotification';
 import webSocketService from '@/lib/WebSocketService';
 import webRTCService from '@/lib/WebRTCService';
 import chatStorageService from '@/lib/ChatStorageService';
+import connectionManagerService from '@/lib/ConnectionManagerService';
 
 const Chat = () => {
   const router = useRouter();
@@ -37,6 +41,14 @@ const Chat = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Connection request dialog state
+  const [connectionRequest, setConnectionRequest] = useState<{
+    fromUserId: string;
+    fromUserName: string;
+    timestamp: Date;
+  } | null>(null);
+  
   const username = useRef<string>('');
   const userId = useRef<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -54,9 +66,7 @@ const Chat = () => {
     username.current = storedUsername;
     userId.current = storedUserId;
 
-    webRTCService.initialize(userId.current);
-
-    // Connection status event handler
+    webRTCService.initialize(userId.current);    // Connection status event handler
     const handleConnectionStatus = (data: any) => {
       if (data.status === 'reconnecting') {
         toast.info(`Reconnecting... Attempt ${data.attempt}/${data.maxAttempts}`);
@@ -66,10 +76,26 @@ const Chat = () => {
       }
     };
 
-    // Connect to WebSocket server with timeout
+    // Connection request handler
+    const handleConnectionRequest = (request: { fromUserId: string; fromUserName: string; timestamp: Date }) => {
+      setConnectionRequest(request);
+      toast.info(`Connection request from ${request.fromUserName}`);
+    };
+
+    // Setup connection manager listeners
+    connectionManagerService.onConnectionRequest(handleConnectionRequest);// Connect to WebSocket server with timeout
     let connectionTimeout: NodeJS.Timeout;
 
-    const connectionPromise = webSocketService.connect(userId.current)
+    // Set a timeout to handle connection attempts that take too long
+    connectionTimeout = setTimeout(() => {
+      if (!webSocketService.isConnected()) {
+        setIsConnected(false);
+        toast.error('Connection timeout - the server might be down or unreachable');
+      }
+    }, 8000);
+
+    // Properly handle the connection promise
+    webSocketService.connect(userId.current)
       .then(() => {
         clearTimeout(connectionTimeout);
         setIsConnected(true);
@@ -81,37 +107,60 @@ const Chat = () => {
       })
       .catch((error) => {
         clearTimeout(connectionTimeout);
+        setIsConnected(false);
         console.error('Failed to connect to WebSocket server:', error);
         toast.error(`Connection failed: ${error.message || 'Could not connect to the server'}`);
-      });
-
-    // Set a timeout to handle connection attempts that take too long
-    connectionTimeout = setTimeout(() => {
-      if (!webSocketService.isConnected()) {
-        setIsConnected(false);
-        toast.error('Connection timeout - the server might be down or unreachable');
-      }
-    }, 8000);
-
-    // Set up WebRTC message handler
+      });    // Set up WebRTC message handler
     webRTCService.onMessage(handleRTCMessage);
 
     // Set up WebRTC connection state handler
     webRTCService.onConnectionStateChange(handleConnectionStateChange);
 
+    // Set up background message handler
+    chatStorageService.onNewMessage(handleBackgroundMessage);
+
     // Clean up on unmount
     return () => {
       webSocketService.removeEventListener('online_users', handleOnlineUsers);
       webSocketService.removeEventListener('connection_status', handleConnectionStatus);
+      connectionManagerService.removeConnectionRequestCallback(handleConnectionRequest);
+      chatStorageService.removeNewMessageCallback(handleBackgroundMessage);
       webSocketService.disconnect();
       webRTCService.closeAllConnections();
     };
   }, [router]);
-
   // Scroll to bottom of messages when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Update page title with unread count
+  useEffect(() => {
+    const totalUnread = chatStorageService.getTotalUnreadCount();
+    if (totalUnread > 0) {
+      document.title = `(${totalUnread}) FreeFlow Chat`;
+    } else {
+      document.title = 'FreeFlow Chat';
+    }
+  }, []);
+
+  // Listen for unread count changes to update title
+  useEffect(() => {
+    const handleUnreadCountChange = () => {
+      const totalUnread = chatStorageService.getTotalUnreadCount();
+      if (totalUnread > 0) {
+        document.title = `(${totalUnread}) FreeFlow Chat`;
+      } else {
+        document.title = 'FreeFlow Chat';
+      }
+    };
+
+    chatStorageService.onUnreadCountChange(handleUnreadCountChange);
+
+    return () => {
+      chatStorageService.removeUnreadCountChangeCallback(handleUnreadCountChange);
+    };
+  }, []);
 
   // Handle online users update
   const handleOnlineUsers = (data: any) => {
@@ -127,60 +176,71 @@ const Chat = () => {
       setUsers(onlineUsers);
     }
   };
-
-  // Handle received WebRTC messages
+  // Handle received WebRTC messages (simplified - storage is now handled in WebRTCService)
   const handleRTCMessage = (message: any) => {
-    const newMessage = {
-      id: message.id,
-      sender: message.sender,
-      content: message.content,
-      timestamp: message.timestamp,
-      isSelf: false
-    };
+    // Only update UI if this message is for the currently selected user
+    if (selectedUser && (message.sender === selectedUser || message.sender === username.current)) {
+      const newMessage = {
+        id: message.id,
+        sender: message.sender,
+        content: message.content,
+        timestamp: new Date(message.timestamp),
+        isSelf: message.sender === username.current
+      };
 
-    // Check if we already have this message (to avoid duplicates from sync)
-    const messageExists = messages.some(msg => msg.id === newMessage.id);
+      // Check if we already have this message (to avoid duplicates)
+      const messageExists = messages.some(msg => msg.id === newMessage.id);
 
-    if (!messageExists) {
-      // Add message to local state
-      setMessages(prevMessages => {
-        // Create a new array with the new message
-        const updatedMessages = [...prevMessages, newMessage];
-
-        // Sort messages by timestamp to ensure correct order
-        updatedMessages.sort((a, b) =>
-          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-        );
-
-        return updatedMessages;
-      });
-
-      // Save message to localStorage if we have a selected user
-      if (selectedUser) {
-        chatStorageService.saveMessage(selectedUser, newMessage);
+      if (!messageExists) {
+        setMessages(prevMessages => {
+          const updatedMessages = [...prevMessages, newMessage];
+          updatedMessages.sort((a, b) =>
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          );
+          return updatedMessages;
+        });
       }
     }
   };
 
+  // Handle background messages (when chat window is not active)
+  const handleBackgroundMessage = (peerId: string, message: any) => {
+    // If this message is from the currently selected user, add it to the UI
+    if (selectedUser === peerId) {
+      const newMessage = {
+        id: message.id,
+        sender: message.sender,
+        content: message.content,
+        timestamp: new Date(message.timestamp),
+        isSelf: message.isSelf
+      };
+
+      const messageExists = messages.some(msg => msg.id === newMessage.id);
+      if (!messageExists) {
+        setMessages(prevMessages => {
+          const updatedMessages = [...prevMessages, newMessage];
+          updatedMessages.sort((a, b) =>
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          );
+          return updatedMessages;
+        });
+      }
+    }
+    // For other users, the message is already saved by ChatStorageService
+    // and unread count is updated automatically
+  };
   // Handle WebRTC connection state changes
   const handleConnectionStateChange = (remoteUserId: string, state: 'connected' | 'disconnected') => {
     if (state === 'connected') {
       toast.success(`Connected to ${remoteUserId}`);
-
-      // Set selected user if not already set
-      if (!selectedUser) {
-        setSelectedUser(remoteUserId);
-
-        // Load chat history for this user
-        const chatHistory = chatStorageService.getMessages(remoteUserId);
-        setMessages(chatHistory);
-      }
+      // Don't automatically open chat - user must click to open
     } else {
       toast.info(`Disconnected from ${remoteUserId}`);
 
       // Clear selected user if it was the disconnected peer
       if (selectedUser === remoteUserId) {
         setSelectedUser(null);
+        setMessages([]);
       }
     }
   };
@@ -220,26 +280,24 @@ const Chat = () => {
       toast.error('Not connected to peer. Trying to establish connection...');
     }
   };
-
   const handleSelectUser = (userId: string) => {
     setSelectedUser(userId);
-    // Close sidebar on mobile after selecting a user
-    setSidebarOpen(false);
+    setSidebarOpen(false); // Close sidebar on mobile after selecting a user
 
     // Load chat history for this user
     const chatHistory = chatStorageService.getMessages(userId);
     setMessages(chatHistory);
 
-    // If not already connected to this peer, request a connection
-    if (!webRTCService.isConnectedToPeer(userId)) {
-      webRTCService.requestConnection(userId);
-      toast.info('Requesting connection...');
-    }
-  };
+    // Mark messages as read
+    chatStorageService.markMessagesAsRead(userId);
 
+    // Only request connection if not already connected
+    // (The UserList component now handles connection requests)
+  };
   const handleLogout = () => {
     webSocketService.disconnect();
     webRTCService.closeAllConnections();
+    connectionManagerService.clearAll();
 
     // Clear all chat messages from localStorage
     chatStorageService.clearAllMessages();
@@ -248,6 +306,30 @@ const Chat = () => {
     localStorage.removeItem('userId');
     toast.success('Logged out successfully');
     router.push('/');
+  };
+
+  // Connection request dialog handlers
+  const handleAcceptConnection = () => {
+    if (connectionRequest) {
+      webRTCService.acceptConnectionRequest(connectionRequest.fromUserId);
+      toast.success(`Accepted connection from ${connectionRequest.fromUserName}`);
+      setConnectionRequest(null);
+    }
+  };
+
+  const handleRejectConnection = () => {
+    if (connectionRequest) {
+      webRTCService.rejectConnectionRequest(connectionRequest.fromUserId);
+      toast.info(`Rejected and blocked ${connectionRequest.fromUserName}`);
+      setConnectionRequest(null);
+    }
+  };
+
+  const handleIgnoreConnection = () => {
+    if (connectionRequest) {
+      connectionManagerService.ignoreConnectionRequest(connectionRequest.fromUserId);
+      setConnectionRequest(null);
+    }
   };
 
   return (
@@ -294,18 +376,19 @@ const Chat = () => {
               </div>
             </div>
             <Separator className="my-2 bg-gray-200 dark:bg-zinc-700" />
-          </div>
-
-          {showHelp ? (
+          </div>          {showHelp ? (
             <HelpInfo className="mx-2 mb-4 overflow-y-auto" />
           ) : (
-            <ScrollArea className="flex-1 overflow-hidden">
-              <UserList
-                users={users}
-                selectedUserId={selectedUser}
-                onSelectUser={handleSelectUser}
-              />
-            </ScrollArea>
+            <>
+              <ScrollArea className="flex-1 overflow-hidden">
+                <UserList
+                  users={users}
+                  selectedUserId={selectedUser}
+                  onSelectUser={handleSelectUser}
+                />
+              </ScrollArea>
+              <ConnectionStats />
+            </>
           )}
         </aside>
 
@@ -404,9 +487,18 @@ const Chat = () => {
               </div>
               <EmptyChat />
             </>
-          )}
-        </main>
+          )}        </main>
       </div>
+        {/* Connection Request Dialog */}
+      <ConnectionRequestDialog
+        request={connectionRequest}
+        onAccept={handleAcceptConnection}
+        onReject={handleRejectConnection}
+        onClose={handleIgnoreConnection}
+      />
+      
+      {/* Pending Requests Notification */}
+      <PendingRequestsNotification />
     </div>
   );
 };
