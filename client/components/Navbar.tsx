@@ -8,13 +8,14 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   SignedIn,
   SignedOut,
-  UserButton
+  UserButton,
+  useUser
 } from "@clerk/nextjs";
 import { Button } from "./ui/button";
 import ConnectionStatus from "@/components/User/ConnectionStatus";
 import webSocketService from "@/lib/WebSocketService";
 import groupChatService from "@/lib/GroupChatService";
-import { UserCog } from "lucide-react";
+import { useClerkLogoutDetection } from "@/hooks/use-clerk-logout";
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -23,7 +24,8 @@ const Navbar: React.FC = () => {
   const pathname = usePathname();
   const router = useRouter();
   const isChatPage = pathname?.includes('/user/chat');
-  const [navbarHeight, setNavbarHeight] = useState(0);
+  const [navbarHeight, setNavbarHeight] = useState(0);  const { isSignedIn, user } = useUser();
+  const { performLogoutCleanup } = useClerkLogoutDetection();
 
   useEffect(() => {
     if (isChatPage) {
@@ -40,51 +42,13 @@ const Navbar: React.FC = () => {
       };
 
       const interval = setInterval(checkConnection, 2000);
-      checkConnection();
-
-      return () => {
+      checkConnection();      return () => {
         clearInterval(interval);
-      };
-    }
-  }, [isChatPage]); const handleLogout = () => {
-    if (webSocketService) {
-      webSocketService.disconnect();
-    }
+      };    }
+  }, [isChatPage]);
 
-    // Clear all group chat data (subscriptions, in-memory state)
-    groupChatService.clearAllData();
-
-    // Clear all localStorage data completely
-    const keysToRemove: string[] = [];
-
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (
-        // Single chat related keys
-        key.startsWith('chat_messages_') ||
-        key.startsWith('unread_count_') ||
-        key.startsWith('freeflow_blacklist_') ||
-        key.startsWith('freeflow_connections_') ||        // Group chat related keys
-        key.startsWith('group_messages_') ||
-        key.startsWith('group_unread_') ||
-        key.startsWith('group_info_') ||
-        key.startsWith('user_groups_') ||
-        key === 'group_join_requests' ||
-        key === 'pending_group_approvals' ||
-        key === 'group_connections' ||
-        key === 'group_notifications' ||
-        // User related keys
-        key === 'username' ||
-        key === 'userId' ||
-        key === 'user_real_name'
-      )) {
-        keysToRemove.push(key);
-      }
-    }
-
-    // Remove all identified keys
-    keysToRemove.forEach(key => localStorage.removeItem(key));
-
+  const handleLogout = () => {
+    performLogoutCleanup();
     router.push('/');
   };
 
