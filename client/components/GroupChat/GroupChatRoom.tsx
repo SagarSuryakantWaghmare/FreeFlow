@@ -10,6 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import groupChatService, { GroupMessage } from '@/lib/GroupChatService';
 import { useToast } from '@/hooks/use-toast';
 import { Copy, Users, LogOut, Send, ArrowLeft, User, Sparkles, MessageCircle } from 'lucide-react';
+import { useUser } from '@clerk/nextjs';
+
+
+
 
 interface GroupChatRoomProps {
   groupId: string;
@@ -19,12 +23,13 @@ interface GroupChatRoomProps {
   onLeaveGroup: () => void;
 }
 
-export default function GroupChatRoom({ 
-  groupId, 
-  groupName, 
-  userId, 
-  inviteLink, 
-  onLeaveGroup 
+
+export default function GroupChatRoom({
+  groupId,
+  groupName,
+  userId,
+  inviteLink,
+  onLeaveGroup
 }: GroupChatRoomProps) {
   const [messages, setMessages] = useState<GroupMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -32,6 +37,20 @@ export default function GroupChatRoom({
   const [isLeaving, setIsLeaving] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { user, isLoaded } = useUser();
+
+  // Getting the current user information
+  useEffect(() => {
+    if (isLoaded && user) {
+      console.log('Current user:', user);
+      console.log('User email:', user.emailAddresses[0]?.emailAddress);
+      console.log('User name:', user.firstName, user.lastName);
+      console.log('User ID:', user.id);
+      
+      // You can access user data here
+      // user.firstName, user.lastName, user.emailAddresses[0]?.emailAddress, etc.
+    }
+  }, [user, isLoaded]);
 
   useEffect(() => {
     const initializeChat = async () => {
@@ -40,9 +59,9 @@ export default function GroupChatRoom({
         if (!groupChatService.isConnected()) {
           await groupChatService.connect();
         }
-        
+
         setIsConnected(true);
-          // Subscribe to group messages
+        // Subscribe to group messages
         groupChatService.subscribeToGroup(groupId, (message: GroupMessage) => {
           console.log('GroupChatRoom received message:', message);
           setMessages(prev => {
@@ -51,7 +70,7 @@ export default function GroupChatRoom({
             return newMessages;
           });
         });
-        
+
         toast({
           title: "Connected ✨",
           description: `Welcome to "${groupName}"`,
@@ -90,7 +109,7 @@ export default function GroupChatRoom({
       senderId: userId,
       content: newMessage.trim(),
     };
-
+    console.log('sender id', userId);
     groupChatService.sendMessage(message);
     setNewMessage('');
   };
@@ -127,19 +146,34 @@ export default function GroupChatRoom({
   };
 
   const formatTime = (timestamp: Date) => {
-    return new Date(timestamp).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return new Date(timestamp).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
-
   const getUserDisplayName = (senderId: string) => {
-    if (senderId === userId) return 'You';
+    if (senderId === userId) {
+      // Use the actual user's name if available, otherwise fallback to 'You'
+      if (user?.firstName) {
+        return user.firstName + (user.lastName ? ` ${user.lastName}` : '');
+      }
+      return 'You';
+    }
+    // For other users, you could implement a user lookup system
+    // For now, just return the senderId
     return senderId;
   };
 
   const getUserInitials = (senderId: string) => {
-    if (senderId === userId) return 'Y';
+    if (senderId === userId) {
+      // Use actual user initials if available
+      if (user?.firstName) {
+        const firstInitial = user.firstName.charAt(0).toUpperCase();
+        const lastInitial = user.lastName ? user.lastName.charAt(0).toUpperCase() : '';
+        return firstInitial + lastInitial;
+      }
+      return 'Y';
+    }
     return senderId.charAt(0).toUpperCase();
   };
 
@@ -186,20 +220,19 @@ export default function GroupChatRoom({
                   <MessageCircle className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <CardTitle 
+                  <CardTitle
                     className="text-2xl font-bold bg-gradient-to-r from-foreground to-[hsl(263.4,70%,50.4%)] bg-clip-text text-transparent"
                     style={{ fontFamily: "'Bebas Neue', sans-serif" }}
                   >
                     {groupName}
                   </CardTitle>
                   <div className="flex items-center space-x-2">
-                    <Badge 
-                      variant={isConnected ? "default" : "secondary"} 
-                      className={`text-xs ${
-                        isConnected 
-                          ? "bg-[hsl(263.4,70%,50.4%)] text-primary-foreground" 
+                    <Badge
+                      variant={isConnected ? "default" : "secondary"}
+                      className={`text-xs ${isConnected
+                          ? "bg-[hsl(263.4,70%,50.4%)] text-primary-foreground"
                           : "bg-muted text-muted-foreground"
-                      }`}
+                        }`}
                     >
                       <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isConnected ? 'bg-green-400' : 'bg-gray-400'}`} />
                       {isConnected ? 'Connected' : 'Connecting...'}
@@ -208,7 +241,7 @@ export default function GroupChatRoom({
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 {inviteLink && (
                   <Button
@@ -233,7 +266,7 @@ export default function GroupChatRoom({
                 </Button>
               </div>
             </div>
-            
+
             {inviteLink && (
               <div className="mt-3 p-3 bg-[hsl(263.4,70%,50.4%)/0.05] rounded-lg border border-[hsl(263.4,70%,50.4%)/0.1">
                 <div className="flex items-center justify-between">
@@ -269,44 +302,39 @@ export default function GroupChatRoom({
                       const showAvatar = shouldShowAvatar(index);
                       const showSenderName = shouldShowSenderName(index);
                       const isOwnMessage = message.senderId === userId;
-                      
+
                       return (
                         <div
                           key={index}
-                          className={`flex items-end space-x-3 ${
-                            isOwnMessage ? 'justify-end' : 'justify-start'
-                          } ${showAvatar ? 'mb-6' : 'mb-2'}`}
+                          className={`flex items-end space-x-3 ${isOwnMessage ? 'justify-end' : 'justify-start'
+                            } ${showAvatar ? 'mb-6' : 'mb-2'}`}
                         >
                           {/* Avatar for other users */}
                           {!isOwnMessage && (
-                            <div className={`flex-shrink-0 w-10 h-10 ${
-                              showAvatar 
-                                ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' 
+                            <div className={`flex-shrink-0 w-10 h-10 ${showAvatar
+                                ? 'bg-gradient-to-br from-emerald-500 to-emerald-600'
                                 : 'bg-transparent'
-                            } rounded-xl flex items-center justify-center text-sm font-bold text-white`}>
+                              } rounded-xl flex items-center justify-center text-sm font-bold text-white`}>
                               {showAvatar && getUserInitials(message.senderId)}
                             </div>
                           )}
-                          
+
                           <div className={`max-w-sm lg:max-w-md ${isOwnMessage ? 'order-first' : ''}`}>
                             {showSenderName && (
-                              <div className={`text-xs font-medium mb-2 px-1 ${
-                                isOwnMessage ? 'text-right text-[hsl(263.4,70%,50.4%)]' : 'text-left text-emerald-600'
-                              }`}>
+                              <div className={`text-xs font-medium mb-2 px-1 ${isOwnMessage ? 'text-right text-[hsl(263.4,70%,50.4%)]' : 'text-left text-emerald-600'
+                                }`}>
                                 {getUserDisplayName(message.senderId)}
                               </div>
                             )}
-                            
-                            <div className={`px-4 py-3 rounded-2xl shadow-lg ${
-                              isOwnMessage
+
+                            <div className={`px-4 py-3 rounded-2xl shadow-lg ${isOwnMessage
                                 ? 'bg-gradient-to-br from-[hsl(263.4,70%,50.4%)] to-[hsl(263.4,70%,60.4%)] text-white'
                                 : 'bg-card border border-border'
-                            } ${showAvatar ? 'rounded-bl-md' : ''}`}>
+                              } ${showAvatar ? 'rounded-bl-md' : ''}`}>
                               <div className="text-sm leading-relaxed">{message.content}</div>
                               {message.timestamp && (
-                                <div className={`text-xs mt-2 ${
-                                  isOwnMessage ? 'text-white/70' : 'text-muted-foreground'
-                                }`}>
+                                <div className={`text-xs mt-2 ${isOwnMessage ? 'text-white/70' : 'text-muted-foreground'
+                                  }`}>
                                   {formatTime(message.timestamp)}
                                 </div>
                               )}
@@ -315,11 +343,10 @@ export default function GroupChatRoom({
 
                           {/* Avatar for your own messages */}
                           {isOwnMessage && (
-                            <div className={`flex-shrink-0 w-10 h-10 ${
-                              showAvatar 
-                                ? 'bg-gradient-to-br from-[hsl(263.4,70%,50.4%)] to-[hsl(263.4,70%,60.4%)]' 
+                            <div className={`flex-shrink-0 w-10 h-10 ${showAvatar
+                                ? 'bg-gradient-to-br from-[hsl(263.4,70%,50.4%)] to-[hsl(263.4,70%,60.4%)]'
                                 : 'bg-transparent'
-                            } rounded-xl flex items-center justify-center text-sm font-bold text-white`}>
+                              } rounded-xl flex items-center justify-center text-sm font-bold text-white`}>
                               {showAvatar && getUserInitials(message.senderId)}
                             </div>
                           )}
@@ -354,7 +381,7 @@ export default function GroupChatRoom({
                   </Button>
                 </div>
               </div>
-              
+
               {!isConnected && (
                 <div className="text-center mt-3">
                   <span className="text-xs text-muted-foreground">Connecting to chat...</span>
