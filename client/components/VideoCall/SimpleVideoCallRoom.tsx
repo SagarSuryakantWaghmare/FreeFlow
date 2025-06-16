@@ -60,15 +60,35 @@ const VideoCallRoom: React.FC<VideoCallRoomProps> = ({ room, onLeave }) => {
 
     const handleUserJoined = ({ participant }: { participant: VideoParticipant }) => {
       setParticipants(prev => [...prev, participant]);
-    };
-
-    const handleUserLeft = ({ userId }: { userId: string }) => {
+    };    const handleUserLeft = ({ userId }: { userId: string }) => {
+      console.log('VideoCallRoom: User left, cleaning up:', userId);
+      
       setParticipants(prev => prev.filter(p => p.id !== userId));
+      
+      // Clean up remote stream and stop tracks
       setRemoteStreams(prev => {
         const newMap = new Map(prev);
+        const stream = newMap.get(userId);
+        if (stream) {
+          // Stop all tracks in the stream
+          stream.getTracks().forEach(track => {
+            track.stop();
+          });
+        }
         newMap.delete(userId);
         return newMap;
       });
+      
+      // Clean up video element reference and clear srcObject
+      const videoElement = remoteVideoRefs.current.get(userId);
+      if (videoElement) {
+        // Clear the video source to remove any paused frame
+        videoElement.srcObject = null;
+        videoElement.load(); // Force the video element to reload/clear
+        remoteVideoRefs.current.delete(userId);
+      }
+      
+      console.log('VideoCallRoom: Cleanup completed for user:', userId);
     };
 
     const handleJoinRequestReceived = (request: JoinRequest) => {
@@ -167,14 +187,23 @@ const VideoCallRoom: React.FC<VideoCallRoomProps> = ({ room, onLeave }) => {
     simpleVideoCallService.leaveRoom();
     onLeave();
   };
-
   const handleApproveJoinRequest = (request: JoinRequest) => {
-    simpleVideoCallService.approveJoinRequest(request.timestamp.getTime().toString(), request.userId);
+    // Handle both Date object and number timestamp
+    const timestampId = request.timestamp instanceof Date 
+      ? request.timestamp.getTime().toString()
+      : request.timestamp.toString();
+    
+    simpleVideoCallService.approveJoinRequest(timestampId, request.userId);
     setPendingRequests(prev => prev.filter(r => r.userId !== request.userId));
   };
 
   const handleRejectJoinRequest = (request: JoinRequest) => {
-    simpleVideoCallService.rejectJoinRequest(request.timestamp.getTime().toString(), request.userId);
+    // Handle both Date object and number timestamp
+    const timestampId = request.timestamp instanceof Date 
+      ? request.timestamp.getTime().toString()
+      : request.timestamp.toString();
+    
+    simpleVideoCallService.rejectJoinRequest(timestampId, request.userId);
     setPendingRequests(prev => prev.filter(r => r.userId !== request.userId));
   };
 
@@ -273,13 +302,11 @@ const VideoCallRoom: React.FC<VideoCallRoomProps> = ({ room, onLeave }) => {
                 <VideoOff size={48} className="text-gray-400" />
               </div>
             )}
-          </Card>
-
-          {/* Remote Videos */}
+          </Card>          {/* Remote Videos */}
           {participants
-            .filter(p => p.id !== simpleVideoCallService.getCurrentRoom()?.ownerId || !simpleVideoCallService.isRoomOwner())
+            .filter(p => p.id !== simpleVideoCallService.getCurrentUserId())
             .map((participant) => (
-            <Card key={participant.id} className="relative bg-gray-800 border-gray-700 overflow-hidden">
+            <Card key={`participant-${participant.id}`} className="relative bg-gray-800 border-gray-700 overflow-hidden">
               <video
                 ref={(el) => {
                   if (el) {

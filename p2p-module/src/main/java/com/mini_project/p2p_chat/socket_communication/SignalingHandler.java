@@ -119,8 +119,7 @@ public class SignalingHandler extends TextWebSocketHandler {    private final Co
                 break;
             case "answer":
                 handleAnswer(session, jsonNode);
-                break;
-            case "ice-candidate":
+                break;            case "ice_candidate":
                 handleIceCandidate(session, jsonNode);
                 break;
 
@@ -139,9 +138,11 @@ public class SignalingHandler extends TextWebSocketHandler {    private final Co
                 break;
             case "toggle_media":
                 handleToggleMedia(session, jsonNode);
-                break;
-            case "remove_participant":
+                break;            case "remove_participant":
                 handleRemoveParticipant(session, jsonNode);
+                break;
+            case "leave_room":
+                handleLeaveRoom(session, jsonNode);
                 break;
             default:
                 System.out.println("Unknown message type: " + type);
@@ -206,35 +207,54 @@ public class SignalingHandler extends TextWebSocketHandler {    private final Co
         if (toSession != null && toSession.isOpen()) {
             toSession.sendMessage(new TextMessage(jsonNode.toString()));
         }
-    }
-
-    private void handleOffer(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        String toUserId = jsonNode.get("toUserId").asText();
-        System.out.println("Received offer for user: " + toUserId);
-        WebSocketSession toSession = onlineUsers.get(toUserId);
-        if (toSession != null && toSession.isOpen()) {
-            toSession.sendMessage(new TextMessage(jsonNode.toString()));
-            System.out.println("Forwarded offer to user: " + toUserId);
+    }    private void handleOffer(WebSocketSession session, JsonNode jsonNode) throws IOException {
+        JsonNode dataNode = jsonNode.get("data");
+        String targetId = dataNode.get("targetId").asText();
+        String fromId = dataNode.get("fromId").asText();
+        
+        System.out.println("Received offer from " + fromId + " for user: " + targetId);
+        
+        WebSocketSession targetSession = onlineUsers.get(targetId);
+        if (targetSession != null && targetSession.isOpen()) {
+            // Forward the offer message to the target user
+            targetSession.sendMessage(new TextMessage(jsonNode.toString()));
+            System.out.println("Forwarded offer to user: " + targetId);
         } else {
-            System.out.println("User " + toUserId + " is not online or session is closed.");
+            System.out.println("User " + targetId + " is not online or session is closed.");
         }
     }
 
     private void handleAnswer(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        String toUserId = jsonNode.get("toUserId").asText();
-        WebSocketSession toSession = onlineUsers.get(toUserId);
-        if (toSession != null && toSession.isOpen()) {
-            toSession.sendMessage(new TextMessage(jsonNode.toString()));
+        JsonNode dataNode = jsonNode.get("data");
+        String targetId = dataNode.get("targetId").asText();
+        String fromId = dataNode.get("fromId").asText();
+        
+        System.out.println("Received answer from " + fromId + " for user: " + targetId);
+        
+        WebSocketSession targetSession = onlineUsers.get(targetId);
+        if (targetSession != null && targetSession.isOpen()) {
+            targetSession.sendMessage(new TextMessage(jsonNode.toString()));
+            System.out.println("Forwarded answer to user: " + targetId);
+        } else {
+            System.out.println("User " + targetId + " is not online or session is closed.");
         }
     }
 
     private void handleIceCandidate(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        String toUserId = jsonNode.get("toUserId").asText();
-        WebSocketSession toSession = onlineUsers.get(toUserId);
-        if (toSession != null && toSession.isOpen()) {
-            toSession.sendMessage(new TextMessage(jsonNode.toString()));
+        JsonNode dataNode = jsonNode.get("data");
+        String targetId = dataNode.get("targetId").asText();
+        String fromId = dataNode.get("fromId").asText();
+        
+        System.out.println("Received ICE candidate from " + fromId + " for user: " + targetId);
+        
+        WebSocketSession targetSession = onlineUsers.get(targetId);
+        if (targetSession != null && targetSession.isOpen()) {
+            targetSession.sendMessage(new TextMessage(jsonNode.toString()));
+            System.out.println("Forwarded ICE candidate to user: " + targetId);
+        } else {
+            System.out.println("User " + targetId + " is not online or session is closed.");
         }
-    }    
+    }
     
     public ConcurrentHashMap.KeySetView<String, WebSocketSession> getOnlineUserIds() {
         return onlineUsers.keySet();
@@ -332,10 +352,19 @@ public class SignalingHandler extends TextWebSocketHandler {    private final Co
 
         System.out.println("Join request rejected for user " + userId + " in room " + roomId);
     }    private void handleToggleMedia(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        String roomId = jsonNode.get("data").get("roomId").asText();
+        JsonNode dataNode = jsonNode.get("data");
+        
+        // Check if roomId is present in the data
+        JsonNode roomIdNode = dataNode.get("roomId");
+        if (roomIdNode == null || roomIdNode.isNull()) {
+            System.out.println("handleToggleMedia: No roomId provided, skipping broadcast");
+            return;
+        }
+        
+        String roomId = roomIdNode.asText();
         
         // Create a new ObjectNode message for broadcasting
-        ObjectNode mediaToggleMessage = createMessage("media_toggle", (ObjectNode) jsonNode.get("data"));
+        ObjectNode mediaToggleMessage = createMessage("media_toggle", (ObjectNode) dataNode);
         
         // Broadcast media toggle to all participants in room
         broadcastToRoom(roomId, mediaToggleMessage, null);
@@ -368,7 +397,36 @@ public class SignalingHandler extends TextWebSocketHandler {    private final Co
 
         System.out.println("User " + userId + " removed from room " + roomId);
     }    
-    
+      private void handleLeaveRoom(WebSocketSession session, JsonNode jsonNode) throws IOException {
+        String roomId = jsonNode.get("data").get("roomId").asText();
+        String userId = jsonNode.get("data").get("userId").asText();
+        
+        VideoRoomInfo room = videoRooms.get(roomId);
+        if (room != null && room.participants.containsKey(userId)) {
+            String userName = room.participants.get(userId);
+            
+            // Remove user from room
+            room.participants.remove(userId);
+            userIdToRoomId.remove(userId);
+            
+            // Notify all remaining participants that user left
+            broadcastToRoom(roomId, createMessage("user_left", 
+                objectMapper.createObjectNode()
+                    .put("userId", userId)
+                    .put("userName", userName)
+                    .put("roomId", roomId)
+            ), userId);
+            
+            // If room is empty, remove it
+            if (room.participants.isEmpty()) {
+                videoRooms.remove(roomId);
+                System.out.println("Room " + roomId + " removed (empty)");
+            }
+            
+            System.out.println("User " + userName + " left room " + roomId);
+        }
+    }
+
     // Helper methods for video calls
     private void sendToUser(String userId, ObjectNode message) throws IOException {
         WebSocketSession session = onlineUsers.get(userId);
