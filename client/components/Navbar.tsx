@@ -16,7 +16,7 @@ import ConnectionStatus from "@/components/User/ConnectionStatus";
 import { SafeLocalStorage } from "@/lib/utils/SafeLocalStorage";
 import webSocketService from "@/lib/WebSocketService";
 import groupChatService from "@/lib/GroupChatService";
-import { useClerkLogoutDetection } from "@/hooks/use-clerk-logout";
+import { useClerkAuth } from "@/hooks/use-clerk-auth";
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -25,8 +25,7 @@ const Navbar: React.FC = () => {
   const pathname = usePathname();
   const router = useRouter();
   const isChatPage = pathname?.includes('/user/chat');
-  const [navbarHeight, setNavbarHeight] = useState(0);  const { isSignedIn, user } = useUser();
-  const { performLogoutCleanup } = useClerkLogoutDetection();
+  const [navbarHeight, setNavbarHeight] = useState(0);  const { isSignedIn, user, performLogoutCleanup } = useClerkAuth();
 
   useEffect(() => {
     if (isChatPage) {

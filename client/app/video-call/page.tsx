@@ -2,23 +2,24 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
 import SimpleVideoCallLobby from '@/components/VideoCall/SimpleVideoCallLobby';
 import SimpleVideoCallRoom from '@/components/VideoCall/SimpleVideoCallRoom';
 import simpleVideoCallService, { VideoRoom } from '@/lib/SimpleVideoCallService';
 import { useToast } from '@/hooks/use-toast';
-import { SafeLocalStorage } from '@/lib/utils/SafeLocalStorage';
+import { useClerkAuth } from '@/hooks/use-clerk-auth'
+import { getUserData } from "@/lib/utils/UserData";
 
 export default function VideoCallPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { isSignedIn, isLoaded, user } = useUser();
+  const { isSignedIn, isLoaded } = useClerkAuth();
   
   const [currentRoom, setCurrentRoom] = useState<VideoRoom | null>(null);
-  const [userId, setUserId] = useState<string>('');
-  const [userName, setUserName] = useState<string>('');
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
+  // Get user info for rendering (available after Clerk auth hook sets localStorage)
+  const { userId, username: userName } = getUserData();
   useEffect(() => {
     // Wait for Clerk to load
     if (!isLoaded) return;
@@ -32,18 +33,22 @@ export default function VideoCallPage() {
       });
       router.push('/sign-in');
       return;
-    }    // Get user info from Clerk
-    if (user) {
-      const clerkUserId = user.id;
-      const clerkUserName = user.firstName && user.lastName 
-        ? `${user.firstName} ${user.lastName}`
-        : user.emailAddresses[0]?.emailAddress?.split('@')[0] || 'Unknown User';
-      
-      setUserId(clerkUserId);
-      setUserName(clerkUserName);
-
-      // Initialize the video call service with user information
-      simpleVideoCallService.initialize(clerkUserId, clerkUserName);
+    }    // Initialize video call service with stored user data
+    if (!isInitialized && isSignedIn) {
+      // Small delay to ensure localStorage is populated by useClerkAuth hook
+      setTimeout(() => {
+        const { userId, username } = getUserData();
+        console.log('VideoCallPage: Getting user data from localStorage:', { userId, username });
+        
+        if (userId && username) {
+          console.log('VideoCallPage: Initializing video call service with:', { userId, username });
+          simpleVideoCallService.initialize(userId, username);
+          setIsInitialized(true);
+        } else {
+          console.error('VideoCallPage: User data not available in localStorage. isSignedIn:', isSignedIn);
+          console.log('VideoCallPage: All localStorage keys:', typeof window !== 'undefined' ? Object.keys(localStorage) : 'SSR');
+        }
+      }, 100);
     }
 
     // Check if there's an existing room
@@ -68,7 +73,7 @@ export default function VideoCallPage() {
       simpleVideoCallService.removeEventListener('room_created', handleRoomCreated);
       simpleVideoCallService.removeEventListener('room_left', handleRoomLeft);
     };
-  }, [isLoaded, isSignedIn, user, router, toast]);
+  }, [isLoaded, isSignedIn, isInitialized, router, toast]);
   const generateUserId = (): string => {
     return 'user_' + Math.random().toString(36).substring(2, 15);
   };
@@ -94,8 +99,8 @@ export default function VideoCallPage() {
       ownerName: 'Room Owner',
       participants: [
         {
-          id: userId,
-          name: userName,
+          id: userId ?? 'unknown_user',
+          name: userName ?? 'Unknown',
           isOwner: false,
           isVideoEnabled: true,
           isAudioEnabled: true
@@ -144,7 +149,8 @@ export default function VideoCallPage() {
         </div>
       </div>
     );
-  }
+  }  // Get user info for rendering
+  // const { userId, username: userName } = getUserData(); // Moved to top of component
 
   // If we don't have user info, show loading
   if (!userId || !userName) {
@@ -167,14 +173,39 @@ export default function VideoCallPage() {
       />
     );
   }
-
   // Otherwise, show the lobby
   return (
-    <SimpleVideoCallLobby
-      onRoomCreated={handleRoomCreated}
-      onRoomJoined={handleRoomJoined}
-      userId={userId}
-      userName={userName}
-    />
+    <div>
+      {/* Debug Panel */}
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{ 
+          position: 'fixed', 
+          top: '10px', 
+          right: '10px', 
+          background: 'black', 
+          color: 'white', 
+          padding: '10px', 
+          borderRadius: '5px', 
+          zIndex: 9999,
+          fontSize: '12px'
+        }}>
+          <button 
+            onClick={() => simpleVideoCallService.testConnection()}
+            style={{ background: '#007bff', color: 'white', border: 'none', padding: '5px', borderRadius: '3px' }}
+          >
+            Test Connection
+          </button>
+          <div>Initialized: {isInitialized ? 'Yes' : 'No'}</div>
+          <div>User: {userId || 'None'}</div>
+        </div>
+      )}
+      
+      <SimpleVideoCallLobby
+        onRoomCreated={handleRoomCreated}
+        onRoomJoined={handleRoomJoined}
+        userId={userId}
+        userName={userName}
+      />
+    </div>
   );
 }
