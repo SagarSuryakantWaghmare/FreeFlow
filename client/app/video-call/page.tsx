@@ -55,9 +55,7 @@ export default function VideoCallPage() {
     const existingRoom = simpleVideoCallService.getCurrentRoom();
     if (existingRoom) {
       setCurrentRoom(existingRoom);
-    }
-
-    // Set up event listeners
+    }    // Set up event listeners
     const handleRoomCreated = (room: VideoRoom) => {
       setCurrentRoom(room);
     };
@@ -66,51 +64,61 @@ export default function VideoCallPage() {
       setCurrentRoom(null);
     };
 
+    const handleJoinApproved = (data: any) => {
+      console.log('VideoCallPage: Join approved, automatically entering room:', data);
+      const currentRoom = simpleVideoCallService.getCurrentRoom();
+      if (currentRoom) {
+        setCurrentRoom(currentRoom);
+        toast({
+          title: "Joined Room!",
+          description: `Successfully joined room: ${data.roomName || data.roomId}`,
+        });
+      }
+    };
+
+    const handleJoinRejected = (data: any) => {
+      toast({
+        title: "Join Request Rejected",
+        description: "Your request to join the room was rejected",
+        variant: "destructive"
+      });
+    };
+
+    const handleJoinError = (data: any) => {
+      toast({
+        title: "Join Error",
+        description: data.error || "Failed to join room",
+        variant: "destructive"
+      });
+    };
+
     simpleVideoCallService.addEventListener('room_created', handleRoomCreated);
     simpleVideoCallService.addEventListener('room_left', handleRoomLeft);
+    simpleVideoCallService.addEventListener('join_approved', handleJoinApproved);
+    simpleVideoCallService.addEventListener('join_rejected', handleJoinRejected);
+    simpleVideoCallService.addEventListener('join_error', handleJoinError);
 
     return () => {
       simpleVideoCallService.removeEventListener('room_created', handleRoomCreated);
       simpleVideoCallService.removeEventListener('room_left', handleRoomLeft);
+      simpleVideoCallService.removeEventListener('join_approved', handleJoinApproved);
+      simpleVideoCallService.removeEventListener('join_rejected', handleJoinRejected);
+      simpleVideoCallService.removeEventListener('join_error', handleJoinError);
     };
   }, [isLoaded, isSignedIn, isInitialized, router, toast]);
   const generateUserId = (): string => {
     return 'user_' + Math.random().toString(36).substring(2, 15);
-  };
-
-  const handleRoomCreated = (roomId: string) => {
+  };  const handleRoomCreated = (roomId: string) => {
     toast({
       title: "Room Created!",
       description: `Room ID: ${roomId}`,
     });
   };
 
-  const handleRoomJoined = (roomId: string) => {
-    toast({
-      title: "Joined Room!",
-      description: `Successfully joined room: ${roomId}`,
-    });
-    
-    // Create a mock room object for now (in real implementation, this would come from the service)
-    const mockRoom: VideoRoom = {
-      id: roomId,
-      name: 'Joined Room',
-      ownerId: 'other_user',
-      ownerName: 'Room Owner',
-      participants: [
-        {
-          id: userId ?? 'unknown_user',
-          name: userName ?? 'Unknown',
-          isOwner: false,
-          isVideoEnabled: true,
-          isAudioEnabled: true
-        }
-      ],
-      createdAt: new Date(),
-      isActive: true
-    };
-    
-    setCurrentRoom(mockRoom);
+  const handleRoomJoinRequest = (roomId: string) => {
+    // This is called when user initiates a join request
+    // The actual joining is now handled automatically via service events
+    console.log('VideoCallPage: Join request initiated for room:', roomId);
   };
 
   const handleLeaveRoom = () => {
@@ -199,10 +207,9 @@ export default function VideoCallPage() {
           <div>User: {userId || 'None'}</div>
         </div>
       )}
-      
-      <SimpleVideoCallLobby
+        <SimpleVideoCallLobby
         onRoomCreated={handleRoomCreated}
-        onRoomJoined={handleRoomJoined}
+        onRoomJoined={handleRoomJoinRequest}
         userId={userId}
         userName={userName}
       />

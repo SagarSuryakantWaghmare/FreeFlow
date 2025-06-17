@@ -123,7 +123,7 @@ public class SignalingHandler extends TextWebSocketHandler {    private final Co
                 handleIceCandidate(session, jsonNode);
                 break;
 
-            // Video call message types
+            // Video call related messages
             case "create_room":
                 handleCreateRoom(session, jsonNode);
                 break;
@@ -138,7 +138,8 @@ public class SignalingHandler extends TextWebSocketHandler {    private final Co
                 break;
             case "toggle_media":
                 handleToggleMedia(session, jsonNode);
-                break;            case "remove_participant":
+                break;
+                case "remove_participant":
                 handleRemoveParticipant(session, jsonNode);
                 break;
             case "leave_room":
@@ -306,8 +307,8 @@ public class SignalingHandler extends TextWebSocketHandler {    private final Co
         sendToUser(room.ownerId, createMessage("join_request", requestData));
         
         System.out.println("Join request sent from " + userName + " to room " + roomId);
-    }
-
+    }    
+    
     private void handleApproveJoin(WebSocketSession session, JsonNode jsonNode) throws IOException {
         String roomId = jsonNode.get("data").get("roomId").asText();
         String userId = jsonNode.get("data").get("userId").asText();
@@ -322,22 +323,35 @@ public class SignalingHandler extends TextWebSocketHandler {    private final Co
         room.participants.put(userId, userName);
         userIdToRoomId.put(userId, roomId);
 
-        // Notify the approved user
-        sendToUser(userId, createMessage("join_approved", 
-            objectMapper.createObjectNode()
-                .put("roomId", roomId)
-                .put("roomName", room.name)
-        ));
+        // Create existing participants array for the new user
+        ArrayNode existingParticipants = objectMapper.createArrayNode();
+        for (String participantId : room.participants.keySet()) {
+            if (!participantId.equals(userId)) { // Don't include the new user themselves
+                ObjectNode participant = objectMapper.createObjectNode();
+                participant.put("userId", participantId);
+                participant.put("userName", room.participants.get(participantId));
+                participant.put("isOwner", participantId.equals(room.ownerId));
+                existingParticipants.add(participant);
+            }
+        }
 
-        // Notify all participants about new user
+        // Notify the approved user with room info and existing participants
+        ObjectNode joinApprovedData = objectMapper.createObjectNode();
+        joinApprovedData.put("roomId", roomId);
+        joinApprovedData.put("roomName", room.name);
+        joinApprovedData.put("ownerId", room.ownerId);
+        joinApprovedData.put("ownerName", room.ownerName);
+        joinApprovedData.set("existingParticipants", existingParticipants);        sendToUser(userId, createMessage("join_approved", joinApprovedData));
+
+        // Notify all OTHER participants about new user (exclude the new user themselves)
         broadcastToRoom(roomId, createMessage("user_joined", 
             objectMapper.createObjectNode()
                 .put("userId", userId)
                 .put("userName", userName)
                 .put("roomId", roomId)
-        ), null);
+        ), userId); // Exclude the new user from this broadcast
 
-        System.out.println("User " + userName + " approved to join room " + roomId);
+        System.out.println("User " + userName + " approved to join room " + roomId + " with " + existingParticipants.size() + " existing participants");
     }
 
     private void handleRejectJoin(WebSocketSession session, JsonNode jsonNode) throws IOException {

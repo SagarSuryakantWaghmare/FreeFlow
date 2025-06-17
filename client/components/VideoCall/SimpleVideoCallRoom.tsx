@@ -48,19 +48,30 @@ const VideoCallRoom: React.FC<VideoCallRoomProps> = ({ room, onLeave }) => {
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
       }
-    };
-
-    const handleRemoteStream = ({ participantId, stream }: { participantId: string; stream: MediaStream }) => {
+    };    const handleRemoteStream = ({ participantId, stream }: { participantId: string; stream: MediaStream }) => {
+      console.log('VideoCallRoom: Received remote stream from participant:', participantId);
+      console.log('VideoCallRoom: Stream tracks:', stream.getTracks().map(t => t.kind + ' - ' + t.id));
+      
       setRemoteStreams(prev => {
         const newMap = new Map(prev);
         newMap.set(participantId, stream);
+        console.log('VideoCallRoom: Total remote streams now:', newMap.size);
         return newMap;
       });
-    };
-
-    const handleUserJoined = ({ participant }: { participant: VideoParticipant }) => {
-      setParticipants(prev => [...prev, participant]);
-    };    const handleUserLeft = ({ userId }: { userId: string }) => {
+    };    const handleUserJoined = ({ participant }: { participant: VideoParticipant }) => {
+      console.log('VideoCallRoom: New participant joined:', participant.name, 'ID:', participant.id);
+      setParticipants(prev => {
+        // Check if participant already exists to prevent duplicates
+        const exists = prev.some(p => p.id === participant.id);
+        if (exists) {
+          console.log('VideoCallRoom: Participant already exists, ignoring duplicate:', participant.name);
+          return prev;
+        }
+        const updated = [...prev, participant];
+        console.log('VideoCallRoom: Total participants now:', updated.length);
+        return updated;
+      });
+    };const handleUserLeft = ({ userId }: { userId: string }) => {
       console.log('VideoCallRoom: User left, cleaning up:', userId);
       
       setParticipants(prev => prev.filter(p => p.id !== userId));
@@ -89,10 +100,19 @@ const VideoCallRoom: React.FC<VideoCallRoomProps> = ({ room, onLeave }) => {
       }
       
       console.log('VideoCallRoom: Cleanup completed for user:', userId);
-    };
-
-    const handleJoinRequestReceived = (request: JoinRequest) => {
-      setPendingRequests(prev => [...prev, request]);
+    };    const handleJoinRequestReceived = (request: JoinRequest) => {
+      console.log('VideoCallRoom: Received join request from:', request.userName);
+      console.log('VideoCallRoom: Request details:', request);
+      console.log('VideoCallRoom: Current pending requests before:', pendingRequests);
+      console.log('VideoCallRoom: Is room owner?', simpleVideoCallService.isRoomOwner());
+      
+      setPendingRequests(prev => {
+        // Temporarily disable duplicate check to debug
+        console.log('VideoCallRoom: Adding join request for:', request.userName);
+        const updated = [...prev, request];
+        console.log('VideoCallRoom: Updated pending requests:', updated);
+        return updated;
+      });
     };
 
     const handleVideoToggled = ({ enabled }: { enabled: boolean }) => {
@@ -222,15 +242,58 @@ const VideoCallRoom: React.FC<VideoCallRoomProps> = ({ room, onLeave }) => {
       console.error('Error switching microphone:', error);
     }
   };
-
   return (
-    <div className="video-call-room h-screen bg-gray-900 text-white flex flex-col">
-      {/* Header */}
-      <div className="bg-gray-800 p-4 flex justify-between items-center">
+    <div className="video-call-room h-screen bg-gray-900 text-white flex flex-col">      {/* Debug Panel */}
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{ 
+          position: 'fixed', 
+          top: '90px', 
+          left: '10px', 
+          background: 'rgba(0,0,0,0.8)', 
+          color: 'white', 
+          padding: '10px', 
+          borderRadius: '5px', 
+          zIndex: 9999,
+          fontSize: '12px',
+          maxWidth: '300px'
+        }}>          <div><strong>Debug Info:</strong></div>
+          <div>Participants: {participants.length}</div>
+          <div>Remote Streams: {remoteStreams.size}</div>
+          <div>Local Stream: {localStream ? 'Yes' : 'No'}</div>
+          <div>Is Owner: {simpleVideoCallService.isRoomOwner() ? 'Yes' : 'No'}</div>
+          <div>Pending Requests: {pendingRequests.length}</div>
+          <div style={{ maxHeight: '100px', overflow: 'auto' }}>
+            <strong>Participants:</strong>
+            {participants.map(p => (
+              <div key={p.id} style={{ fontSize: '10px' }}>
+                • {p.name} ({p.id.slice(0, 8)}...)
+              </div>
+            ))}
+          </div>          <div style={{ maxHeight: '100px', overflow: 'auto' }}>
+            <strong>Remote Streams:</strong>
+            {Array.from(remoteStreams.keys()).map(id => (
+              <div key={id} style={{ fontSize: '10px' }}>
+                • {id.slice(0, 8)}...
+              </div>
+            ))}
+          </div>
+          <div style={{ maxHeight: '100px', overflow: 'auto' }}>
+            <strong>Pending Requests:</strong>
+            {pendingRequests.map(req => (
+              <div key={req.userId} style={{ fontSize: '10px' }}>
+                • {req.userName} ({req.userId.slice(0, 8)}...)
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+        {/* Header with Controls */}
+      <div className="fixed top-0 left-0 right-0 bg-gray-800 p-4 flex justify-between items-center z-50 shadow-lg">
         <div>
           <h2 className="text-xl font-bold">{room.name}</h2>
           <p className="text-sm text-gray-400">Room ID: {room.id}</p>
         </div>
+        
         <div className="flex items-center gap-4">
           <Badge variant="secondary" className="flex items-center gap-1">
             <Users size={16} />
@@ -241,45 +304,92 @@ const VideoCallRoom: React.FC<VideoCallRoomProps> = ({ room, onLeave }) => {
               Owner
             </Badge>
           )}
-        </div>
-      </div>
+          
+          {/* Video Chat Controls */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant={isAudioEnabled ? "default" : "destructive"}
+              size="sm"
+              onClick={handleToggleAudio}
+              className="rounded-full w-10 h-10"
+            >
+              {isAudioEnabled ? <Mic size={16} /> : <MicOff size={16} />}
+            </Button>
 
-      {/* Join Requests (Only for room owner) */}
-      {simpleVideoCallService.isRoomOwner() && pendingRequests.length > 0 && (
-        <div className="bg-yellow-900 border-b border-yellow-700 p-3">
-          <h3 className="font-semibold mb-2">Pending Join Requests:</h3>
-          <div className="space-y-2">
-            {pendingRequests.map((request) => (
-              <div key={request.userId} className="flex items-center justify-between bg-yellow-800 p-2 rounded">
-                <span>{request.userName} wants to join</span>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-green-400 border-green-400 hover:bg-green-400 hover:text-black"
-                    onClick={() => handleApproveJoinRequest(request)}
-                  >
-                    <UserCheck size={16} />
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-red-400 border-red-400 hover:bg-red-400 hover:text-black"
-                    onClick={() => handleRejectJoinRequest(request)}
-                  >
-                    <UserX size={16} />
-                    Reject
-                  </Button>
-                </div>
-              </div>
-            ))}
+            <Button
+              variant={isVideoEnabled ? "default" : "destructive"}
+              size="sm"
+              onClick={handleToggleVideo}
+              className="rounded-full w-10 h-10"
+            >
+              {isVideoEnabled ? <Video size={16} /> : <VideoOff size={16} />}
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSettings(!showSettings)}
+              className="rounded-full w-10 h-10"
+            >
+              <Settings size={16} />
+            </Button>
+
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleLeaveRoom}
+              className="rounded-full w-10 h-10"
+            >
+              <PhoneOff size={16} />
+            </Button>
           </div>
         </div>
-      )}
-
-      {/* Video Grid */}
-      <div className="flex-1 p-4">
+      </div>      {/* Join Requests (Only for room owner) */}
+      {(() => {
+        const isOwner = simpleVideoCallService.isRoomOwner();
+        const hasRequests = pendingRequests.length > 0;
+        console.log('VideoCallRoom Render: Is Owner?', isOwner, 'Has Requests?', hasRequests, 'Request Count:', pendingRequests.length);
+        console.log('VideoCallRoom Render: Pending requests:', pendingRequests);
+        
+        if (isOwner && hasRequests) {
+          return (
+            <div className="fixed top-24 left-0 right-0 bg-yellow-600 border-b border-yellow-500 p-4 z-40 shadow-lg">
+              <h3 className="font-semibold mb-3 text-black">🔔 Pending Join Requests ({pendingRequests.length}):</h3>
+              <div className="space-y-3">
+                {pendingRequests.map((request) => (
+                  <div key={`${request.userId}-${request.timestamp}`} className="flex items-center justify-between bg-yellow-700 p-3 rounded-lg shadow">
+                    <span className="font-medium text-white">{request.userName} wants to join the room</span>
+                    <div className="flex gap-3">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-green-400 border-green-400 hover:bg-green-400 hover:text-black font-medium"
+                        onClick={() => handleApproveJoinRequest(request)}
+                      >
+                        <UserCheck size={16} />
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-red-400 border-red-400 hover:bg-red-400 hover:text-black font-medium"
+                        onClick={() => handleRejectJoinRequest(request)}
+                      >
+                        <UserX size={16} />
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        }
+        return null;
+      })()}{/* Video Grid */}
+      <div className="flex-1 p-4" style={{ 
+        marginTop: simpleVideoCallService.isRoomOwner() && pendingRequests.length > 0 ? '200px' : '96px' 
+      }}>
         <div className={`grid gap-4 h-full ${
           participants.length <= 2 ? 'grid-cols-1 md:grid-cols-2' :
           participants.length <= 4 ? 'grid-cols-2' :
@@ -328,52 +438,12 @@ const VideoCallRoom: React.FC<VideoCallRoomProps> = ({ room, onLeave }) => {
                 </div>
               )}
             </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div className="bg-gray-800 p-4 flex justify-center items-center gap-4">
-        <Button
-          variant={isAudioEnabled ? "default" : "destructive"}
-          size="lg"
-          onClick={handleToggleAudio}
-          className="rounded-full w-12 h-12"
-        >
-          {isAudioEnabled ? <Mic size={20} /> : <MicOff size={20} />}
-        </Button>
-
-        <Button
-          variant={isVideoEnabled ? "default" : "destructive"}
-          size="lg"
-          onClick={handleToggleVideo}
-          className="rounded-full w-12 h-12"
-        >
-          {isVideoEnabled ? <Video size={20} /> : <VideoOff size={20} />}
-        </Button>
-
-        <Button
-          variant="outline"
-          size="lg"
-          onClick={() => setShowSettings(!showSettings)}
-          className="rounded-full w-12 h-12"
-        >
-          <Settings size={20} />
-        </Button>
-
-        <Button
-          variant="destructive"
-          size="lg"
-          onClick={handleLeaveRoom}
-          className="rounded-full w-12 h-12"
-        >
-          <PhoneOff size={20} />
-        </Button>
+          ))}        </div>
       </div>
 
       {/* Settings Panel */}
       {showSettings && (
-        <div className="absolute bottom-20 right-4 bg-gray-800 border border-gray-600 rounded-lg p-4 w-80">
+        <div className="fixed top-24 right-4 bg-gray-800 border border-gray-600 rounded-lg p-4 w-80 z-50">
           <h3 className="font-semibold mb-4">Device Settings</h3>
           
           <div className="space-y-4">

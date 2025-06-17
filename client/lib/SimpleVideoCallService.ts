@@ -74,24 +74,20 @@ class SimpleVideoCallService {
 
   private setupWebSocket() {
     // Use the same WebSocket URL as the main WebSocketService
-    let backendUrl;
-    if (process.env.NODE_ENV === 'production') {
-      backendUrl = "https://freeflow-server.onrender.com/ws/p2p";
-    } else {
-      backendUrl = "ws://localhost:8080/ws/p2p";
-    }
+    let backendUrl = "ws://localhost:8080/ws/p2p";
 
     console.log('SimpleVideoCallService: Attempting WebSocket connection to:', backendUrl);
 
     if (typeof window !== 'undefined') {
       try {
-        this.ws = new WebSocket(backendUrl);        this.ws.onopen = () => {
+        this.ws = new WebSocket(backendUrl);
+        this.ws.onopen = () => {
           console.log('SimpleVideoCallService: WebSocket connected successfully');
           this.wsConnected = true;
-          
+
           // Send user_online message to register with the server
           this.sendUserOnline();
-          
+
           // Flush any pending messages
           this.flushPendingMessages();
         };
@@ -103,15 +99,16 @@ class SimpleVideoCallService {
 
         this.ws.onerror = (error) => {
           console.error('SimpleVideoCallService: WebSocket error:', error);
-        };        this.ws.onclose = (event) => {
+        }; this.ws.onclose = (event) => {
           console.log('SimpleVideoCallService: WebSocket disconnected. Code:', event.code, 'Reason:', event.reason);
           this.wsConnected = false;
-          
+
           // Only attempt to reconnect if the service was properly initialized
           if (this.isInitialized) {
             console.log('SimpleVideoCallService: Attempting to reconnect in 3 seconds...');
             setTimeout(() => this.setupWebSocket(), 3000);
-          }        };
+          }
+        };
       } catch (error) {
         console.error('Failed to setup WebSocket:', error);
       }
@@ -371,7 +368,8 @@ class SimpleVideoCallService {
     this.sendWebSocketMessage({
       type: 'remove_participant',
       data: { roomId: this.currentRoom.id, userId }
-    });  }
+    });
+  }
 
   // Media controls
   toggleVideo() {
@@ -424,12 +422,13 @@ class SimpleVideoCallService {
       }
     }
   }
+
   // WebRTC handling
   private async createPeerConnection(participantId: string): Promise<RTCPeerConnection> {
     // Check if peer connection already exists
     const existingConnection = this.peerConnections.get(participantId);
-    if (existingConnection && existingConnection.connectionState !== 'closed') {
-      console.log('SimpleVideoCallService: Reusing existing peer connection for', participantId);
+    if (existingConnection && existingConnection.connectionState !== 'closed' && existingConnection.connectionState !== 'failed') {
+      console.log('SimpleVideoCallService: Reusing existing peer connection for', participantId, 'state:', existingConnection.connectionState);
       return existingConnection;
     }
 
@@ -453,6 +452,7 @@ class SimpleVideoCallService {
     peerConnection.ontrack = (event) => {
       const [remoteStream] = event.streams;
       console.log('SimpleVideoCallService: Received remote stream from', participantId);
+      console.log('SimpleVideoCallService: Remote stream tracks:', remoteStream.getTracks().map(t => t.kind));
       this.emit('remote_stream', { participantId, stream: remoteStream });
     };
 
@@ -460,6 +460,13 @@ class SimpleVideoCallService {
       console.log('SimpleVideoCallService: Connection state changed for', participantId, ':', peerConnection.connectionState);
       if (peerConnection.connectionState === 'failed' || peerConnection.connectionState === 'disconnected') {
         console.warn('SimpleVideoCallService: Peer connection failed for', participantId);
+        // Optionally try to reconnect or clean up
+        setTimeout(() => {
+          if (peerConnection.connectionState === 'failed') {
+            console.log('SimpleVideoCallService: Removing failed peer connection for', participantId);
+            this.peerConnections.delete(participantId);
+          }
+        }, 5000);
       }
     };
 
@@ -467,6 +474,7 @@ class SimpleVideoCallService {
     if (this.localStream) {
       this.localStream.getTracks().forEach(track => {
         peerConnection.addTrack(track, this.localStream!);
+        console.log('SimpleVideoCallService: Added', track.kind, 'track to peer connection for', participantId);
       });
       console.log('SimpleVideoCallService: Added local stream tracks to peer connection for', participantId);
     } else {
@@ -480,7 +488,7 @@ class SimpleVideoCallService {
   // WebSocket message handlers
   private handleJoinRequest(data: any) {
     console.log('SimpleVideoCallService: Received join request data:', data);
-    
+
     if (this.isOwner()) {
       // Convert timestamp from number to Date object
       const joinRequest: JoinRequest = {
@@ -489,7 +497,7 @@ class SimpleVideoCallService {
         roomId: data.roomId,
         timestamp: new Date(data.timestamp) // Convert number to Date
       };
-      
+
       console.log('SimpleVideoCallService: Processed join request:', joinRequest);
       this.pendingJoinRequests.push(joinRequest);
       this.emit('join_request_received', joinRequest);
@@ -497,23 +505,61 @@ class SimpleVideoCallService {
       console.log('SimpleVideoCallService: Not room owner, ignoring join request');
     }
   }
+
   private async handleJoinApproved(data: any) {
     // User was approved to join, now get media and setup peer connections
-    try {      // Set current room data
+    try {
+      // Set current room data
       this.currentRoom = {
         id: data.roomId,
         name: data.roomName || data.roomId,
-        ownerId: '', // Will be set when we receive participant data
-        ownerName: '', // Will be set when we receive participant data
+        ownerId: data.ownerId || '',
+        ownerName: data.ownerName || '',
         participants: [],
         isActive: true,
         createdAt: new Date()
       };
 
+      // Add existing participants to the room
+      if (data.existingParticipants && Array.isArray(data.existingParticipants)) {
+        for (const participant of data.existingParticipants) {
+          const videoParticipant: VideoParticipant = {
+            id: participant.userId,
+            name: participant.userName,
+            isOwner: participant.isOwner || false,
+            isVideoEnabled: true,
+            isAudioEnabled: true
+          };
+          this.currentRoom.participants.push(videoParticipant);
+        }
+        console.log('SimpleVideoCallService: Added', data.existingParticipants.length, 'existing participants to room');
+      }
+
+      // Add ourselves to the participants list
+      const currentUserId = this.getCurrentUserId();
+      const currentUserName = SafeLocalStorage.getItem('username') || 'Unknown';
+      const selfParticipant: VideoParticipant = {
+        id: currentUserId,
+        name: currentUserName,
+        isOwner: false,
+        isVideoEnabled: true,
+        isAudioEnabled: true
+      };
+      this.currentRoom.participants.push(selfParticipant);
+
       this.localStream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: true
       });
+
+      // Pre-create peer connections for existing participants
+      // They will send us offers which we'll handle in handleOffer
+      if (data.existingParticipants && Array.isArray(data.existingParticipants)) {
+        for (const participant of data.existingParticipants) {
+          console.log('SimpleVideoCallService: Pre-creating peer connection for existing participant:', participant.userId);
+          await this.createPeerConnection(participant.userId);
+        }
+      }
 
       this.emit('join_approved', data);
       this.emit('local_stream', this.localStream);
@@ -524,8 +570,17 @@ class SimpleVideoCallService {
   }
 
   private handleJoinRejected(data: any) {
-    this.emit('join_rejected', data);  }  private async handleUserJoined(data: any) {
+    this.emit('join_rejected', data);
+  } private async handleUserJoined(data: any) {
     if (this.currentRoom) {
+      const currentUserId = this.getCurrentUserId();
+
+      // If this is about us joining, we already handled this in handleJoinApproved
+      if (data.userId === currentUserId) {
+        console.log('SimpleVideoCallService: Ignoring user_joined for self (already handled in join_approved)');
+        return;
+      }
+
       const newParticipant: VideoParticipant = {
         id: data.userId,
         name: data.userName,
@@ -538,37 +593,34 @@ class SimpleVideoCallService {
       const existingParticipant = this.currentRoom.participants.find(p => p.id === data.userId);
       if (!existingParticipant) {
         this.currentRoom.participants.push(newParticipant);
+        console.log('SimpleVideoCallService: Added new participant:', data.userName);
+      } else {
+        console.log('SimpleVideoCallService: Participant already exists:', data.userName);
       }
 
-      const currentUserId = this.getCurrentUserId();
-      
       // Only existing users should create offers for the new user
       // The new user will receive these offers and create answers
-      if (data.userId !== currentUserId) {
-        console.log('SimpleVideoCallService: Existing user creating offer for new participant:', data.userId);
-        try {
-          // Create peer connection for new user
-          const peerConnection = await this.createPeerConnection(data.userId);
-          
-          const offer = await peerConnection.createOffer();
-          await peerConnection.setLocalDescription(offer);
+      console.log('SimpleVideoCallService: Existing user creating offer for new participant:', data.userId);
+      try {
+        // Create peer connection for new user
+        const peerConnection = await this.createPeerConnection(data.userId);
 
-          this.sendWebSocketMessage({
-            type: 'offer',
-            data: {
-              roomId: this.currentRoom.id,
-              targetId: data.userId,
-              fromId: currentUserId,
-              offer
-            }
-          });
-          
-          console.log('SimpleVideoCallService: Sent offer to new participant:', data.userId);
-        } catch (error) {
-          console.error('SimpleVideoCallService: Error creating offer for new participant:', error);
-        }
-      } else {
-        console.log('SimpleVideoCallService: New user joined (me), waiting for offers from existing participants');
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        this.sendWebSocketMessage({
+          type: 'offer',
+          data: {
+            roomId: this.currentRoom.id,
+            targetId: data.userId,
+            fromId: currentUserId,
+            offer
+          }
+        });
+
+        console.log('SimpleVideoCallService: Sent offer to new participant:', data.userId);
+      } catch (error) {
+        console.error('SimpleVideoCallService: Error creating offer for new participant:', error);
       }
 
       this.emit('user_joined', { participant: newParticipant });
@@ -577,7 +629,7 @@ class SimpleVideoCallService {
   private handleUserLeft(data: any) {
     if (this.currentRoom) {
       console.log('SimpleVideoCallService: User left:', data.userId);
-      
+
       // Remove from participants list
       this.currentRoom.participants = this.currentRoom.participants.filter(
         p => p.id !== data.userId
@@ -587,24 +639,26 @@ class SimpleVideoCallService {
       const peerConnection = this.peerConnections.get(data.userId);
       if (peerConnection) {
         console.log('SimpleVideoCallService: Closing peer connection for:', data.userId);
-        
+
         // Close all remote tracks/streams
         peerConnection.getReceivers().forEach(receiver => {
           if (receiver.track) {
             receiver.track.stop();
           }
         });
-        
+
         peerConnection.close();
         this.peerConnections.delete(data.userId);
       }
 
       this.emit('user_left', { userId: data.userId });
     }
-  }private async handleOffer(data: any) {
+  }
+
+  private async handleOffer(data: any) {
     console.log('SimpleVideoCallService: Received offer from', data.fromId);
     console.log('SimpleVideoCallService: Local stream available:', !!this.localStream);
-    
+
     // Ensure we have a local stream before creating peer connection
     if (!this.localStream) {
       console.warn('SimpleVideoCallService: No local stream available when receiving offer, attempting to get media');
@@ -616,27 +670,38 @@ class SimpleVideoCallService {
         this.emit('local_stream', this.localStream);
       } catch (error) {
         console.error('SimpleVideoCallService: Failed to get local media when receiving offer:', error);
+        return; // Can't proceed without local media
       }
     }
-    
-    const peerConnection = this.peerConnections.get(data.fromId) ||
-      await this.createPeerConnection(data.fromId);
 
-    await peerConnection.setRemoteDescription(data.offer);
-    const answer = await peerConnection.createAnswer();
-    await peerConnection.setLocalDescription(answer);
+    // Get or create peer connection for the sender
+    let peerConnection = this.peerConnections.get(data.fromId);
+    if (!peerConnection) {
+      console.log('SimpleVideoCallService: Creating new peer connection for offer from', data.fromId);
+      peerConnection = await this.createPeerConnection(data.fromId);
+    } else {
+      console.log('SimpleVideoCallService: Using existing peer connection for offer from', data.fromId);
+    }
 
-    console.log('SimpleVideoCallService: Created answer, sending to', data.fromId);
+    try {
+      await peerConnection.setRemoteDescription(data.offer);
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
 
-    this.sendWebSocketMessage({
-      type: 'answer',
-      data: {
-        roomId: this.currentRoom?.id,
-        targetId: data.fromId,
-        fromId: this.getCurrentUserId(),
-        answer
-      }
-    });
+      console.log('SimpleVideoCallService: Created answer, sending to', data.fromId);
+
+      this.sendWebSocketMessage({
+        type: 'answer',
+        data: {
+          roomId: this.currentRoom?.id,
+          targetId: data.fromId,
+          fromId: this.getCurrentUserId(),
+          answer
+        }
+      });
+    } catch (error) {
+      console.error('SimpleVideoCallService: Error handling offer from', data.fromId, ':', error);
+    }
   }
 
   private async handleAnswer(data: any) {
@@ -645,11 +710,17 @@ class SimpleVideoCallService {
       await peerConnection.setRemoteDescription(data.answer);
     }
   }
-
   private async handleIceCandidate(data: any) {
     const peerConnection = this.peerConnections.get(data.fromId);
-    if (peerConnection) {
-      await peerConnection.addIceCandidate(data.candidate);
+    if (peerConnection && peerConnection.remoteDescription) {
+      try {
+        await peerConnection.addIceCandidate(data.candidate);
+        console.log('SimpleVideoCallService: Added ICE candidate from', data.fromId);
+      } catch (error) {
+        console.error('SimpleVideoCallService: Error adding ICE candidate from', data.fromId, ':', error);
+      }
+    } else {
+      console.warn('SimpleVideoCallService: Cannot add ICE candidate from', data.fromId, '- no peer connection or remote description not set');
     }
   }
 
@@ -671,7 +742,7 @@ class SimpleVideoCallService {
   private generateRoomId(): string {
     return Math.random().toString(36).substring(2, 15) +
       Math.random().toString(36).substring(2, 15);
-  }  private sendWebSocketMessage(message: any) {
+  } private sendWebSocketMessage(message: any) {
     console.log('SimpleVideoCallService: Attempting to send message:', message);
     console.log('SimpleVideoCallService: WebSocket ready state:', this.ws?.readyState);
 
@@ -690,11 +761,11 @@ class SimpleVideoCallService {
     console.log('SimpleVideoCallService: Flushing', this.pendingMessages.length, 'pending messages');
     const messages = [...this.pendingMessages];
     this.pendingMessages = [];
-    
+
     messages.forEach(message => {
       this.sendWebSocketMessage(message);
     });
-  }private sendUserOnline() {
+  } private sendUserOnline() {
     // Get user info from SafeLocalStorage (set by the video call page)
     const userId = typeof window !== 'undefined' ? SafeLocalStorage.getItem('userId') : null;
     const userName = typeof window !== 'undefined' ? SafeLocalStorage.getItem('username') : null;
