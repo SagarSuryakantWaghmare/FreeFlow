@@ -30,7 +30,7 @@ function FeatureCard({ icon, title, description, delay }: FeatureCardProps) {
     <div
       ref={ref}
       className={cn(
-        "bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700 transform transition-all duration-700 ease-out",
+        "bg-white  dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700 transform transition-all duration-700 ease-out",
         inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
       )}
       style={{ transitionDelay: `${delay * 100}ms` }}
