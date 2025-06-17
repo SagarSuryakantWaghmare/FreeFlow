@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 public class ChatMessage {
     private String senderId;  // from external auth system
+    private String senderName; // actual username
     private String content;
     private Long groupId;
     private LocalDateTime timestamp;
@@ -15,6 +16,14 @@ public class ChatMessage {
 
     public void setSenderId(String senderId) {
         this.senderId = senderId;
+    }
+
+    public String getSenderName() {
+        return senderName;
+    }
+
+    public void setSenderName(String senderName) {
+        this.senderName = senderName;
     }
 
     public String getContent() {

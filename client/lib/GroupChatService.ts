@@ -466,10 +466,16 @@ class GroupChatService {
       return;
     }
 
+    // Ensure message has senderName
+    if (!message.senderName) {
+      message.senderName = this.getUserDisplayName(message.senderId);
+    }
+
     // Convert frontend message format to backend format
     const backendMessage = {
       groupId: parseInt(message.groupId), // Convert string to number for backend
       senderId: message.senderId,
+      senderName: message.senderName, // Include sender name
       content: message.content
     };
 

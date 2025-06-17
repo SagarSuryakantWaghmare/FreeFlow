@@ -246,8 +246,7 @@ export default function GroupChatRoom({
     // Fallback to senderId
     return senderId;
   };
-
-  const getUserInitials = (senderId: string) => {
+  const getUserInitials = (senderId: string, senderName?: string) => {
     if (senderId === userId) {
       // Use actual user initials if available
       if (user?.firstName) {
@@ -257,6 +256,16 @@ export default function GroupChatRoom({
       }
       return 'Y';
     }
+    
+    // Use senderName if available to generate initials
+    if (senderName) {
+      const nameParts = senderName.split(' ');
+      if (nameParts.length >= 2) {
+        return nameParts[0].charAt(0).toUpperCase() + nameParts[1].charAt(0).toUpperCase();
+      }
+      return senderName.charAt(0).toUpperCase();
+    }
+    
     return senderId.charAt(0).toUpperCase();
   };
 
@@ -391,21 +400,19 @@ export default function GroupChatRoom({
                           className={`flex items-end space-x-3 ${isOwnMessage ? 'justify-end' : 'justify-start'
                             } ${showAvatar ? 'mb-6' : 'mb-2'} w-full`}
                         >
-                          {/* Avatar for other users */}
-                          {!isOwnMessage && (
+                          {/* Avatar for other users */}                          {!isOwnMessage && (
                             <div className={`flex-shrink-0 w-10 h-10 ${showAvatar
                                 ? 'bg-gradient-to-br from-emerald-500 to-emerald-600'
                                 : 'bg-transparent'
                               } rounded-xl flex items-center justify-center text-sm font-bold text-white`}>
-                              {showAvatar && getUserInitials(message.senderId)}
+                              {showAvatar && getUserInitials(message.senderId, message.senderName)}
                             </div>
                           )}
 
-                          <div className={`max-w-[70%] sm:max-w-md ${isOwnMessage ? 'order-first' : ''}`}>
-                            {showSenderName && (
+                          <div className={`max-w-[70%] sm:max-w-md ${isOwnMessage ? 'order-first' : ''}`}>                            {showSenderName && (
                               <div className={`text-xs font-medium mb-2 px-1 ${isOwnMessage ? 'text-right text-[hsl(263.4,70%,50.4%)]' : 'text-left text-emerald-600'
                                 }`}>
-                                {getUserDisplayName(message.senderId)}
+                                {message.senderName || getUserDisplayName(message.senderId)}
                               </div>
                             )}
 
