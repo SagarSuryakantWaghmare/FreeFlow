@@ -1,5 +1,5 @@
 import { HeroSection } from "@/components/Home/hero-section";
-import { FeaturesSection } from "@/components/Home/features-section";
+import { AnimatedFeaturesDemo } from "@/components/animated-features-demo";
 import { PricingSection } from "@/components/Home/pricing-section";
 import { AnimatedTestimonialsDemo } from "@/components/animated-testimonials-demo";
 import { CtaSection } from "@/components/Home/cta-section";
@@ -10,7 +10,7 @@ export default function Home() {
   return (
     <div className="w-full">
       <HeroSection />
-      <FeaturesSection />
+      <AnimatedFeaturesDemo />
       <PricingSection />
       <AnimatedTestimonialsDemo />
       <CtaSection />
