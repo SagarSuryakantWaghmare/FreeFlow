@@ -3,9 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { Shield, Lock, Zap, ArrowRight } from 'lucide-react';
+import { Shield, Lock, Zap, ArrowRight, MessageCircle, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import { BackgroundBeamsWithCollision } from '@/components/ui/background-beams-with-collision';
+import { Footer } from '@/components/Home/footer';
 
 export default function P2PLanding() {
   const router = useRouter();
@@ -69,97 +71,125 @@ export default function P2PLanding() {
     tap: {
       scale: 0.95,
     },
-  };
-  return (
-    <div className="min-h-screen mt-8 flex flex-col bg-background text-foreground">
-      <main className="mt-4 md:mt-8 flex-1 container mx-auto px-2 md:px-4 py-8 md:py-16 flex flex-col items-center justify-center text-center">        <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : -20 }}
-        transition={{ duration: 0.6 }}
-        className="mb-6 md:mb-10 px-4"
-      >
-        <h2 className="text-3xl md:text-4xl lg:text-5xl text-center font-bold mb-4 md:mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70 dark:from-primary dark:to-purple-300">
-          Secure Peer-to-Peer Communication
-        </h2>        <p className="text-base md:text-lg lg:text-xl text-muted-foreground max-w-5xl mb-8 md:mb-12 mx-auto">
-          Experience truly private conversations with direct peer-to-peer technology.
-          No servers storing your messages, no third parties—just you and the people you chat with.
-        </p>
-
+  };  return (
+    <div className="min-h-screen">
+        <div className="container relative z-10 mx-auto px-4 md:px-6 pt-36 pb-8 md:pt-40 md:pb-24">
+        {/* Hero Section */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="mb-8 md:mb-12 px-4"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : -20 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16 md:mb-20"
         >
-          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-card border border-border rounded-lg p-6 text-left">
-              <h3 className="text-xl font-semibold mb-3 text-primary">One-on-One P2P Chat</h3>
-              <p className="text-muted-foreground mb-4">
+          <div className="inline-block rounded-full bg-[hsl(263.4,70%,50.4%)/0.1] px-4 py-2 text-sm font-semibold text-[hsl(263.4,70%,50.4%)] mb-6">
+            Secure. Private. Direct.
+          </div>
+          
+          <h1
+            className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight tracking-wide mb-6 relative z-20"
+            style={{ fontFamily: "'Bebas Neue', sans-serif" }}
+          >
+            <span className="text-[hsl(263.4,70%,50.4%)]">PEER-TO-PEER</span>
+            <br />
+            Secure Communication
+          </h1>
+          
+          <p className="text-lg md:text-xl text-[hsl(217.9,10.6%,64.9%)] max-w-3xl mx-auto mb-12 relative z-20">
+            Experience truly private conversations with direct peer-to-peer technology.
+            No servers storing your messages, no third parties—just you and the people you chat with.
+          </p>
+
+          {/* Action Cards */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-16"
+          >
+            <div className="group bg-white/5 dark:bg-white/5 backdrop-blur-sm border border-white/10 dark:border-white/10 rounded-2xl p-8 text-left hover:bg-white/10 dark:hover:bg-white/10 transition-all duration-300 hover:scale-105">
+              <MessageCircle className="h-12 w-12 text-[hsl(263.4,70%,50.4%)] mb-4" />
+              <h3 className="text-2xl font-bold mb-3 text-white dark:text-white" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
+                One-on-One P2P Chat
+              </h3>
+              <p className="text-[hsl(217.9,10.6%,64.9%)] mb-4">
                 Direct encrypted communication between two users. No servers, maximum privacy.
               </p>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Complete anonymity</li>
-                <li>• No message history stored</li>
-                <li>• Real-time direct connection</li>
+              <ul className="text-sm text-[hsl(217.9,10.6%,64.9%)] space-y-2">
+                <li className="flex items-center"><span className="text-[hsl(263.4,70%,50.4%)] mr-2">•</span> Complete anonymity</li>
+                <li className="flex items-center"><span className="text-[hsl(263.4,70%,50.4%)] mr-2">•</span> No message history stored</li>
+                <li className="flex items-center"><span className="text-[hsl(263.4,70%,50.4%)] mr-2">•</span> Real-time direct connection</li>
               </ul>
             </div>
             
-            <div className="bg-card border border-border rounded-lg p-6 text-left">
-              <h3 className="text-xl font-semibold mb-3 text-green-600">Group Chat</h3>
-              <p className="text-muted-foreground mb-4">
+            <div className="group bg-white/5 dark:bg-white/5 backdrop-blur-sm border border-white/10 dark:border-white/10 rounded-2xl p-8 text-left hover:bg-white/10 dark:hover:bg-white/10 transition-all duration-300 hover:scale-105">
+              <Users className="h-12 w-12 text-green-500 mb-4" />
+              <h3 className="text-2xl font-bold mb-3 text-white dark:text-white" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
+                Group Chat
+              </h3>
+              <p className="text-[hsl(217.9,10.6%,64.9%)] mb-4">
                 Secure group conversations with multiple participants. Create or join existing groups.
               </p>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Multiple participants</li>
-                <li>• Create custom groups</li>
-                <li>• Join existing conversations</li>
+              <ul className="text-sm text-[hsl(217.9,10.6%,64.9%)] space-y-2">
+                <li className="flex items-center"><span className="text-green-500 mr-2">•</span> Multiple participants</li>
+                <li className="flex items-center"><span className="text-green-500 mr-2">•</span> Create custom groups</li>
+                <li className="flex items-center"><span className="text-green-500 mr-2">•</span> Join existing conversations</li>
               </ul>
             </div>
-          </div>
-        </motion.div>
-      </motion.div>
+          </motion.div>
+        </motion.div>        {/* Features Section */}
         <motion.div
           ref={featureRef}
           variants={containerVariants}
           initial="hidden"
           animate={featureInView ? "visible" : "hidden"}
-          className="w-full max-w-[1200px] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8 mb-8 md:mb-12 px-4"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16 max-w-6xl mx-auto"
         >
           <motion.div
             variants={featureVariants}
-            className="bg-card hover:bg-card/90 rounded-xl p-4 md:p-6 shadow-md transition-all duration-200 border border-border hover:border-primary/30"
+            className="group bg-white/5 dark:bg-white/5 backdrop-blur-sm border border-white/10 dark:border-white/10 rounded-2xl p-8 text-center hover:bg-white/10 dark:hover:bg-white/10 transition-all duration-300 hover:scale-105"
           >
-            <Shield className="h-8 w-8 md:h-10 md:w-10 lg:h-12 lg:w-12 text-primary mx-auto mb-3 md:mb-4" />
-            <h3 className="text-lg md:text-xl font-semibold mb-1 md:mb-2">End-to-End Encryption</h3>
-            <p className="text-sm md:text-base text-muted-foreground">
+            <Shield className="h-16 w-16 text-[hsl(263.4,70%,50.4%)] mx-auto mb-6" />
+            <h3 className="text-2xl font-bold mb-4 text-white dark:text-white" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
+              End-to-End Encryption
+            </h3>
+            <p className="text-[hsl(217.9,10.6%,64.9%)]">
               All your conversations are encrypted and decrypted only on your devices
             </p>
           </motion.div>
+          
           <motion.div
             variants={featureVariants}
-            className="bg-card hover:bg-card/90 rounded-xl p-4 md:p-6 shadow-md transition-all duration-200 border border-border hover:border-primary/30"
+            className="group bg-white/5 dark:bg-white/5 backdrop-blur-sm border border-white/10 dark:border-white/10 rounded-2xl p-8 text-center hover:bg-white/10 dark:hover:bg-white/10 transition-all duration-300 hover:scale-105"
           >
-            <Lock className="h-8 w-8 md:h-10 md:w-10 lg:h-12 lg:w-12 text-primary mx-auto mb-3 md:mb-4" />
-            <h3 className="text-lg md:text-xl font-semibold mb-1 md:mb-2">No Message Storage</h3>
-            <p className="text-sm md:text-base text-muted-foreground">
+            <Lock className="h-16 w-16 text-[hsl(263.4,70%,50.4%)] mx-auto mb-6" />
+            <h3 className="text-2xl font-bold mb-4 text-white dark:text-white" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
+              No Message Storage
+            </h3>
+            <p className="text-[hsl(217.9,10.6%,64.9%)]">
               Your messages never touch a server, eliminating the risk of data breaches
             </p>
           </motion.div>
+          
           <motion.div
             variants={featureVariants}
-            className="bg-card hover:bg-card/90 rounded-xl p-4 md:p-6 shadow-md transition-all duration-200 border border-border hover:border-primary/30"
+            className="group bg-white/5 dark:bg-white/5 backdrop-blur-sm border border-white/10 dark:border-white/10 rounded-2xl p-8 text-center hover:bg-white/10 dark:hover:bg-white/10 transition-all duration-300 hover:scale-105"
           >
-            <Zap className="h-8 w-8 md:h-10 md:w-10 lg:h-12 lg:w-12 text-primary mx-auto mb-3 md:mb-4" />
-            <h3 className="text-lg md:text-xl font-semibold mb-1 md:mb-2">Direct Connection</h3>
-            <p className="text-sm md:text-base text-muted-foreground">
+            <Zap className="h-16 w-16 text-[hsl(263.4,70%,50.4%)] mx-auto mb-6" />
+            <h3 className="text-2xl font-bold mb-4 text-white dark:text-white" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
+              Direct Connection
+            </h3>
+            <p className="text-[hsl(217.9,10.6%,64.9%)]">
               Peer-to-peer technology creates direct channels between users for maximum privacy
             </p>
           </motion.div>
-        </motion.div>        <motion.div
+        </motion.div>
+
+        {/* CTA Buttons */}
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="flex flex-col sm:flex-row gap-4 items-center justify-center"
+          className="flex flex-col sm:flex-row gap-6 items-center justify-center"
         >
           <motion.div
             variants={buttonVariants}
@@ -171,15 +201,15 @@ export default function P2PLanding() {
             <Button
               size="lg"
               onClick={() => router.push('/simple-sign-in')}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm md:text-base lg:text-lg px-4 md:px-6 lg:px-8 py-3 md:py-4 lg:py-6 h-auto cursor-pointer rounded-lg shadow-lg transition-all duration-200 ease-in-out"
+              className="bg-[hsl(263.4,70%,50.4%)] hover:bg-[hsl(263.4,70%,45%)] text-white text-lg px-8 py-6 h-auto rounded-2xl shadow-2xl transition-all duration-300 relative z-20"
             >
               Start P2P Chatting
               <motion.div
                 initial={{ x: 0 }}
-                animate={{ x: isButtonHovered ? 5 : 0 }}
+                animate={{ x: isButtonHovered ? 8 : 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5" />
+                <ArrowRight className="ml-3 h-5 w-5" />
               </motion.div>
             </Button>
           </motion.div>
@@ -193,17 +223,15 @@ export default function P2PLanding() {
               size="lg"
               variant="outline"
               onClick={() => router.push('/group-chat')}
-              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground text-sm md:text-base lg:text-lg px-4 md:px-6 lg:px-8 py-3 md:py-4 lg:py-6 h-auto cursor-pointer rounded-lg shadow-lg transition-all duration-200 ease-in-out"
+              className="border-2 border-white/20 text-white hover:bg-white/10 hover:border-white/30 text-lg px-8 py-6 h-auto rounded-2xl shadow-2xl transition-all duration-300 backdrop-blur-sm relative z-20"
             >
               Join Group Chat
-              <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5" />
-            </Button>
-          </motion.div>
+              <ArrowRight className="ml-3 h-5 w-5" />
+            </Button>          </motion.div>
         </motion.div>
-      </main>
-      <footer className="container mx-auto p-2 md:p-4 text-center text-muted-foreground text-xs md:text-sm">
-        <p>© 2025 FreeFlow. All communications are peer-to-peer and not stored on our servers.</p>
-      </footer>
+      </div>
+     
+      
     </div>
   );
 }
