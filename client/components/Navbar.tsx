@@ -120,14 +120,19 @@ const Navbar: React.FC = () => {
                   Logout
                 </Button>
                 <ThemeToggle />
-              </>
-            ) : (<>
+              </>            ) : (<>
+              <Link
+                href="/about"
+                className="text-gray-600 dark:text-gray-300 hover:text-[hsl(263.4,70%,50.4%)] px-3 py-2 rounded-md text-sm transition-colors"
+              >
+                About
+              </Link>
               <Link
                 href="/p2p"
                 className="text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-sm transition-colors"
               >
                 Go Private
-              </Link>              <SignedIn>
+              </Link><SignedIn>
                 <Link
                   href="/group-chat"
                   className="text-white bg-[rgb(76,175,80)] hover:bg-[rgb(56,155,60)] px-4 py-2 rounded-md text-sm transition-colors"
@@ -174,15 +179,21 @@ const Navbar: React.FC = () => {
                   >
                     Logout
                   </Button>
-                </>
-              ) : (<>
+                </>              ) : (<>
+                <Link
+                  href="/about"
+                  className="block text-gray-600 dark:text-gray-300 hover:text-[hsl(263.4,70%,50.4%)] px-4 py-2 rounded-md text-center transition-colors border border-gray-300 dark:border-gray-600 hover:border-[hsl(263.4,70%,50.4%)]"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  About
+                </Link>
                 <Link
                   href="/p2p"
                   className="block text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Go Private
-                </Link>                <SignedIn>
+                </Link><SignedIn>
                   <Link
                     href="/group-chat"
                     className="block text-white bg-[rgb(76,175,80)] hover:bg-[rgb(56,155,60)] px-4 py-2 rounded-md text-center mt-2"

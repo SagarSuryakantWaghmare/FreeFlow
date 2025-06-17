@@ -26,10 +26,11 @@ export function Footer() {
             <p className="text-sm text-[hsl(217.9,10.6%,64.9%)] max-w-md">
               Seamless peer-to-peer communication that flows freely. Connect with anyone, anywhere.
             </p>
-          </div>
-
-          {/* Legal Links */}
+          </div>          {/* Legal Links */}
           <div className="flex justify-center space-x-6">
+            <Link href="/about" className="text-sm text-[hsl(217.9,10.6%,64.9%)] hover:text-[hsl(263.4,70%,50.4%)] transition-colors">
+              About
+            </Link>
             <Link href="/terms" className="text-sm text-[hsl(217.9,10.6%,64.9%)] hover:text-[hsl(263.4,70%,50.4%)] transition-colors">
               Terms & Conditions
             </Link>
