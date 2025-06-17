@@ -1,14 +1,14 @@
 "use client";
 import React from "react";
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip";
+import Sagar from "@/public/Photos/sagar.jpg";
 
 const developers = [
   {
     id: 1,
     name: "Sagar Suryakant Waghmare",
     designation: "Full Stack Developer",
-    image:
-      "https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=3387&q=80",
+    image: Sagar,
   },
   {
     id: 2,

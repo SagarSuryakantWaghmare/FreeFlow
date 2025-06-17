@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import {
   motion,
   useTransform,
@@ -8,6 +9,7 @@ import {
   useMotionValue,
   useSpring,
 } from "framer-motion";
+import { StaticImageData } from "next/image";
 
 export const AnimatedTooltip = ({
   items,
@@ -16,7 +18,7 @@ export const AnimatedTooltip = ({
     id: number;
     name: string;
     designation: string;
-    image: string;
+    image: string | StaticImageData;
   }[];
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
