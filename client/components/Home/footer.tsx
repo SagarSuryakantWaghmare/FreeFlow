@@ -29,7 +29,7 @@ export function Footer() {
           {/* GitHub Link */}
           <div className="flex justify-center">
             <Link 
-              href="https://github.com" 
+              href="https://github.com/SagarSuryakantWaghmare/FreeFlow" 
               className="inline-flex items-center space-x-2 text-[hsl(217.9,10.6%,64.9%)] hover:text-[hsl(263.4,70%,50.4%)] transition-colors"
               aria-label="GitHub"
             >
@@ -55,7 +55,7 @@ export function Footer() {
             <div className="flex items-center space-x-1 text-sm text-[hsl(217.9,10.6%,64.9%)]">
               <span>Made with</span>
               <Heart className="h-4 w-4 text-red-500 fill-current" />
-              <span>by Atharva Sagar and Akash</span>
+              <span>by Atharva,Sagar and Akash</span>
             </div>
             <div className="text-sm text-[hsl(217.9,10.6%,64.9%)]">
               &copy; 2025 FreeFlow. All rights reserved.
