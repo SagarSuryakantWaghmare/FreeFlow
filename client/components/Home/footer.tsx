@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Github, Heart } from "lucide-react";
 import logo from "@/public/1.png";
+import DeveloperTooltip from "@/components/ui/animated-tooltip-demo";
 
 export function Footer() {
   return (    <footer className="bg-white dark:bg-[hsl(224,71.4%,4.1%)] border-t border-gray-200 dark:border-[hsl(215,27.9%,16.9%)]">
@@ -47,15 +48,16 @@ export function Footer() {
               Privacy Policy
             </Link>
           </div>
-        </div>
-
-        {/* Bottom Section */}
+        </div>        {/* Bottom Section */}
         <div className="mt-8 pt-6 border-t border-gray-200 dark:border-[hsl(215,27.9%,16.9%)] text-center">
-          <div className="flex flex-col items-center space-y-2">
-            <div className="flex items-center space-x-1 text-sm text-[hsl(217.9,10.6%,64.9%)]">
-              <span>Made with</span>
-              <Heart className="h-4 w-4 text-red-500 fill-current" />
-              <span>by Atharva,Sagar and Akash</span>
+          <div className="flex flex-col items-center space-y-4">
+            <div className="flex flex-col items-center space-y-3">
+              <div className="flex items-center space-x-2 text-sm text-[hsl(217.9,10.6%,64.9%)]">
+                <span>Made with</span>
+                <Heart className="h-4 w-4 text-red-500 fill-current" />
+                <span>by our amazing team</span>
+              </div>
+              <DeveloperTooltip />
             </div>
             <div className="text-sm text-[hsl(217.9,10.6%,64.9%)]">
               &copy; 2025 FreeFlow. All rights reserved.
