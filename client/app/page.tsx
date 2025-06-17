@@ -4,6 +4,7 @@ import { PricingSection } from "@/components/Home/pricing-section";
 import { TestimonialsSection } from "@/components/Home/testimonials-section";
 import { CtaSection } from "@/components/Home/cta-section";
 import { Footer } from "@/components/Home/footer";
+import TextHoverEffectDemo from "@/components/text-hover-effect-demo";
 
 export default function Home() {
   return (
@@ -14,6 +15,7 @@ export default function Home() {
       <TestimonialsSection />
       <CtaSection />
       <Footer />
+      <TextHoverEffectDemo />
     </div>
   );
 }
