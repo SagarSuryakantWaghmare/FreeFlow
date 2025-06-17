@@ -68,9 +68,8 @@ export const BackgroundBeamsWithCollision = ({
 
   return (
     <div
-      ref={parentRef}
-      className={cn(
-        "h-96 md:h-[40rem] bg-black   relative flex items-center w-full justify-center overflow-hidden",
+      ref={parentRef}      className={cn(
+        "h-96 md:h-[40rem] bg-white dark:bg-black relative flex items-center w-full justify-center overflow-hidden",
         // h-screen if you want bigger
         className
       )}
@@ -86,10 +85,10 @@ export const BackgroundBeamsWithCollision = ({
 
       {children}      <div
         ref={containerRef}
-        className="absolute bottom-0 bg-black dark:bg-black w-full inset-x-0 pointer-events-none"
+        className="absolute bottom-0 bg-white dark:bg-black w-full inset-x-0 pointer-events-none"
         style={{
           boxShadow:
-            "0 0 24px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.1)",
+            "0 0 24px rgba(34, 42, 53, 0.06), 0 1px 1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(34, 42, 53, 0.04), 0 0 4px rgba(34, 42, 53, 0.08), 0 16px 68px rgba(47, 48, 55, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1) inset",
         }}
       ></div>
     </div>

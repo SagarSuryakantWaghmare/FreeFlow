@@ -14,7 +14,7 @@ export function HeroSection() {
     setIsVisible(true);
   }, []);
   return (
-    <BackgroundBeamsWithCollision className="relative overflow-hidden pt-36 pb-16 md:pt-40 md:pb-24 min-h-screen bg-black dark:from-[hsl(224,71.4%,4.1%)] dark:via-[hsl(263.4,70%,50.4%)]/5 dark:to-[hsl(224,71.4%,4.1%)]">
+    <BackgroundBeamsWithCollision className="relative   overflow-hidden pt-36 pb-16 md:pt-40 md:pb-24 min-h-screen bg-black dark:from-[hsl(224,71.4%,4.1%)] dark:via-[hsl(263.4,70%,50.4%)]/5 dark:to-[hsl(224,71.4%,4.1%)]">
       {/* Hero content */}
       <div className="container relative z-10 mx-auto px-4 md:px-6 md:ml-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
