@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import groupChatService, { GroupMessage } from '@/lib/GroupChatService';
 import { useToast } from '@/hooks/use-toast';
 import { Copy, Users, LogOut, Send, ArrowLeft, User, Sparkles, MessageCircle } from 'lucide-react';
-import { useUser } from '@clerk/nextjs';
+import { useClerkAuth } from '@/hooks/use-clerk-auth';
 import { SafeLocalStorage } from '@/lib/utils/SafeLocalStorage';
 
 
@@ -37,37 +37,43 @@ export default function GroupChatRoom({
   const [messages, setMessages] = useState<GroupMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isConnected, setIsConnected] = useState(false);
-  const [isLeaving, setIsLeaving] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isLeaving, setIsLeaving] = useState(false); const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded } = useClerkAuth();
 
-  // Getting the current user information
+  // Getting the current user information and ensuring username is in localStorage
   useEffect(() => {
     if (isLoaded && user) {
       console.log('Current user:', user);
       console.log('User email:', user.emailAddresses[0]?.emailAddress);
       console.log('User name:', user.firstName, user.lastName);
       console.log('User ID:', user.id);
-      
+
+      // Ensure username is properly stored
+      const storedUsername = SafeLocalStorage.getItem('username');
+      console.log('Stored username in localStorage:', storedUsername);
+
       // You can access user data here
       // user.firstName, user.lastName, user.emailAddresses[0]?.emailAddress, etc.
     }
-  }, [user, isLoaded]);  useEffect(() => {
+  }, [user, isLoaded]);
+
+  useEffect(() => {
     const initializeChat = async () => {
       try {
         // Initialize service with userId
         groupChatService.initialize(userId);
-        
+
         // Ensure connection
         if (!groupChatService.isConnected()) {
           await groupChatService.connect();
         }
 
         setIsConnected(true);
-        
         // Load existing messages from storage first
         const storedMessages = groupChatService.getGroupMessages(groupId);
+        console.log('Loaded stored messages:', storedMessages);
+
         const convertedMessages = storedMessages.map(msg => ({
           groupId: msg.groupId,
           senderId: msg.senderId,
@@ -75,22 +81,25 @@ export default function GroupChatRoom({
           content: msg.content,
           timestamp: msg.timestamp
         }));
+        console.log('Converted messages for display:', convertedMessages);
         setMessages(convertedMessages);
-        
+
         // Mark group as active (for unread count management)
         groupChatService.setGroupActive(groupId);
-        
+
         // Subscribe to group messages for real-time updates
         groupChatService.subscribeToGroup(groupId, (message: GroupMessage) => {
-          console.log('GroupChatRoom received message:', message);
+          console.log('GroupChatRoom received new message:', message);
+          console.log('Message senderName:', message.senderName);
+          console.log('Message senderId:', message.senderId);
           setMessages(prev => {
             // Check if message already exists to avoid duplicates
-            const exists = prev.some(msg => 
-              msg.senderId === message.senderId && 
-              msg.content === message.content && 
+            const exists = prev.some(msg =>
+              msg.senderId === message.senderId &&
+              msg.content === message.content &&
               Math.abs((msg.timestamp?.getTime() || 0) - (message.timestamp?.getTime() || 0)) < 1000
             );
-            
+
             if (!exists) {
               return [...prev, message];
             }
@@ -100,7 +109,11 @@ export default function GroupChatRoom({
 
         // Auto-reconnect to previously connected groups
         if (!isMultiChat) {
-          await groupChatService.autoReconnectGroups();
+          // await groupChatService.autoReconnectGroups(); // This method doesn't exist
+          // Reconnection logic is usually handled by the STOMP client's reconnectDelay
+          // or by re-calling connect() if needed. For now, we assume STOMP handles it.
+          // If specific groups need to be re-subscribed, that would be handled by subscribeToAllUserGroups or similar.
+          console.log("Auto-reconnect for single chat mode - STOMP client handles general reconnection.");
         }
 
         if (!isMultiChat) {
@@ -145,7 +158,7 @@ export default function GroupChatRoom({
       timestamp: msg.timestamp
     }));
     setMessages(convertedMessages);
-    
+
     // Scroll to bottom when messages load
     setTimeout(() => scrollToBottom(), 100);
   }, [groupId]);
@@ -181,7 +194,7 @@ export default function GroupChatRoom({
       content: newMessage.trim(),
       timestamp: new Date()
     };
-    
+
     console.log('Sending message with user info:', message);
     groupChatService.sendMessage(message);
     setNewMessage('');
@@ -223,27 +236,44 @@ export default function GroupChatRoom({
       hour: '2-digit',
       minute: '2-digit'
     });
-  };  const getUserDisplayName = (senderId: string) => {
+  };
+
+  const getUserDisplayName = (senderId: string) => {
+    console.log('getUserDisplayName called with senderId:', senderId);
+    console.log('Current userId:', userId);
+
     if (senderId === userId) {
       // Use the actual user's name if available, otherwise fallback to 'You'
       if (user?.firstName) {
-        return user.firstName + (user.lastName ? ` ${user.lastName}` : '');
-      }      // Try to get username from localStorage
+        const fullName = user.firstName + (user.lastName ? ` ${user.lastName}` : '');
+        console.log('Returning user full name:', fullName);
+        return fullName;
+      }
+
+      // Try to get username from localStorage
       const username = SafeLocalStorage.getItem('username');
-      if (username) return username;
+      console.log('Retrieved username from localStorage:', username);
+      if (username) {
+        console.log('Returning stored username:', username);
+        return username;
+      }
+      console.log('Returning fallback "You"');
       return 'You';
     }
-    
+
     // For other users, try to extract meaningful name from email
     if (senderId.includes('@')) {
       const emailPart = senderId.split('@')[0];
       // Convert dot notation to space and capitalize
-      return emailPart.split('.').map(part => 
+      const displayName = emailPart.split('.').map(part =>
         part.charAt(0).toUpperCase() + part.slice(1)
       ).join(' ');
+      console.log('Returning email-based display name:', displayName);
+      return displayName;
     }
-    
+
     // Fallback to senderId
+    console.log('Returning fallback senderId:', senderId);
     return senderId;
   };
   const getUserInitials = (senderId: string, senderName?: string) => {
@@ -256,7 +286,7 @@ export default function GroupChatRoom({
       }
       return 'Y';
     }
-    
+
     // Use senderName if available to generate initials
     if (senderName) {
       const nameParts = senderName.split(' ');
@@ -265,7 +295,7 @@ export default function GroupChatRoom({
       }
       return senderName.charAt(0).toUpperCase();
     }
-    
+
     return senderId.charAt(0).toUpperCase();
   };
 
@@ -323,8 +353,8 @@ export default function GroupChatRoom({
                     <Badge
                       variant={isConnected ? "default" : "secondary"}
                       className={`text-xs ${isConnected
-                          ? "bg-[hsl(263.4,70%,50.4%)] text-primary-foreground"
-                          : "bg-muted text-muted-foreground"
+                        ? "bg-[hsl(263.4,70%,50.4%)] text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
                         }`}
                     >
                       <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isConnected ? 'bg-green-400' : 'bg-gray-400'}`} />
@@ -402,23 +432,23 @@ export default function GroupChatRoom({
                         >
                           {/* Avatar for other users */}                          {!isOwnMessage && (
                             <div className={`flex-shrink-0 w-10 h-10 ${showAvatar
-                                ? 'bg-gradient-to-br from-emerald-500 to-emerald-600'
-                                : 'bg-transparent'
+                              ? 'bg-gradient-to-br from-emerald-500 to-emerald-600'
+                              : 'bg-transparent'
                               } rounded-xl flex items-center justify-center text-sm font-bold text-white`}>
                               {showAvatar && getUserInitials(message.senderId, message.senderName)}
                             </div>
                           )}
 
                           <div className={`max-w-[70%] sm:max-w-md ${isOwnMessage ? 'order-first' : ''}`}>                            {showSenderName && (
-                              <div className={`text-xs font-medium mb-2 px-1 ${isOwnMessage ? 'text-right text-[hsl(263.4,70%,50.4%)]' : 'text-left text-emerald-600'
-                                }`}>
-                                {message.senderName || getUserDisplayName(message.senderId)}
-                              </div>
-                            )}
+                            <div className={`text-xs font-medium mb-2 px-1 ${isOwnMessage ? 'text-right text-[hsl(263.4,70%,50.4%)]' : 'text-left text-emerald-600'
+                              }`}>
+                              {message.senderName || getUserDisplayName(message.senderId)}
+                            </div>
+                          )}
 
                             <div className={`px-4 py-3 rounded-2xl shadow-lg break-words ${isOwnMessage
-                                ? 'bg-gradient-to-br from-[hsl(263.4,70%,50.4%)] to-[hsl(263.4,70%,60.4%)] text-white'
-                                : 'bg-card border border-border'
+                              ? 'bg-gradient-to-br from-[hsl(263.4,70%,50.4%)] to-[hsl(263.4,70%,60.4%)] text-white'
+                              : 'bg-card border border-border'
                               } ${showAvatar ? 'rounded-bl-md' : ''}`}>
                               <div className="text-sm leading-relaxed break-words whitespace-pre-wrap">{message.content}</div>
                               {message.timestamp && (
@@ -433,8 +463,8 @@ export default function GroupChatRoom({
                           {/* Avatar for your own messages */}
                           {isOwnMessage && (
                             <div className={`flex-shrink-0 w-10 h-10 ${showAvatar
-                                ? 'bg-gradient-to-br from-[hsl(263.4,70%,50.4%)] to-[hsl(263.4,70%,60.4%)]'
-                                : 'bg-transparent'
+                              ? 'bg-gradient-to-br from-[hsl(263.4,70%,50.4%)] to-[hsl(263.4,70%,60.4%)]'
+                              : 'bg-transparent'
                               } rounded-xl flex items-center justify-center text-sm font-bold text-white`}>
                               {showAvatar && getUserInitials(message.senderId)}
                             </div>

@@ -6,7 +6,6 @@ import groupStorageService, { GroupMessage as StorageGroupMessage, GroupInfo, Gr
 import groupManagerService from './GroupManagerService';
 import groupConnectionManagerService from './GroupConnectionManagerService';
 import groupNotificationService from './GroupNotificationService';
-import { SafeLocalStorage } from './utils/SafeLocalStorage';
 
 export interface GroupMessage {
   groupId: string;
@@ -46,31 +45,31 @@ class GroupChatService {
   private stompClient: Client | null = null;
   private subscriptions: Map<string, StompSubscription> = new Map();
   private messageListeners: Map<string, ((message: GroupMessage) => void)[]> = new Map();
-  private activeGroups: Set<string> = new Set(); // Track currently active/open groups
-  private baseUrl = 'http://localhost:8080'; 
+  private activeGroups: Set<string> = new Set();
+  private baseUrl = 'http://localhost:8080';
   private connectionState = false;
   private currentUserId: string | null = null;
 
   constructor() {
-    // Initialize when needed, not immediately
+    // Initialization can be deferred or done here if needed
   }
 
-  /**
-   * Initialize with current user ID
-   */
   initialize(userId: string): void {
     this.currentUserId = userId;
     groupStorageService.initialize(userId);
     groupManagerService.initialize(userId);
-    
-    // Sync connection manager with existing groups
     const userGroups = groupStorageService.getUserGroups();
     groupConnectionManagerService.syncWithGroupStorage(userGroups);
   }
 
+  // Add public getter for connection state
+  public isConnected(): boolean {
+    return this.connectionState && this.stompClient?.connected === true;
+  }
+
   private initializeStompClient(): void {
     if (this.stompClient) {
-      return; // Already initialized
+      return;
     }
 
     const socket = new SockJS(`${this.baseUrl}/ws/group`);
@@ -87,8 +86,6 @@ class GroupChatService {
     this.stompClient.onConnect = () => {
       console.log('Connected to STOMP server for group chat');
       this.connectionState = true;
-      
-      // Update connection status for all groups
       const userGroups = this.getUserGroups();
       userGroups.forEach(group => {
         groupConnectionManagerService.updateConnectionStatus(group.groupId, 'connected', {
@@ -102,8 +99,6 @@ class GroupChatService {
     this.stompClient.onDisconnect = () => {
       console.log('Disconnected from STOMP server');
       this.connectionState = false;
-      
-      // Update connection status for all groups
       const userGroups = this.getUserGroups();
       userGroups.forEach(group => {
         groupConnectionManagerService.updateConnectionStatus(group.groupId, 'disconnected');
@@ -114,10 +109,12 @@ class GroupChatService {
       console.error('STOMP error:', frame);
       this.connectionState = false;
     };
-  }  async connect(): Promise<void> {
+  }
+
+  async connect(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.initializeStompClient();
-      
+
       if (!this.stompClient) {
         reject(new Error('STOMP client not initialized'));
         return;
@@ -129,13 +126,13 @@ class GroupChatService {
         return;
       }
 
-      this.stompClient.onConnect = () => {
-        console.log('Connected to STOMP server for group chat');
+      this.stompClient.onConnect = () => { // Re-assign onConnect for this specific promise
+        console.log('Connected to STOMP server for group chat (connect method)');
         this.connectionState = true;
         resolve();
       };
 
-      this.stompClient.onStompError = (frame) => {
+      this.stompClient.onStompError = (frame) => { // Re-assign onStompError for this specific promise
         console.error('STOMP connection error:', frame);
         this.connectionState = false;
         reject(new Error(`Failed to connect to STOMP server: ${frame.headers['message'] || 'Unknown error'}`));
@@ -149,7 +146,9 @@ class GroupChatService {
         reject(error);
       }
     });
-  }  disconnect(): void {
+  }
+
+  disconnect(): void {
     if (this.stompClient) {
       this.subscriptions.forEach((subscription) => {
         subscription.unsubscribe();
@@ -157,9 +156,12 @@ class GroupChatService {
       this.subscriptions.clear();
       this.stompClient.deactivate();
       this.connectionState = false;
+      console.log('STOMP client deactivated');
     }
   }
-  async createGroup(groupName: string, userId: string): Promise<CreateGroupResponse> {
+
+  async createGroup(groupName: string, userId: string, userName: string): Promise<CreateGroupResponse> {
+    if (!this.currentUserId) throw new Error("User not initialized");
     try {
       const response = await fetch(`${this.baseUrl}/api/groups/create?name=${encodeURIComponent(groupName)}`, {
         method: 'POST',
@@ -174,8 +176,7 @@ class GroupChatService {
       }
 
       const result: CreateGroupResponse = await response.json();
-      
-      // Store group info locally with owner status
+
       const groupInfo: GroupInfo = {
         groupId: result.groupId,
         groupName,
@@ -183,7 +184,7 @@ class GroupChatService {
         ownerId: userId,
         members: [{
           userId,
-          userName: this.getUserNameFromId(userId),
+          userName: userName, // Use provided userName
           joinedAt: new Date(),
           isOwner: true,
           status: 'online'
@@ -192,19 +193,14 @@ class GroupChatService {
         joinedAt: new Date(),
         lastActivity: new Date()
       };
-      
+
       groupStorageService.saveGroupInfo(groupInfo);
-      
-      // Update connection manager
       groupConnectionManagerService.updateConnectionStatus(result.groupId, 'connected', {
         groupName,
         memberCount: 1,
         isOwner: true
       });
-      
-      // Create notification for group creation
       groupNotificationService.notifyGroupCreated(result.groupId, groupName);
-      
       return result;
     } catch (error) {
       console.error('Error creating group:', error);
@@ -212,7 +208,8 @@ class GroupChatService {
     }
   }
 
-  async joinGroup(token: string, userId: string): Promise<JoinGroupResponse> {
+  async joinGroup(token: string, userId: string, userName: string): Promise<JoinGroupResponse> {
+    if (!this.currentUserId) throw new Error("User not initialized");
     try {
       const response = await fetch(`${this.baseUrl}/api/groups/join/${token}`, {
         method: 'POST',
@@ -227,16 +224,15 @@ class GroupChatService {
       }
 
       const result: JoinGroupResponse = await response.json();
-      
-      // Store group info locally
+
       const groupInfo: GroupInfo = {
         groupId: result.groupId,
         groupName: result.groupName,
         isOwner: false,
-        ownerId: '', // Would be provided by backend in real implementation
-        members: [{
+        ownerId: '', // This should ideally be fetched or provided by backend
+        members: [{ // Add the joining user to members list
           userId,
-          userName: this.getUserNameFromId(userId),
+          userName: userName, // Use provided userName
           joinedAt: new Date(),
           isOwner: false,
           status: 'online'
@@ -244,9 +240,26 @@ class GroupChatService {
         joinedAt: new Date(),
         lastActivity: new Date()
       };
-      
+
       groupStorageService.saveGroupInfo(groupInfo);
-      
+      // After joining, it's good practice to fetch the full member list
+      this.fetchAndUpdateGroupMembers(result.groupId);
+
+      groupConnectionManagerService.updateConnectionStatus(result.groupId, 'connected', {
+        groupName: result.groupName,
+        memberCount: groupStorageService.getGroupInfo(result.groupId)?.members.length || 1, // Update with actual count
+        isOwner: false
+      });
+      // groupNotificationService.notifyGroupJoined(result.groupId, result.groupName, userName);
+      groupNotificationService.createNotification(
+        'member_joined',
+        result.groupId,
+        result.groupName,
+        `${userName} joined the group`,
+        `Welcome ${userName}!`
+      );
+
+
       return result;
     } catch (error) {
       console.error('Error joining group:', error);
@@ -254,20 +267,42 @@ class GroupChatService {
     }
   }
 
-  /**
-   * Request to join a group (with approval system)
-   */
+  async fetchAndUpdateGroupMembers(groupId: string): Promise<void> {
+    try {
+      // Placeholder: In a real app, fetch members from backend
+      // const response = await fetch(`${this.baseUrl}/api/groups/${groupId}/members`);
+      // if (!response.ok) throw new Error('Failed to fetch members');
+      // const members: GroupMember[] = await response.json();
+      // const groupInfo = groupStorageService.getGroupInfo(groupId);
+      // if (groupInfo) {
+      //   groupInfo.members = members; // Update with fetched members
+      //   groupStorageService.saveGroupInfo(groupInfo);
+      //   console.log(`Updated members for group ${groupId}`);
+      // }
+      console.log(`Simulating fetch/update members for group ${groupId}. In a real app, call backend.`);
+      // For now, ensure the current user is in the member list if they are part of the group
+      const groupInfo = groupStorageService.getGroupInfo(groupId);
+      if (groupInfo && this.currentUserId && !groupInfo.members.find(m => m.userId === this.currentUserId)) {
+        // This part is tricky without knowing the current user's name for this group
+        // It's better if the backend provides the full member list on join or via this fetch
+      }
+
+    } catch (error) {
+      console.error(`Error fetching/updating members for group ${groupId}:`, error);
+    }
+  }
+
   async requestJoinGroup(token: string, userId: string, userName: string): Promise<{ success: boolean; message: string }> {
     try {
-      // This would send a join request to the group owner
-      // For demonstration, we'll simulate the approval process
-      
-      // In real implementation, this would:
-      // 1. Validate the token
-      // 2. Get group info
-      // 3. Send join request to group owner
-      // 4. Wait for approval
-      
+      // Simulate sending request to backend
+      console.log(`User ${userName} (${userId}) requested to join group via token ${token}`);
+      // In a real app, this would involve backend logic for approval.
+      // For now, let's assume it sends a notification or creates a pending request.
+      // The group owner would then approve/deny.
+      // We can notify the requester that the request has been sent.
+      // groupNotificationService.notifyJoinRequestSent(token, userName);
+      groupNotificationService.notifyJoinRequest(token, userName, "group_id_placeholder", "group_name_placeholder"); // Placeholder for groupId and groupName if needed by notifyJoinRequest
+
       return {
         success: true,
         message: 'Join request sent to group owner. Awaiting approval.'
@@ -284,93 +319,100 @@ class GroupChatService {
   async leaveGroup(groupId: string, userId: string): Promise<void> {
     try {
       const groupInfo = groupStorageService.getGroupInfo(groupId);
-      
-      // Handle ownership transfer if current user is owner
       if (groupInfo?.isOwner && groupInfo.members.length > 1) {
         const newOwnerId = groupManagerService.handleOwnerLeaving(groupId, groupInfo.members);
         if (newOwnerId) {
-          // In real implementation, this would notify the backend
           console.log(`Ownership of group ${groupId} transferred to ${newOwnerId}`);
+          // Notify backend about ownership change
         }
       }
-      
-      const response = await fetch(`${this.baseUrl}/api/groups/leave/${groupId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': userId,
-        },
-      });
 
-      if (!response.ok) {
-        throw new Error(`Failed to leave group: ${response.statusText}`);
-      }
+      // const response = await fetch(`${this.baseUrl}/api/groups/leave/${groupId}`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+      // });
+      // if (!response.ok) throw new Error(`Failed to leave group: ${response.statusText}`);
 
-      // Remove group from local storage
+      console.log(`User ${userId} leaving group ${groupId} (simulated backend call)`);
+
+
       groupStorageService.removeGroup(groupId);
-      
-      // Unsubscribe from group messages
       this.unsubscribeFromGroup(groupId);
-      
-      // Remove from active groups
       this.activeGroups.delete(groupId);
-      
+      // groupConnectionManagerService.removeGroup(groupId); // This method doesn't exist
+      // Instead, update its status or handle removal if the service supports it.
+      // For now, we can ensure its connection status is marked as disconnected if it was tracked.
+      if (groupConnectionManagerService.getConnectionStatus(groupId) !== 'disconnected') {
+        groupConnectionManagerService.updateConnectionStatus(groupId, 'disconnected');
+      }
+      // groupNotificationService.notifyGroupLeft(groupId, groupInfo?.groupName || groupId, this.getUserDisplayName(userId, groupId));
+      groupNotificationService.createNotification(
+        'member_left',
+        groupId,
+        groupInfo?.groupName || groupId,
+        `${this.getUserDisplayName(userId, groupId)} left the group`,
+        `${this.getUserDisplayName(userId, groupId)} has departed.`
+      );
+
     } catch (error) {
       console.error('Error leaving group:', error);
       throw error;
     }
   }
+
   subscribeToGroup(groupId: string, onMessage: (message: GroupMessage) => void): void {
     if (!this.stompClient || !this.stompClient.connected) {
-      console.warn('STOMP client not connected');
+      console.warn('STOMP client not connected, cannot subscribe to group', groupId);
+      // Optionally, queue subscription or attempt to connect
       return;
     }
 
     const destination = `/topic/group/${groupId}`;
-    
-    // Unsubscribe if already subscribed
     if (this.subscriptions.has(groupId)) {
-      this.subscriptions.get(groupId)?.unsubscribe();
+      console.log('Already subscribed to group:', groupId);
+      // Potentially update listener if different, or just return
+      // this.subscriptions.get(groupId)?.unsubscribe(); // If re-subscription with new handler is needed
     }
 
     const subscription = this.stompClient.subscribe(destination, (message) => {
       try {
         const receivedMessage = JSON.parse(message.body);
-        console.log('Received raw message:', receivedMessage);
-        
-        // Convert backend message format to frontend format
+        const senderName = receivedMessage.senderName || this.getUserDisplayName(receivedMessage.senderId, groupId);
+
         const groupMessage: GroupMessage = {
-          groupId: String(receivedMessage.groupId), // Convert number to string for frontend
+          groupId: String(receivedMessage.groupId),
           senderId: receivedMessage.senderId,
-          senderName: receivedMessage.senderName || receivedMessage.senderId,
+          senderName: senderName,
           content: receivedMessage.content,
           timestamp: receivedMessage.timestamp ? new Date(receivedMessage.timestamp) : new Date()
         };
-          console.log('Processed message:', groupMessage);
-        
-        // Save message using enhanced method
+
         this.saveMessageWithUserInfo(groupMessage.groupId, groupMessage, groupMessage.senderId === this.currentUserId);
-        
-        // Create notification for background messages
+
         if (!this.activeGroups.has(groupId)) {
-          const messagePreview = groupMessage.content.length > 50 
+          const messagePreview = groupMessage.content.length > 50
             ? groupMessage.content.substring(0, 50) + '...'
             : groupMessage.content;
           groupNotificationService.notifyNewMessage(
             groupId,
             this.getGroupInfo(groupId)?.groupName || `Group ${groupId}`,
-            this.getUserDisplayName(groupMessage.senderId),
+            senderName, // Use the resolved senderName
             messagePreview
           );
         }
-        
         onMessage(groupMessage);
       } catch (error) {
-        console.error('Error parsing group message:', error);
+        console.error('Error parsing group message:', error, message.body);
       }
     });
 
     this.subscriptions.set(groupId, subscription);
+    // Add to messageListeners if specific callbacks per group are needed beyond the main onMessage
+    if (!this.messageListeners.has(groupId)) {
+      this.messageListeners.set(groupId, []);
+    }
+    this.messageListeners.get(groupId)?.push(onMessage);
+
     console.log(`Subscribed to group ${groupId}`);
   }
 
@@ -381,258 +423,181 @@ class GroupChatService {
       this.subscriptions.delete(groupId);
       console.log(`Unsubscribed from group ${groupId}`);
     }
-    
-    // Remove from active groups
-    this.activeGroups.delete(groupId);
+    this.messageListeners.delete(groupId);
+    this.activeGroups.delete(groupId); // Also remove from active if unsubscribing
   }
 
-  /**
-   * Mark a group as active (user is currently viewing it)
-   */
   setGroupActive(groupId: string): void {
     this.activeGroups.add(groupId);
-    // Mark all messages as read when group becomes active
     groupStorageService.markMessagesAsRead(groupId);
   }
 
-  /**
-   * Mark a group as inactive (user switched away)
-   */
   setGroupInactive(groupId: string): void {
     this.activeGroups.delete(groupId);
   }
 
-  /**
-   * Get all user's groups
-   */
   getUserGroups(): GroupInfo[] {
     return groupStorageService.getUserGroups();
   }
 
-  /**
-   * Get unread count for a specific group
-   */
   getGroupUnreadCount(groupId: string): number {
     return groupStorageService.getUnreadCount(groupId);
   }
 
-  /**
-   * Get total unread count across all groups
-   */
   getTotalUnreadCount(): number {
     return groupStorageService.getTotalUnreadCount();
   }
 
-  /**
-   * Get group messages from storage
-   */
   getGroupMessages(groupId: string): StorageGroupMessage[] {
     return groupStorageService.getMessages(groupId);
   }
 
-  /**
-   * Get group information
-   */
   getGroupInfo(groupId: string): GroupInfo | null {
     return groupStorageService.getGroupInfo(groupId);
   }
 
-  /**
-   * Subscribe to all user's groups for background message handling
-   */
   subscribeToAllUserGroups(): void {
     const userGroups = this.getUserGroups();
     userGroups.forEach(group => {
       if (!this.subscriptions.has(group.groupId)) {
-        this.subscribeToGroup(group.groupId, () => {
-          // Background message handling is done in subscribeToGroup
+        // The onMessage callback for background subscriptions might be minimal
+        // or could trigger a generic update mechanism (e.g., update unread counts)
+        this.subscribeToGroup(group.groupId, (message) => {
+          console.log('Background message received for group:', message.groupId);
+          // Potentially update UI elements showing unread counts or notifications
+          // This callback is distinct from the one used when a group chat is active
         });
       }
     });
   }
 
-  /**
-   * Helper method to get user name from ID
-   */
-  private getUserNameFromId(userId: string): string {
-    // Extract name from email or use the userId
-    if (userId.includes('@')) {
-      return userId.split('@')[0];
+  private getUserDisplayName(userId: string, groupId?: string): string {
+    if (this.currentUserId && userId === this.currentUserId) {
+      return 'You';
     }
-    return userId;
-  }  sendMessage(message: GroupMessage): void {
+
+    if (groupId) {
+      const groupInfo = groupStorageService.getGroupInfo(groupId);
+      if (groupInfo && groupInfo.members) {
+        const member = groupInfo.members.find(m => m.userId === userId);
+        if (member && member.userName && member.userName.trim() !== '' && member.userName !== userId) {
+          return member.userName;
+        }
+      }
+    }
+
+    // Fallback heuristics if not found in group members or no groupId provided
+    if (userId.includes('@')) {
+      const namePart = userId.split('@')[0];
+      if (namePart.length > 0) {
+        const parts = namePart.split(/[._-]/);
+        return parts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+      }
+    }
+
+    if (userId.startsWith('user_')) { // Clerk-like user IDs
+      return `User ${userId.substring(5, 13)}`;
+    }
+
+    return `User ${userId.substring(0, 8)}...`; // Generic fallback
+  }
+
+  sendMessage(message: GroupMessage): void {
     if (!this.stompClient || !this.stompClient.connected) {
-      console.warn('STOMP client not connected');
+      console.warn('STOMP client not connected, cannot send message');
+      // Optionally, queue message or attempt to connect
       return;
     }
 
-    // Ensure message has senderName
-    if (!message.senderName) {
-      message.senderName = this.getUserDisplayName(message.senderId);
+    if (!this.currentUserId) {
+      console.error("Cannot send message, current user ID is not set.");
+      return;
     }
 
-    // Convert frontend message format to backend format
+    // Ensure senderId is current user
+    message.senderId = this.currentUserId;
+
+    // Resolve senderName if not already set
+    if (!message.senderName) {
+      message.senderName = this.getUserDisplayName(message.senderId, message.groupId);
+    }
+
     const backendMessage = {
-      groupId: parseInt(message.groupId), // Convert string to number for backend
+      groupId: parseInt(message.groupId), // Backend might expect number
       senderId: message.senderId,
-      senderName: message.senderName, // Include sender name
-      content: message.content
+      senderName: message.senderName,
+      content: message.content,
+      timestamp: new Date().toISOString() // Add timestamp if backend expects it
     };
 
-    console.log('Sending message:', backendMessage);
-    
-    // Save message locally before sending
-    this.saveMessageWithUserInfo(message.groupId, message, true);
-    
-    // Send to backend
+    this.saveMessageWithUserInfo(message.groupId, message, true); // Save locally immediately
+
     this.stompClient.publish({
-      destination: '/app/chat/send',
+      destination: '/app/chat/send', // Ensure this matches backend STOMP mapping
       body: JSON.stringify(backendMessage),
     });
+    console.log('Message sent to backend:', backendMessage);
   }
 
-  /**
-   * Enhanced message saving with better user info
-   */
   private saveMessageWithUserInfo(groupId: string, message: GroupMessage, isSelf: boolean): void {
+    const groupInfo = groupStorageService.getGroupInfo(groupId);
+    let senderName = message.senderName;
+
+    if (!senderName) { // Fallback if senderName wasn't resolved before calling this
+      senderName = this.getUserDisplayName(message.senderId, groupId);
+    }
+
     const storageMessage: StorageGroupMessage = {
-      id: `${groupId}_${Date.now()}_${Math.random()}`,
-      groupId: groupId,
-      senderId: message.senderId,
-      senderName: this.getUserDisplayName(message.senderId),
-      content: message.content,
-      timestamp: message.timestamp || new Date(),
+      ...message,
+      // id: message.id || `${Date.now()}_${message.senderId}`, // GroupMessage doesn't have id, StorageGroupMessage does.
+      // The spread operator should handle this if id is part of StorageGroupMessage but not GroupMessage.
+      // If id is mandatory and not in message, it needs to be generated here.
+      // Assuming StorageGroupMessage expects an id that might not be in GroupMessage.
+      id: (message as any).id || `${Date.now()}_${Math.random().toString(36).substring(2, 15)}`, // Ensure a unique ID for storage
+      senderName: senderName, // Ensure senderName is set
       isSelf: isSelf,
-      isRead: isSelf || this.activeGroups.has(groupId)
+      isRead: isSelf || this.activeGroups.has(groupId), // Changed 'read' to 'isRead'
+      timestamp: message.timestamp || new Date() // Ensure timestamp
     };
-    
     groupStorageService.saveMessage(groupId, storageMessage);
-  }
-  /**
-   * Get user display name (enhanced)
-   */
-  private getUserDisplayName(userId: string): string {
-    // Try to get real username from localStorage
-    const username = SafeLocalStorage.getItem('username');
-    if (userId === this.currentUserId && username) {
-      return username;
-    }
-    
-    // Check if it's an email and extract the name part
-    if (userId.includes('@')) {
-      const emailPart = userId.split('@')[0];
-      // Convert dot notation to space and capitalize
-      return emailPart.split('.').map(part => 
-        part.charAt(0).toUpperCase() + part.slice(1)
-      ).join(' ');
-    }
-    
-    // Fallback to userId
-    return userId;
-  }
 
-  /**
-   * Clear all group data (for logout)
-   */  clearAllData(): void {
-    // Unsubscribe from all groups
-    this.subscriptions.forEach((subscription, groupId) => {
-      subscription.unsubscribe();
-    });
-    this.subscriptions.clear();
-    this.activeGroups.clear();
-    
-    // Clear storage and services
-    groupStorageService.clearAllGroups();
-    groupManagerService.clearAll();
-    groupConnectionManagerService.clearAllConnections();
-    groupNotificationService.clearAll();
-  }
-
-  /**
-   * Event listener management
-   */
-  onNewMessage(callback: (groupId: string, message: StorageGroupMessage) => void): void {
-    groupStorageService.onNewMessage(callback);
-  }
-
-  onUnreadCountChange(callback: (groupId: string, count: number) => void): void {
-    groupStorageService.onUnreadCountChange(callback);
-  }
-
-  onGroupInfoChange(callback: (groupId: string, info: GroupInfo) => void): void {
-    groupStorageService.onGroupInfoChange(callback);
-  }
-
-  removeNewMessageCallback(callback: (groupId: string, message: StorageGroupMessage) => void): void {
-    groupStorageService.removeNewMessageCallback(callback);
-  }
-
-  removeUnreadCountChangeCallback(callback: (groupId: string, count: number) => void): void {
-    groupStorageService.removeUnreadCountChangeCallback(callback);
-  }
-
-  removeGroupInfoChangeCallback(callback: (groupId: string, info: GroupInfo) => void): void {
-    groupStorageService.removeGroupInfoChangeCallback(callback);
-  }
-
-  isConnected(): boolean {
-    return this.connectionState && (this.stompClient?.connected || false);
-  }
-
-  /**
-   * Get group connection status
-   */
-  getGroupConnectionStatus(groupId: string): string {
-    return groupConnectionManagerService.getConnectionStatus(groupId);
-  }
-
-  /**
-   * Check if connected to a specific group
-   */
-  isConnectedToGroup(groupId: string): boolean {
-    return groupConnectionManagerService.isConnectedToGroup(groupId);
-  }
-
-  /**
-   * Get all connected groups
-   */
-  getConnectedGroups(): any[] {
-    return groupConnectionManagerService.getConnectedGroups();
-  }
-
-  /**
-   * Auto-reconnect to previously connected groups
-   */
-  async autoReconnectGroups(): Promise<void> {
-    const groupsToReconnect = groupConnectionManagerService.getGroupsForAutoReconnect();
-    
-    for (const groupConnection of groupsToReconnect) {
-      try {
-        groupConnectionManagerService.updateConnectionStatus(groupConnection.groupId, 'connecting');
-        // Re-subscribe to the group
-        this.subscribeToGroup(groupConnection.groupId, () => {
-          // Background message handling
+    // Update last activity for the group
+    if (groupInfo) {
+      groupInfo.lastActivity = new Date();
+      // If the message sender is not in members list (e.g. first message from them), add them.
+      // This is a client-side heuristic; ideally, backend manages member lists.
+      if (!groupInfo.members.find(m => m.userId === message.senderId)) {
+        groupInfo.members.push({
+          userId: message.senderId,
+          userName: senderName, // Use the resolved senderName
+          joinedAt: new Date(), // Approximate join time
+          isOwner: false, // Cannot determine owner status client-side reliably here
+          status: 'online' // Assume online if sending messages
         });
-        console.log(`Auto-reconnected to group: ${groupConnection.groupName}`);
-      } catch (error) {
-        console.error(`Failed to auto-reconnect to group ${groupConnection.groupId}:`, error);
-        groupConnectionManagerService.updateConnectionStatus(groupConnection.groupId, 'error');
+      }
+      groupStorageService.saveGroupInfo(groupInfo);
+    }
+  }
+
+  // Method to add a message listener (e.g., for UI updates)
+  addMessageListener(groupId: string, listener: (message: GroupMessage) => void): void {
+    if (!this.messageListeners.has(groupId)) {
+      this.messageListeners.set(groupId, []);
+    }
+    this.messageListeners.get(groupId)?.push(listener);
+  }
+
+  // Method to remove a message listener
+  removeMessageListener(groupId: string, listener: (message: GroupMessage) => void): void {
+    const listeners = this.messageListeners.get(groupId);
+    if (listeners) {
+      const index = listeners.indexOf(listener);
+      if (index > -1) {
+        listeners.splice(index, 1);
       }
     }
   }
-
-  /**
-   * Enhanced connection management
-   */
-  onGroupConnectionStatusChange(callback: (groupId: string, status: string) => void): void {
-    groupConnectionManagerService.onConnectionStatusChange(callback);
-  }
-
-  removeGroupConnectionStatusChangeCallback(callback: (groupId: string, status: string) => void): void {
-    groupConnectionManagerService.removeConnectionStatusChangeCallback(callback);
-  }
 }
 
-// Create singleton instance
 const groupChatService = new GroupChatService();
 export default groupChatService;

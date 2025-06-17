@@ -241,9 +241,8 @@ const VideoCallRoom: React.FC<VideoCallRoomProps> = ({ room, onLeave }) => {
     } catch (error) {
       console.error('Error switching microphone:', error);
     }
-  };
-  return (
-    <div className="video-call-room h-screen bg-gray-900 text-white flex flex-col">      {/* Debug Panel */}
+  };  return (
+    <div className="video-call-room h-screen bg-background text-foreground flex flex-col">      {/* Debug Panel */}
       {process.env.NODE_ENV === 'development' && (
         <div style={{ 
           position: 'fixed', 
@@ -286,21 +285,19 @@ const VideoCallRoom: React.FC<VideoCallRoomProps> = ({ room, onLeave }) => {
             ))}
           </div>
         </div>
-      )}
-        {/* Header with Controls */}
-      <div className="fixed top-0 left-0 right-0 bg-gray-800 p-4 flex justify-between items-center z-50 shadow-lg">
+      )}        {/* Header with Controls */}
+      <div className="fixed top-0 left-0 right-0 bg-card/90 backdrop-blur-sm border-b border-border p-4 flex justify-between items-center z-50 shadow-lg">
         <div>
           <h2 className="text-xl font-bold">{room.name}</h2>
-          <p className="text-sm text-gray-400">Room ID: {room.id}</p>
+          <p className="text-sm text-muted-foreground">Room ID: {room.id}</p>
         </div>
         
         <div className="flex items-center gap-4">
           <Badge variant="secondary" className="flex items-center gap-1">
             <Users size={16} />
             {participants.length}
-          </Badge>
-          {simpleVideoCallService.isRoomOwner() && (
-            <Badge variant="outline" className="text-yellow-400 border-yellow-400">
+          </Badge>          {simpleVideoCallService.isRoomOwner() && (
+            <Badge variant="outline" className="text-amber-400 border-amber-400">
               Owner
             </Badge>
           )}
@@ -350,20 +347,19 @@ const VideoCallRoom: React.FC<VideoCallRoomProps> = ({ room, onLeave }) => {
         const hasRequests = pendingRequests.length > 0;
         console.log('VideoCallRoom Render: Is Owner?', isOwner, 'Has Requests?', hasRequests, 'Request Count:', pendingRequests.length);
         console.log('VideoCallRoom Render: Pending requests:', pendingRequests);
-        
-        if (isOwner && hasRequests) {
+          if (isOwner && hasRequests) {
           return (
-            <div className="fixed top-24 left-0 right-0 bg-yellow-600 border-b border-yellow-500 p-4 z-40 shadow-lg">
-              <h3 className="font-semibold mb-3 text-black">🔔 Pending Join Requests ({pendingRequests.length}):</h3>
+            <div className="fixed top-24 left-0 right-0 bg-amber-100 dark:bg-amber-900/80 backdrop-blur-sm border-b border-amber-300 dark:border-amber-700 p-4 z-40 shadow-lg">
+              <h3 className="font-semibold mb-3 text-amber-800 dark:text-amber-200">🔔 Pending Join Requests ({pendingRequests.length}):</h3>
               <div className="space-y-3">
                 {pendingRequests.map((request) => (
-                  <div key={`${request.userId}-${request.timestamp}`} className="flex items-center justify-between bg-yellow-700 p-3 rounded-lg shadow">
-                    <span className="font-medium text-white">{request.userName} wants to join the room</span>
+                  <div key={`${request.userId}-${request.timestamp}`} className="flex items-center justify-between bg-card p-3 rounded-lg shadow border border-border">
+                    <span className="font-medium text-foreground">{request.userName} wants to join the room</span>
                     <div className="flex gap-3">
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-green-400 border-green-400 hover:bg-green-400 hover:text-black font-medium"
+                        className="text-green-600 border-green-600 hover:bg-green-600 hover:text-white font-medium"
                         onClick={() => handleApproveJoinRequest(request)}
                       >
                         <UserCheck size={16} />
@@ -372,7 +368,7 @@ const VideoCallRoom: React.FC<VideoCallRoomProps> = ({ room, onLeave }) => {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-red-400 border-red-400 hover:bg-red-400 hover:text-black font-medium"
+                        className="text-red-600 border-red-600 hover:bg-red-600 hover:text-white font-medium"
                         onClick={() => handleRejectJoinRequest(request)}
                       >
                         <UserX size={16} />
@@ -394,9 +390,8 @@ const VideoCallRoom: React.FC<VideoCallRoomProps> = ({ room, onLeave }) => {
           participants.length <= 2 ? 'grid-cols-1 md:grid-cols-2' :
           participants.length <= 4 ? 'grid-cols-2' :
           'grid-cols-2 md:grid-cols-3'
-        }`}>
-          {/* Local Video */}
-          <Card className="relative bg-gray-800 border-gray-700 overflow-hidden">
+        }`}>          {/* Local Video */}
+          <Card className="relative bg-card border-border overflow-hidden">
             <video
               ref={localVideoRef}
               autoPlay
@@ -404,19 +399,19 @@ const VideoCallRoom: React.FC<VideoCallRoomProps> = ({ room, onLeave }) => {
               playsInline
               className="w-full h-full object-cover"
             />
-            <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 px-2 py-1 rounded text-sm">
+            <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-sm">
               You {!isVideoEnabled && '(Video Off)'}
             </div>
             {!isVideoEnabled && (
-              <div className="absolute inset-0 bg-gray-700 flex items-center justify-center">
-                <VideoOff size={48} className="text-gray-400" />
+              <div className="absolute inset-0 bg-muted flex items-center justify-center">
+                <VideoOff size={48} className="text-muted-foreground" />
               </div>
             )}
           </Card>          {/* Remote Videos */}
           {participants
             .filter(p => p.id !== simpleVideoCallService.getCurrentUserId())
             .map((participant) => (
-            <Card key={`participant-${participant.id}`} className="relative bg-gray-800 border-gray-700 overflow-hidden">
+            <Card key={`participant-${participant.id}`} className="relative bg-card border-border overflow-hidden">
               <video
                 ref={(el) => {
                   if (el) {
@@ -427,30 +422,28 @@ const VideoCallRoom: React.FC<VideoCallRoomProps> = ({ room, onLeave }) => {
                 playsInline
                 className="w-full h-full object-cover"
               />
-              <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 px-2 py-1 rounded text-sm flex items-center gap-1">
+              <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-sm flex items-center gap-1">
                 {participant.name}
                 {!participant.isAudioEnabled && <MicOff size={14} />}
                 {participant.isOwner && <Badge variant="outline" className="text-xs">Owner</Badge>}
               </div>
               {!participant.isVideoEnabled && (
-                <div className="absolute inset-0 bg-gray-700 flex items-center justify-center">
-                  <VideoOff size={48} className="text-gray-400" />
+                <div className="absolute inset-0 bg-muted flex items-center justify-center">
+                  <VideoOff size={48} className="text-muted-foreground" />
                 </div>
               )}
             </Card>
-          ))}        </div>
-      </div>
-
-      {/* Settings Panel */}
+          ))}</div>
+      </div>      {/* Settings Panel */}
       {showSettings && (
-        <div className="fixed top-24 right-4 bg-gray-800 border border-gray-600 rounded-lg p-4 w-80 z-50">
-          <h3 className="font-semibold mb-4">Device Settings</h3>
+        <div className="fixed top-24 right-4 bg-card border border-border rounded-lg p-4 w-80 z-50 shadow-lg">
+          <h3 className="font-semibold mb-4 text-foreground">Device Settings</h3>
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Camera</label>
+              <label className="block text-sm font-medium mb-2 text-foreground">Camera</label>
               <select
-                className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                className="w-full bg-input border border-border rounded px-3 py-2 text-foreground"
                 onChange={(e) => handleSwitchCamera(e.target.value)}
               >
                 {availableDevices.videoDevices.map((device) => (
@@ -462,9 +455,9 @@ const VideoCallRoom: React.FC<VideoCallRoomProps> = ({ room, onLeave }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Microphone</label>
+              <label className="block text-sm font-medium mb-2 text-foreground">Microphone</label>
               <select
-                className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                className="w-full bg-input border border-border rounded px-3 py-2 text-foreground"
                 onChange={(e) => handleSwitchMicrophone(e.target.value)}
               >
                 {availableDevices.audioDevices.map((device) => (

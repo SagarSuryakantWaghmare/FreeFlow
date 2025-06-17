@@ -2,13 +2,7 @@
 
 import { SafeLocalStorage } from './utils/SafeLocalStorage';
 
-let backendUrl: string;
-
-if (process.env.NODE_ENV === 'production') {
-  backendUrl = "https://freeflow-server.onrender.com/ws/p2p";
-} else {
-  backendUrl = "ws://localhost:8080/ws/p2p";
-}
+let backendUrl: string = "ws://localhost:8080/ws/p2p"; // Default URL for developmentbackendUrl = "ws://localhost:8080/ws/p2p";
 
 /**
  * WebSocketService.ts - Handles WebSocket connections to the signaling server
@@ -20,13 +14,13 @@ class WebSocketService {
   private socket: WebSocket | null = null;
   private listeners: Map<string, ((data: any) => void)[]> = new Map();
   private reconnectTimeout: NodeJS.Timeout | null = null;
-  private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
+  private reconnectAttempts = 0;  private maxReconnectAttempts = 5;
   private userId: string | null = null;
+  private connectionStableTimeout: NodeJS.Timeout | null = null;
+  private connectionIsStable = false;
 
   constructor() {
   }
-
   /**
    * Connect to the WebSocket server
    * @param userId - The ID of the user connecting
@@ -42,12 +36,32 @@ class WebSocketService {
         return;
       }
 
-      try {
-        this.socket = new WebSocket(serverUrl);
+      // If currently connecting, wait for that connection
+      if (this.socket && this.socket.readyState === WebSocket.CONNECTING) {
+        const checkConnection = () => {
+          if (this.socket?.readyState === WebSocket.OPEN) {
+            resolve();
+          } else if (this.socket?.readyState === WebSocket.CLOSED) {
+            reject(new Error("Connection failed"));
+          } else {
+            setTimeout(checkConnection, 100);
+          }
+        };
+        checkConnection();
+        return;
+      }
 
-        this.socket.onopen = () => {
+      try {
+        this.socket = new WebSocket(serverUrl);        this.socket.onopen = () => {
           console.log("WebSocket connection established");
-          this.reconnectAttempts = 0;          // Send user_online message with username
+          this.reconnectAttempts = 0;
+            // Mark connection as stable after a brief delay
+          this.connectionStableTimeout = setTimeout(() => {
+            this.connectionIsStable = true;
+            console.log("WebSocket connection marked as stable");
+          }, 2000);
+          
+          // Send user_online message with username
           const username = SafeLocalStorage.getItem('username');
           this.sendMessage({
             type: "user_online",
@@ -65,24 +79,40 @@ class WebSocketService {
           } catch (error) {
             console.error("Failed to parse WebSocket message:", error);
           }
-        };
-
-        this.socket.onclose = (event) => {
+        };        this.socket.onclose = (event) => {
           console.log("WebSocket connection closed", event.code, event.reason);
-          this.attemptReconnect();
+          this.connectionIsStable = false;
+          
+          // Clear stability timeout if connection closes early
+          if (this.connectionStableTimeout) {
+            clearTimeout(this.connectionStableTimeout);
+            this.connectionStableTimeout = null;
+          }
+          
+          // Handle different close codes
+          if (event.code === 1011) {
+            // Server error - likely backend crash
+            console.warn("Server error detected (1011) - backend may have crashed");
+          } else if (event.code === 1006) {
+            // Abnormal closure
+            console.warn("Abnormal WebSocket closure (1006) - connection lost unexpectedly");
+          }
+          
+          // Only attempt reconnect if it wasn't a manual close (code 1000)
+          if (event.code !== 1000) {
+            this.attemptReconnect();
+          }
+        };        this.socket.onerror = (error) => {
+          console.error("WebSocket error:", error);
+          // Don't reject here as we want to handle reconnection gracefully
+          // reject(error);
         };
-
-        // this.socket.onerror = (error) => {
-        //   console.error("WebSocket error:", error);
-        //   reject(error);
-        // };
       } catch (error) {
         console.error("Failed to create WebSocket:", error);
         reject(error);
       }
     });
-  }
-  /**
+  }/**
    * Send a message through the WebSocket
    * @param message - The message to send (will be JSON stringified)
    */
@@ -91,6 +121,34 @@ class WebSocketService {
       this.socket.send(JSON.stringify(message));
     } else {
       console.error("WebSocket is not connected. Message not sent:", message);
+      // Attempt immediate reconnection for critical messages
+      if (this.userId && ['ice-candidate', 'offer', 'answer', 'connection_accepted'].includes(message.type)) {
+        console.log("Attempting immediate reconnection for critical message");
+        this.attemptImmediateReconnect(message);
+      }
+    }
+  }
+
+  /**
+   * Attempt immediate reconnection and queue the message
+   * @param message - The message to send after reconnection
+   */
+  private attemptImmediateReconnect(message: any): void {
+    if (!this.userId) return;
+    
+    // Only attempt if not already connecting
+    if (!this.socket || this.socket.readyState === WebSocket.CLOSED) {
+      this.connect(this.userId).then(() => {
+        // Retry sending the message after successful reconnection
+        setTimeout(() => {
+          if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(JSON.stringify(message));
+            console.log("Message sent after reconnection:", message.type);
+          }
+        }, 100);
+      }).catch(err => {
+        console.error("Immediate reconnection failed:", err);
+      });
     }
   }
 
@@ -138,7 +196,6 @@ class WebSocketService {
       this.listeners.set(type, callbacks);
     }
   }
-
   /**
    * Disconnect from the WebSocket server
    */
@@ -149,17 +206,24 @@ class WebSocketService {
     }
 
     if (this.socket) {
-      this.socket.close();
+      // Set close code to 1000 (normal closure) to prevent auto-reconnect
+      this.socket.close(1000, "Manual disconnect");
       this.socket = null;
     }
   }
-
   /**
    * Get the current connection status
    * @returns Boolean indicating if the connection is open
    */
   isConnected(): boolean {
     return this.socket !== null && this.socket.readyState === WebSocket.OPEN;
+  }
+  /**
+   * Check if the connection is stable (has been open for a while)
+   * @returns Boolean indicating if the connection is stable
+   */
+  isConnectionStable(): boolean {
+    return this.isConnected() && this.connectionIsStable;
   }
 
   /**

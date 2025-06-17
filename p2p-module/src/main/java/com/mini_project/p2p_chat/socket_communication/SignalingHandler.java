@@ -95,16 +95,16 @@ public class SignalingHandler extends TextWebSocketHandler {    private final Co
             e.printStackTrace();
         }
     }    
-    
-    @Override
+      @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
-        JsonNode jsonNode = objectMapper.readTree(message.getPayload());
-        String type = jsonNode.get("type").asText();
-        
-        System.out.println("\nReceived message type: " + type);
-        System.out.println("\nMessage payload: " + message.getPayload());
-        
-        switch (type) {
+        try {
+            JsonNode jsonNode = objectMapper.readTree(message.getPayload());
+            String type = jsonNode.get("type").asText();
+            
+            System.out.println("\nReceived message type: " + type);
+            System.out.println("\nMessage payload: " + message.getPayload());
+            
+            switch (type) {
             case "user_online":
                 handleUserOnline(session, jsonNode);
                 break;
@@ -116,11 +116,17 @@ public class SignalingHandler extends TextWebSocketHandler {    private final Co
                 break;
             case "offer":
                 handleOffer(session, jsonNode);
-                break;
-            case "answer":
+                break;            case "answer":
                 handleAnswer(session, jsonNode);
-                break;            case "ice_candidate":
+                break;              case "ice-candidate":  // Support both formats
+            case "ice_candidate":
                 handleIceCandidate(session, jsonNode);
+                break;
+            case "connection_rejected":
+                handleConnectionRejected(session, jsonNode);
+                break;
+            case "logout_notification":
+                handleLogoutNotification(session, jsonNode);
                 break;
 
             // Video call related messages
@@ -144,9 +150,14 @@ public class SignalingHandler extends TextWebSocketHandler {    private final Co
                 break;
             case "leave_room":
                 handleLeaveRoom(session, jsonNode);
-                break;
-            default:
+                break;            default:
                 System.out.println("Unknown message type: " + type);
+                break;
+        }
+        } catch (Exception e) {
+            System.err.println("Error processing WebSocket message: " + e.getMessage());
+            e.printStackTrace();
+            // Don't close the session for recoverable errors
         }
     }
 
@@ -209,51 +220,139 @@ public class SignalingHandler extends TextWebSocketHandler {    private final Co
             toSession.sendMessage(new TextMessage(jsonNode.toString()));
         }
     }    private void handleOffer(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        JsonNode dataNode = jsonNode.get("data");
-        String targetId = dataNode.get("targetId").asText();
-        String fromId = dataNode.get("fromId").asText();
-        
-        System.out.println("Received offer from " + fromId + " for user: " + targetId);
-        
-        WebSocketSession targetSession = onlineUsers.get(targetId);
-        if (targetSession != null && targetSession.isOpen()) {
-            // Forward the offer message to the target user
-            targetSession.sendMessage(new TextMessage(jsonNode.toString()));
-            System.out.println("Forwarded offer to user: " + targetId);
-        } else {
-            System.out.println("User " + targetId + " is not online or session is closed.");
+        try {
+            String targetId = null;
+            String fromId = null;
+            
+            // Support both message formats for compatibility
+            if (jsonNode.has("data") && jsonNode.get("data") != null && !jsonNode.get("data").isNull()) {
+                // Old video call format
+                JsonNode dataNode = jsonNode.get("data");
+                if (dataNode.has("targetId") && !dataNode.get("targetId").isNull()) {
+                    targetId = dataNode.get("targetId").asText();
+                }
+                if (dataNode.has("fromId") && !dataNode.get("fromId").isNull()) {
+                    fromId = dataNode.get("fromId").asText();
+                }
+            }
+            
+            // If not found in data, try direct fields (New P2P chat format)
+            if (targetId == null && jsonNode.has("toUserId") && !jsonNode.get("toUserId").isNull()) {
+                targetId = jsonNode.get("toUserId").asText();
+            }
+            if (fromId == null && jsonNode.has("fromUserId") && !jsonNode.get("fromUserId").isNull()) {
+                fromId = jsonNode.get("fromUserId").asText();
+            }
+            
+            if (targetId == null || fromId == null) {
+                System.err.println("Invalid offer message format - missing required fields: targetId=" + targetId + ", fromId=" + fromId);
+                System.err.println("Message: " + jsonNode.toString());
+                return;
+            }
+            
+            System.out.println("Received offer from " + fromId + " for user: " + targetId);
+            
+            WebSocketSession targetSession = onlineUsers.get(targetId);
+            if (targetSession != null && targetSession.isOpen()) {
+                // Forward the offer message to the target user
+                targetSession.sendMessage(new TextMessage(jsonNode.toString()));
+                System.out.println("Forwarded offer to user: " + targetId);
+            } else {
+                System.out.println("User " + targetId + " is not online or session is closed.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error handling offer: " + e.getMessage());
+            e.printStackTrace();
         }
     }
-
-    private void handleAnswer(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        JsonNode dataNode = jsonNode.get("data");
-        String targetId = dataNode.get("targetId").asText();
-        String fromId = dataNode.get("fromId").asText();
-        
-        System.out.println("Received answer from " + fromId + " for user: " + targetId);
-        
-        WebSocketSession targetSession = onlineUsers.get(targetId);
-        if (targetSession != null && targetSession.isOpen()) {
-            targetSession.sendMessage(new TextMessage(jsonNode.toString()));
-            System.out.println("Forwarded answer to user: " + targetId);
-        } else {
-            System.out.println("User " + targetId + " is not online or session is closed.");
+      private void handleAnswer(WebSocketSession session, JsonNode jsonNode) throws IOException {
+        try {
+            String targetId = null;
+            String fromId = null;
+            
+            // Support both message formats for compatibility
+            if (jsonNode.has("data") && jsonNode.get("data") != null && !jsonNode.get("data").isNull()) {
+                // Old video call format
+                JsonNode dataNode = jsonNode.get("data");
+                if (dataNode.has("targetId") && !dataNode.get("targetId").isNull()) {
+                    targetId = dataNode.get("targetId").asText();
+                }
+                if (dataNode.has("fromId") && !dataNode.get("fromId").isNull()) {
+                    fromId = dataNode.get("fromId").asText();
+                }
+            }
+            
+            // If not found in data, try direct fields (New P2P chat format)
+            if (targetId == null && jsonNode.has("toUserId") && !jsonNode.get("toUserId").isNull()) {
+                targetId = jsonNode.get("toUserId").asText();
+            }
+            if (fromId == null && jsonNode.has("fromUserId") && !jsonNode.get("fromUserId").isNull()) {
+                fromId = jsonNode.get("fromUserId").asText();
+            }
+            
+            if (targetId == null || fromId == null) {
+                System.err.println("Invalid answer message format - missing required fields: targetId=" + targetId + ", fromId=" + fromId);
+                System.err.println("Message: " + jsonNode.toString());
+                return;
+            }
+            
+            System.out.println("Received answer from " + fromId + " for user: " + targetId);
+            
+            WebSocketSession targetSession = onlineUsers.get(targetId);
+            if (targetSession != null && targetSession.isOpen()) {
+                targetSession.sendMessage(new TextMessage(jsonNode.toString()));
+                System.out.println("Forwarded answer to user: " + targetId);
+            } else {
+                System.out.println("User " + targetId + " is not online or session is closed.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error handling answer: " + e.getMessage());
+            e.printStackTrace();
         }
     }
-
-    private void handleIceCandidate(WebSocketSession session, JsonNode jsonNode) throws IOException {
-        JsonNode dataNode = jsonNode.get("data");
-        String targetId = dataNode.get("targetId").asText();
-        String fromId = dataNode.get("fromId").asText();
-        
-        System.out.println("Received ICE candidate from " + fromId + " for user: " + targetId);
-        
-        WebSocketSession targetSession = onlineUsers.get(targetId);
-        if (targetSession != null && targetSession.isOpen()) {
-            targetSession.sendMessage(new TextMessage(jsonNode.toString()));
-            System.out.println("Forwarded ICE candidate to user: " + targetId);
-        } else {
-            System.out.println("User " + targetId + " is not online or session is closed.");
+      private void handleIceCandidate(WebSocketSession session, JsonNode jsonNode) throws IOException {
+        try {
+            String targetId = null;
+            String fromId = null;
+            
+            // Support both message formats for compatibility
+            if (jsonNode.has("data") && jsonNode.get("data") != null && !jsonNode.get("data").isNull()) {
+                // Old video call format
+                JsonNode dataNode = jsonNode.get("data");
+                if (dataNode.has("targetId") && !dataNode.get("targetId").isNull()) {
+                    targetId = dataNode.get("targetId").asText();
+                }
+                if (dataNode.has("fromId") && !dataNode.get("fromId").isNull()) {
+                    fromId = dataNode.get("fromId").asText();
+                }
+            }
+            
+            // If not found in data, try direct fields (New P2P chat format)
+            if (targetId == null && jsonNode.has("toUserId") && !jsonNode.get("toUserId").isNull()) {
+                targetId = jsonNode.get("toUserId").asText();
+            }
+            if (fromId == null && jsonNode.has("fromUserId") && !jsonNode.get("fromUserId").isNull()) {
+                fromId = jsonNode.get("fromUserId").asText();
+            }
+            
+            if (targetId == null || fromId == null) {
+                System.err.println("Invalid ICE candidate message format - missing required fields: targetId=" + targetId + ", fromId=" + fromId);
+                System.err.println("Message: " + jsonNode.toString());
+                return;
+            }
+            
+            System.out.println("Received ICE candidate from " + fromId + " for user: " + targetId);
+            
+            WebSocketSession targetSession = onlineUsers.get(targetId);
+            if (targetSession != null && targetSession.isOpen()) {
+                targetSession.sendMessage(new TextMessage(jsonNode.toString()));
+                System.out.println("Forwarded ICE candidate to user: " + targetId);
+            } else {
+                System.out.println("User " + targetId + " is not online or session is closed.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error handling ICE candidate: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     
@@ -481,5 +580,45 @@ public class SignalingHandler extends TextWebSocketHandler {    private final Co
         System.out.println("Session URI: " + session.getUri());
         System.out.println("Session remote address: " + session.getRemoteAddress());
         super.afterConnectionEstablished(session);
+    }
+
+    private void handleConnectionRejected(WebSocketSession session, JsonNode jsonNode) throws IOException {
+        try {
+            String toUserId = jsonNode.get("toUserId").asText();
+            String fromUserId = jsonNode.get("fromUserId").asText();
+            
+            System.out.println("Connection rejected from " + fromUserId + " to " + toUserId);
+            
+            WebSocketSession toSession = onlineUsers.get(toUserId);
+            if (toSession != null && toSession.isOpen()) {
+                toSession.sendMessage(new TextMessage(jsonNode.toString()));
+                System.out.println("Forwarded connection rejection to user: " + toUserId);
+            } else {
+                System.out.println("User " + toUserId + " is not online or session is closed.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error handling connection rejection: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void handleLogoutNotification(WebSocketSession session, JsonNode jsonNode) throws IOException {
+        try {
+            String fromUserId = jsonNode.get("fromUserId").asText();
+            String toUserId = jsonNode.get("toUserId").asText();
+            
+            System.out.println("Logout notification from " + fromUserId + " to " + toUserId);
+            
+            WebSocketSession toSession = onlineUsers.get(toUserId);
+            if (toSession != null && toSession.isOpen()) {
+                toSession.sendMessage(new TextMessage(jsonNode.toString()));
+                System.out.println("Forwarded logout notification to user: " + toUserId);
+            } else {
+                System.out.println("User " + toUserId + " is not online or session is closed.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error handling logout notification: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

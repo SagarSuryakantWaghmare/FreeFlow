@@ -16,7 +16,7 @@ import {
   ChevronRight,
   Clock
 } from 'lucide-react';
-import { GroupInfo } from '@/lib/GroupStorageService';
+import groupStorageService, { GroupInfo } from '@/lib/GroupStorageService'; // Import GroupInfo from GroupStorageService
 import groupChatService from '@/lib/GroupChatService';
 
 interface GroupListProps {
@@ -40,13 +40,13 @@ export default function GroupList({
   // Load groups and unread counts
   useEffect(() => {
     const loadGroups = () => {
-      const userGroups = groupChatService.getUserGroups();
+      const userGroups = groupChatService.getUserGroups(); // This can remain as groupChatService might aggregate or have other logic
       setGroups(userGroups);
       
       // Load unread counts for each group
       const counts: Record<string, number> = {};
       userGroups.forEach(group => {
-        counts[group.groupId] = groupChatService.getGroupUnreadCount(group.groupId);
+        counts[group.groupId] = groupStorageService.getUnreadCount(group.groupId); // Use groupStorageService
       });
       setUnreadCounts(counts);
     };
@@ -62,12 +62,12 @@ export default function GroupList({
       loadGroups();
     };
 
-    groupChatService.onUnreadCountChange(handleUnreadCountChange);
-    groupChatService.onGroupInfoChange(handleGroupInfoChange);
+    groupStorageService.onUnreadCountChange(handleUnreadCountChange); // Use groupStorageService
+    groupStorageService.onGroupInfoChange(handleGroupInfoChange); // Use groupStorageService
 
     return () => {
-      groupChatService.removeUnreadCountChangeCallback(handleUnreadCountChange);
-      groupChatService.removeGroupInfoChangeCallback(handleGroupInfoChange);
+      groupStorageService.removeUnreadCountChangeCallback(handleUnreadCountChange); // Use groupStorageService
+      groupStorageService.removeGroupInfoChangeCallback(handleGroupInfoChange); // Use groupStorageService
     };
   }, []);
 

@@ -122,10 +122,22 @@ const Chat = () => {
           }, 2000 + Math.random() * 1000); // Add small random delay to avoid conflicts
         }
       });
-    };
-
-    // Set up auto-reconnection after WebSocket connects
-    setTimeout(autoReconnectToPeers, 3000);// Connect to WebSocket server with timeout
+    };    // Set up auto-reconnection after WebSocket connects - increased delay for stability
+    setTimeout(() => {
+      // Wait for stable connection before auto-reconnecting
+      const checkStabilityAndReconnect = () => {
+        if (webSocketService.isConnectionStable()) {
+          autoReconnectToPeers();
+        } else if (webSocketService.isConnected()) {
+          // Connected but not stable yet, wait a bit more
+          setTimeout(checkStabilityAndReconnect, 2000);
+        } else {
+          // Not connected, skip auto-reconnect for now
+          console.log("WebSocket not connected, skipping auto-reconnect");
+        }
+      };
+      checkStabilityAndReconnect();
+    }, 6000); // Initial delay before checking// Connect to WebSocket server with timeout
     let connectionTimeout: NodeJS.Timeout;
 
     // Set a timeout to handle connection attempts that take too long
@@ -134,7 +146,7 @@ const Chat = () => {
         setIsConnected(false);
         toast.error('Connection timeout - the server might be down or unreachable');
       }
-    }, 8000);
+    }, 10000); // Increased timeout to 10 seconds
 
     // Properly handle the connection promise
     webSocketService.connect(userId.current)
@@ -151,7 +163,7 @@ const Chat = () => {
         setIsConnected(false);
         console.error('Failed to connect to WebSocket server:', error);
         toast.error(`Connection failed: ${error.message || 'Could not connect to the server'}`);
-      });    // Set up WebRTC message handler
+      });// Set up WebRTC message handler
     webRTCService.onMessage(handleRTCMessage);
 
     // Set up WebRTC connection state handler
@@ -370,15 +382,14 @@ const Chat = () => {
     if (connectedUserIds.length > 0 && userId.current) {
       webSocketService.sendLogoutNotification(userId.current, connectedUserIds);
     }
-    
-    // Close all WebRTC connections
+      // Close all WebRTC connections
     webRTCService.closeAllConnections();
     
     // Disconnect from WebSocket
     webSocketService.disconnect();
     
-    // Clear all group chat data (subscriptions, in-memory state)
-    groupChatService.clearAllData();
+    // Disconnect from group chat service
+    groupChatService.disconnect();
     
     // Clear all user-specific data from localStorage
     connectionManagerService.clearAllUserData();
@@ -389,12 +400,24 @@ const Chat = () => {
     toast.success('Logged out successfully');
     router.push('/');
   };
-
   // Connection request dialog handlers
   const handleAcceptConnection = () => {
     if (connectionRequest) {
-      webRTCService.acceptConnectionRequest(connectionRequest.fromUserId);
-      toast.success(`Accepted connection from ${connectionRequest.fromUserName}`);
+      // Ensure WebSocket is connected before accepting
+      if (!webSocketService.isConnected()) {
+        toast.info("Reconnecting to accept connection request...");
+        // Try to reconnect first
+        webSocketService.connect(userId.current).then(() => {
+          webRTCService.acceptConnectionRequest(connectionRequest.fromUserId);
+          toast.success(`Accepted connection from ${connectionRequest.fromUserName}`);
+        }).catch(err => {
+          toast.error("Failed to reconnect. Please try again.");
+          console.error("Reconnection failed:", err);
+        });
+      } else {
+        webRTCService.acceptConnectionRequest(connectionRequest.fromUserId);
+        toast.success(`Accepted connection from ${connectionRequest.fromUserName}`);
+      }
       setConnectionRequest(null);
     }
   };

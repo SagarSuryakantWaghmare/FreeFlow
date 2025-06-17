@@ -9,6 +9,7 @@ import { SafeLocalStorage } from './utils/SafeLocalStorage';
 interface RTCPeerData {
   peerConnection: RTCPeerConnection;
   dataChannel?: RTCDataChannel;
+  pendingIceCandidates?: RTCIceCandidate[];
 }
 
 interface Message {
@@ -27,13 +28,32 @@ class WebRTCService {
   private localUserId: string | null = null;
   private messageCallbacks: MessageCallback[] = [];
   private connectionStateCallbacks: ConnectionStateCallback[] = [];
+  private pendingOffers: Map<string, any> = new Map(); // Queue offers when WebSocket is down
   private iceServers = [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
   ];
-
   constructor() {
     this.setupWebSocketListeners();
+    this.setupWebSocketReconnectionHandler();
+  }
+
+  /**
+   * Set up WebSocket reconnection handler to process pending messages
+   */
+  private setupWebSocketReconnectionHandler(): void {
+    // Listen for WebSocket reconnection to process pending offers
+    const originalConnect = webSocketService.connect.bind(webSocketService);
+    
+    // Override connect method to process pending offers after successful connection
+    webSocketService.connect = (userId: string) => {
+      return originalConnect(userId).then(() => {
+        // Process any pending offers after successful reconnection
+        setTimeout(() => {
+          this.processPendingOffers();
+        }, 1000);
+      });
+    };
   }
 
   /**
@@ -170,8 +190,7 @@ class WebRTCService {
 
     // The ConnectionManagerService will trigger a popup for user decision
     // The actual acceptance/rejection will be handled by acceptConnectionRequest/rejectConnectionRequest methods
-  }
-  /**
+  }  /**
    * Accept a connection request from another user
    */
   acceptConnectionRequest(fromUserId: string): void {
@@ -180,17 +199,49 @@ class WebRTCService {
     // Update connection manager
     connectionManagerService.acceptConnectionRequest(fromUserId);
 
-    // Send acceptance to the requesting user
-    webSocketService.sendMessage({
-      type: 'connection_accepted',
-      fromUserId: this.localUserId,
-      toUserId: fromUserId
-    });
+    // Ensure WebSocket is connected before sending acceptance
+    if (!webSocketService.isConnected()) {
+      console.log("WebSocket not connected, attempting reconnection before accepting request");
+      // Queue the acceptance and try to reconnect
+      setTimeout(() => {
+        this.sendConnectionAcceptance(fromUserId);
+      }, 1000);
+    } else {
+      this.sendConnectionAcceptance(fromUserId);
+    }
 
     // Force update the connection status immediately
     setTimeout(() => {
       connectionManagerService.updateConnectionStatus(fromUserId, 'connecting');
     }, 100);
+  }
+  /**
+   * Send connection acceptance message
+   */
+  private sendConnectionAcceptance(fromUserId: string): void {
+    if (!this.localUserId) return;
+
+    const sendAcceptance = () => {
+      webSocketService.sendMessage({
+        type: 'connection_accepted',
+        fromUserId: this.localUserId,
+        toUserId: fromUserId
+      });
+    };
+
+    // Check if connection is stable, if not wait a bit
+    if (webSocketService.isConnectionStable()) {
+      sendAcceptance();
+    } else if (webSocketService.isConnected()) {
+      // Connected but not stable yet, wait a bit
+      setTimeout(sendAcceptance, 1000);
+    } else {
+      // Not connected, try to reconnect first
+      console.log("WebSocket not connected, attempting reconnection");
+      setTimeout(() => {
+        sendAcceptance();
+      }, 2000);
+    }
   }
 
   /**
@@ -210,7 +261,6 @@ class WebRTCService {
       reason: 'rejected_and_blocked'
     });
   }
-
   /**
    * Create and send an offer to a remote peer
    */
@@ -223,22 +273,52 @@ class WebRTCService {
 
       this.setupDataChannel(remoteUserId, dataChannel);
 
-      this.peers.set(remoteUserId, { peerConnection, dataChannel });
+      this.peers.set(remoteUserId, { 
+        peerConnection, 
+        dataChannel,
+        pendingIceCandidates: []
+      });
 
       const offer = await peerConnection.createOffer();
-      await peerConnection.setLocalDescription(offer);
-
-      webSocketService.sendMessage({
+      await peerConnection.setLocalDescription(offer);      const offerMessage = {
         type: 'offer',
         fromUserId: this.localUserId,
         toUserId: remoteUserId,
-        sdp: peerConnection.localDescription
-      });
+        sdp: peerConnection.localDescription,
+        // Add additional data structure to help backend parse
+        data: {
+          type: peerConnection.localDescription?.type,
+          sdp: peerConnection.localDescription?.sdp
+        }
+      };      // Send offer with retry logic to handle backend crashes
+      this.sendWithRetry(offerMessage, remoteUserId, 'offer');
     } catch (error) {
       console.error('Error creating offer:', error);
     }
   }
+  /**
+   * Process any pending offers when WebSocket reconnects
+   */
+  private processPendingOffers(): void {
+    if (this.pendingOffers.size === 0) return;
 
+    // Wait a bit for WebSocket to be stable, then send queued offers
+    setTimeout(() => {
+      if (webSocketService.isConnectionStable()) {
+        this.pendingOffers.forEach((offer, userId) => {
+          console.log("Sending queued offer to", userId);
+          webSocketService.sendMessage(offer);
+        });
+        this.pendingOffers.clear();
+      } else if (webSocketService.isConnected()) {
+        // Connected but not stable, wait a bit more
+        setTimeout(() => this.processPendingOffers(), 1000);
+      } else {
+        // Still not connected, try again later
+        setTimeout(() => this.processPendingOffers(), 2000);
+      }
+    }, 1000);
+  }
   /**
    * Handle an incoming offer
    */
@@ -247,28 +327,37 @@ class WebRTCService {
 
     try {
       const peerConnection = this.createPeerConnection(data.fromUserId);
-      this.peers.set(data.fromUserId, { peerConnection });
+      this.peers.set(data.fromUserId, { 
+        peerConnection,
+        pendingIceCandidates: []
+      });
 
       peerConnection.addEventListener('datachannel', event => {
         this.setupDataChannel(data.fromUserId, event.channel);
-        this.peers.get(data.fromUserId)!.dataChannel = event.channel;
+        const peerData = this.peers.get(data.fromUserId);
+        if (peerData) {
+          peerData.dataChannel = event.channel;
+        }
       });
 
       await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
       const answer = await peerConnection.createAnswer();
-      await peerConnection.setLocalDescription(answer);
-
-      webSocketService.sendMessage({
+      await peerConnection.setLocalDescription(answer);      const answerMessage = {
         type: 'answer',
         fromUserId: this.localUserId,
         toUserId: data.fromUserId,
-        sdp: peerConnection.localDescription
-      });
+        sdp: peerConnection.localDescription,
+        // Add additional data structure to help backend parse
+        data: {
+          type: peerConnection.localDescription?.type,
+          sdp: peerConnection.localDescription?.sdp
+        }
+      };      // Send answer with retry logic for stable connection and backend resilience
+      this.sendWithRetry(answerMessage, data.fromUserId, 'answer');
     } catch (error) {
       console.error('Error handling offer:', error);
     }
   }
-
   /**
    * Handle an incoming answer to our offer
    */
@@ -277,12 +366,15 @@ class WebRTCService {
     if (peer && peer.peerConnection) {
       try {
         await peer.peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        console.log("Set remote description from answer for", data.fromUserId);
+        
+        // Process any pending ICE candidates now that remote description is set
+        await this.processPendingIceCandidates(data.fromUserId);
       } catch (error) {
         console.error('Error setting remote description from answer:', error);
       }
     }
   }
-
   /**
    * Handle an incoming ICE candidate
    */
@@ -291,11 +383,44 @@ class WebRTCService {
     if (peer && peer.peerConnection) {
       try {
         if (data.candidate) {
-          await peer.peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+          const iceCandidate = new RTCIceCandidate(data.candidate);
+          
+          // If remote description is set, add candidate immediately
+          if (peer.peerConnection.remoteDescription) {
+            await peer.peerConnection.addIceCandidate(iceCandidate);
+            console.log("Added ICE candidate for", data.fromUserId);
+          } else {
+            // Queue the candidate until remote description is set
+            if (!peer.pendingIceCandidates) {
+              peer.pendingIceCandidates = [];
+            }
+            peer.pendingIceCandidates.push(iceCandidate);
+            console.log("Queued ICE candidate for", data.fromUserId);
+          }
         }
       } catch (error) {
         console.error('Error adding ICE candidate:', error);
       }
+    }
+  }
+
+  /**
+   * Process any pending ICE candidates for a peer
+   */
+  private async processPendingIceCandidates(remoteUserId: string): Promise<void> {
+    const peer = this.peers.get(remoteUserId);
+    if (peer?.pendingIceCandidates && peer.peerConnection.remoteDescription) {
+      console.log(`Processing ${peer.pendingIceCandidates.length} pending ICE candidates for ${remoteUserId}`);
+      
+      for (const candidate of peer.pendingIceCandidates) {
+        try {
+          await peer.peerConnection.addIceCandidate(candidate);
+        } catch (error) {
+          console.error('Error adding queued ICE candidate:', error);
+        }
+      }
+      
+      peer.pendingIceCandidates = [];
     }
   }
 
@@ -305,20 +430,26 @@ class WebRTCService {
   private createPeerConnection(remoteUserId: string): RTCPeerConnection {
     const peerConnection = new RTCPeerConnection({
       iceServers: this.iceServers
-    });
-
-    peerConnection.addEventListener('icecandidate', event => {
+    });    peerConnection.addEventListener('icecandidate', event => {
       if (!this.localUserId) return;
 
-      if (event.candidate) {
-        webSocketService.sendMessage({
+      if (event.candidate) {        const candidateMessage = {
           type: 'ice-candidate',
           fromUserId: this.localUserId,
           toUserId: remoteUserId,
-          candidate: event.candidate
-        });
+          candidate: event.candidate,
+          // Add additional data structure to help backend parse
+          data: {
+            candidate: event.candidate.candidate,
+            sdpMid: event.candidate.sdpMid,
+            sdpMLineIndex: event.candidate.sdpMLineIndex,
+            usernameFragment: event.candidate.usernameFragment
+          }
+        };        
+        // Use retry logic for ICE candidates since backend has issues
+        this.sendWithRetry(candidateMessage, remoteUserId, 'ice-candidate', 5); // More retries for ICE
       }
-    });    peerConnection.addEventListener('connectionstatechange', () => {
+    });peerConnection.addEventListener('connectionstatechange', () => {
       if (peerConnection.connectionState === 'connected') {
         connectionManagerService.updateConnectionStatus(remoteUserId, 'connected');
         this.notifyConnectionStateChange(remoteUserId, 'connected');
@@ -591,6 +722,37 @@ class WebRTCService {
         console.error('Error in connection state callback:', error);
       }
     });
+  }
+
+  /**
+   * Send message with retry logic for backend stability issues
+   */
+  private sendWithRetry(message: any, userId: string, messageType: string, maxRetries: number = 3): void {
+    let attempts = 0;
+    
+    const trySend = () => {
+      attempts++;
+      
+      if (webSocketService.isConnectionStable()) {
+        webSocketService.sendMessage(message);
+        console.log(`${messageType} sent successfully to ${userId} (attempt ${attempts})`);
+      } else if (attempts < maxRetries) {
+        console.log(`${messageType} send failed for ${userId}, retrying... (attempt ${attempts}/${maxRetries})`);
+        
+        // Exponential backoff: 1s, 2s, 4s
+        const delay = Math.pow(2, attempts - 1) * 1000;
+        setTimeout(trySend, delay);
+      } else {
+        console.error(`Failed to send ${messageType} to ${userId} after ${maxRetries} attempts`);
+        // Queue it for later if it's critical
+        if (messageType === 'offer') {
+          this.pendingOffers.set(userId, message);
+          this.processPendingOffers();
+        }
+      }
+    };
+    
+    trySend();
   }
 }
 

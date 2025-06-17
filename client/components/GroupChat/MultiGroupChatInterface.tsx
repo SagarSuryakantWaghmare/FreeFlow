@@ -26,7 +26,7 @@ import GroupList from './GroupList';
 import GroupJoinRequestDialog from './GroupJoinRequestDialog';
 import GroupNotificationPanel from './GroupNotificationPanel';
 import groupChatService from '@/lib/GroupChatService';
-import groupStorageService, { GroupInfo, GroupMessage } from '@/lib/GroupStorageService';
+import groupStorageService, { GroupInfo, GroupMessage as StorageGroupMessage } from '@/lib/GroupStorageService'; // Renamed GroupMessage import to avoid conflict
 import groupManagerService from '@/lib/GroupManagerService';
 import groupNotificationService from '@/lib/GroupNotificationService';
 
@@ -108,7 +108,7 @@ export default function MultiGroupChatInterface({ userId: propUserId }: MultiGro
 
   // Setup real-time listeners
   useEffect(() => {
-    const handleNewMessage = (groupId: string, message: GroupMessage) => {
+    const handleNewMessage = (groupId: string, message: StorageGroupMessage) => { // Changed GroupMessage to StorageGroupMessage
       updateUnreadCounts();
       
       // Show notification if group is not currently active
@@ -146,17 +146,17 @@ export default function MultiGroupChatInterface({ userId: propUserId }: MultiGro
     const handleNotificationCountChange = (count: number) => {
       setNotificationCount(count);
     };    // Register listeners
-    groupChatService.onNewMessage(handleNewMessage);
-    groupChatService.onUnreadCountChange(handleUnreadCountChange);
-    groupChatService.onGroupInfoChange(handleGroupInfoChange);
+    groupStorageService.onNewMessage(handleNewMessage); // Changed from groupChatService
+    groupStorageService.onUnreadCountChange(handleUnreadCountChange); // Changed from groupChatService
+    groupStorageService.onGroupInfoChange(handleGroupInfoChange); // Changed from groupChatService
     groupManagerService.onJoinRequest(handleJoinRequest);
     groupNotificationService.onUnreadCountChange(handleNotificationCountChange);
 
     return () => {
       // Cleanup listeners
-      groupChatService.removeNewMessageCallback(handleNewMessage);
-      groupChatService.removeUnreadCountChangeCallback(handleUnreadCountChange);
-      groupChatService.removeGroupInfoChangeCallback(handleGroupInfoChange);
+      groupStorageService.removeNewMessageCallback(handleNewMessage); // Changed from groupChatService
+      groupStorageService.removeUnreadCountChangeCallback(handleUnreadCountChange); // Changed from groupChatService
+      groupStorageService.removeGroupInfoChangeCallback(handleGroupInfoChange); // Changed from groupChatService
       groupManagerService.removeJoinRequestCallback(handleJoinRequest);
       groupNotificationService.removeUnreadCountCallback(handleNotificationCountChange);
     };
