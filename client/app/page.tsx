@@ -3,6 +3,7 @@ import { FeaturesSection } from "@/components/Home/features-section";
 import { PricingSection } from "@/components/Home/pricing-section";
 import { TestimonialsSection } from "@/components/Home/testimonials-section";
 import { CtaSection } from "@/components/Home/cta-section";
+import { Footer } from "@/components/Home/footer";
 
 export default function Home() {
   return (
@@ -12,6 +13,7 @@ export default function Home() {
       <PricingSection />
       <TestimonialsSection />
       <CtaSection />
+      <Footer />
     </div>
   );
 }
