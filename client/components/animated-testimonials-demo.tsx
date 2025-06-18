@@ -4,8 +4,8 @@ import { AnimatedTestimonials } from "@/components/ui/animated-testimonials";
 import omkar from '@/public/Home/omkar.jpg';
 import Sourabh from '@/public/Home/Saurabh.jpg';
 import rajat from '@/public/Home/rajat.png';
-import Aniket from '@/public/Home/Aniket.jpg';
-import p from '@/public/Home/p.jpg';
+import Aniket from '@/public/Home/Aniket1.jpg';
+import p from '@/public/Home/p.png';
 import vedant from '@/public/Home/Vedant.jpg';
 
 export function AnimatedTestimonialsDemo() {
