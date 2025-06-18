@@ -6,25 +6,21 @@ import SimpleVideoCallLobby from '@/components/VideoCall/SimpleVideoCallLobby';
 import SimpleVideoCallRoom from '@/components/VideoCall/SimpleVideoCallRoom';
 import simpleVideoCallService, { VideoRoom } from '@/lib/SimpleVideoCallService';
 import { useToast } from '@/hooks/use-toast';
-import { useClerkAuth } from '@/hooks/use-clerk-auth'
+import { useClerkAuth } from '@/hooks/use-clerk-auth';
 import { getUserData } from "@/lib/utils/UserData";
+import { Footer } from '@/components/Home/footer';
 
 export default function VideoCallPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const { isSignedIn, isLoaded } = useClerkAuth();
-  
   const [currentRoom, setCurrentRoom] = useState<VideoRoom | null>(null);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
-
-  // Get user info for rendering (available after Clerk auth hook sets localStorage)
   const { userId, username: userName } = getUserData();
-  useEffect(() => {
-    // Wait for Clerk to load
-    if (!isLoaded) return;
 
-    // Redirect to sign-in if not authenticated
+  useEffect(() => {
+    if (!isLoaded) return;
     if (!isSignedIn) {
       toast({
         title: "Authentication Required",
@@ -33,39 +29,23 @@ export default function VideoCallPage() {
       });
       router.push('/sign-in');
       return;
-    }    // Initialize video call service with stored user data
+    }
     if (!isInitialized && isSignedIn) {
-      // Small delay to ensure localStorage is populated by useClerkAuth hook
       setTimeout(() => {
         const { userId, username } = getUserData();
-        console.log('VideoCallPage: Getting user data from localStorage:', { userId, username });
-        
         if (userId && username) {
-          console.log('VideoCallPage: Initializing video call service with:', { userId, username });
           simpleVideoCallService.initialize(userId, username);
           setIsInitialized(true);
-        } else {
-          console.error('VideoCallPage: User data not available in localStorage. isSignedIn:', isSignedIn);
-          console.log('VideoCallPage: All localStorage keys:', typeof window !== 'undefined' ? Object.keys(localStorage) : 'SSR');
         }
       }, 100);
     }
-
-    // Check if there's an existing room
     const existingRoom = simpleVideoCallService.getCurrentRoom();
     if (existingRoom) {
       setCurrentRoom(existingRoom);
-    }    // Set up event listeners
-    const handleRoomCreated = (room: VideoRoom) => {
-      setCurrentRoom(room);
-    };
-
-    const handleRoomLeft = () => {
-      setCurrentRoom(null);
-    };
-
+    }
+    const handleRoomCreated = (room: VideoRoom) => setCurrentRoom(room);
+    const handleRoomLeft = () => setCurrentRoom(null);
     const handleJoinApproved = (data: any) => {
-      console.log('VideoCallPage: Join approved, automatically entering room:', data);
       const currentRoom = simpleVideoCallService.getCurrentRoom();
       if (currentRoom) {
         setCurrentRoom(currentRoom);
@@ -75,7 +55,6 @@ export default function VideoCallPage() {
         });
       }
     };
-
     const handleJoinRejected = (data: any) => {
       toast({
         title: "Join Request Rejected",
@@ -83,7 +62,6 @@ export default function VideoCallPage() {
         variant: "destructive"
       });
     };
-
     const handleJoinError = (data: any) => {
       toast({
         title: "Join Error",
@@ -91,13 +69,11 @@ export default function VideoCallPage() {
         variant: "destructive"
       });
     };
-
     simpleVideoCallService.addEventListener('room_created', handleRoomCreated);
     simpleVideoCallService.addEventListener('room_left', handleRoomLeft);
     simpleVideoCallService.addEventListener('join_approved', handleJoinApproved);
     simpleVideoCallService.addEventListener('join_rejected', handleJoinRejected);
     simpleVideoCallService.addEventListener('join_error', handleJoinError);
-
     return () => {
       simpleVideoCallService.removeEventListener('room_created', handleRoomCreated);
       simpleVideoCallService.removeEventListener('room_left', handleRoomLeft);
@@ -106,21 +82,17 @@ export default function VideoCallPage() {
       simpleVideoCallService.removeEventListener('join_error', handleJoinError);
     };
   }, [isLoaded, isSignedIn, isInitialized, router, toast]);
-  const generateUserId = (): string => {
-    return 'user_' + Math.random().toString(36).substring(2, 15);
-  };  const handleRoomCreated = (roomId: string) => {
+
+  const handleRoomCreated = (roomId: string) => {
     toast({
       title: "Room Created!",
       description: `Room ID: ${roomId}`,
     });
   };
-
   const handleRoomJoinRequest = (roomId: string) => {
     // This is called when user initiates a join request
     // The actual joining is now handled automatically via service events
-    console.log('VideoCallPage: Join request initiated for room:', roomId);
   };
-
   const handleLeaveRoom = () => {
     setCurrentRoom(null);
     toast({
@@ -129,61 +101,65 @@ export default function VideoCallPage() {
     });
   };
 
-  // Show loading while Clerk is loading
+  // Loading state
   if (!isLoaded) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-[hsl(263.4,70%,50.4%)/0.05] items-center justify-center">
         <div className="text-white text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p>Loading...</p>
+          <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>Loading FreeFlow</h2>
+          <p className="text-muted-foreground">Preparing your video call experience...</p>
         </div>
+        <Footer />
       </div>
     );
   }
-
-  // Redirect to sign-in if not authenticated (this shouldn't happen due to useEffect redirect)
+  // Not signed in
   if (!isSignedIn) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-[hsl(263.4,70%,50.4%)/0.05] items-center justify-center">
         <div className="text-white text-center">
-          <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
+          <h2 className="text-2xl font-bold mb-4" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>Authentication Required</h2>
           <p className="mb-4">Please sign in to use video calls</p>
           <button 
             onClick={() => router.push('/sign-in')}
-            className="bg-blue-500 hover:bg-blue-600 px-6 py-2 rounded-lg transition-colors"
+            className="bg-[hsl(263.4,70%,50.4%)] hover:bg-[hsl(263.4,70%,45%)] px-6 py-2 rounded-lg transition-colors text-white font-semibold"
           >
             Sign In
           </button>
         </div>
+        <Footer />
       </div>
     );
-  }  // Get user info for rendering
-  // const { userId, username: userName } = getUserData(); // Moved to top of component
-
-  // If we don't have user info, show loading
+  }
+  // No user info
   if (!userId || !userName) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-[hsl(263.4,70%,50.4%)/0.05] items-center justify-center">
         <div className="text-white text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p>Loading user information...</p>
+          <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>Loading User Info</h2>
+          <p className="text-muted-foreground">Loading user information...</p>
         </div>
+        <Footer />
       </div>
     );
   }
-
-  // If in a room, show the room component
+  // In a room
   if (currentRoom) {
     return (
-      <SimpleVideoCallRoom
-        room={currentRoom}
-        onLeave={handleLeaveRoom}
-      />
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-[hsl(263.4,70%,50.4%)/0.05]">
+        <SimpleVideoCallRoom
+          room={currentRoom}
+          onLeave={handleLeaveRoom}
+        />
+        <Footer />
+      </div>
     );
   }
-  // Otherwise, show the lobby
+  // Lobby
   return (
-    <div>
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-[hsl(263.4,70%,50.4%)/0.05]">
       {/* Debug Panel */}
       {process.env.NODE_ENV === 'development' && (
         <div style={{ 
@@ -207,12 +183,13 @@ export default function VideoCallPage() {
           <div>User: {userId || 'None'}</div>
         </div>
       )}
-        <SimpleVideoCallLobby
+      <SimpleVideoCallLobby
         onRoomCreated={handleRoomCreated}
         onRoomJoined={handleRoomJoinRequest}
         userId={userId}
         userName={userName}
       />
+      <Footer />
     </div>
   );
 }

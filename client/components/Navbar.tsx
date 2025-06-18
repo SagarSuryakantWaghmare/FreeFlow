@@ -120,44 +120,42 @@ const Navbar: React.FC = () => {
                   Logout
                 </Button>
                 <ThemeToggle />
+              </>) : (<>
+                <Link
+                  href="/p2p"
+                  className="text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-sm transition-colors"
+                >
+                  Go Private
+                </Link><SignedIn>
+                  <a
+                    href="/group-chat"
+                    className="text-white bg-[rgb(76,175,80)] hover:bg-[rgb(56,155,60)] px-4 py-2 rounded-md text-sm transition-colors"
+                  >
+                    Group Chat
+                  </a>
+                  <a
+                    href="/video-call"
+                    className="text-white bg-[rgb(59,130,246)] hover:bg-[rgb(37,99,235)] px-4 py-2 rounded-md text-sm transition-colors"
+                  >
+                    Video Call
+                  </a>
+                </SignedIn>
+                <ThemeToggle />
+                <SignedOut>
+                  <a
+                    href="/sign-in"
+                    className="text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-sm transition-colors"
+                  >
+                    Go Private
+                  </a>
+                  <Button variant="outline">
+                    <Link href="/sign-in">Sign in</Link>
+                  </Button>
+                </SignedOut>
+                <SignedIn>
+                  <UserButton />
+                </SignedIn>
               </>
-            ) : (<>
-              <SignedIn>
-                <a
-                  href="/user/chat"
-                  className="text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-sm transition-colors"
-                >
-                  Go Private
-                </a>
-                <a
-                  href="/group-chat"
-                  className="text-white bg-[rgb(76,175,80)] hover:bg-[rgb(56,155,60)] px-4 py-2 rounded-md text-sm transition-colors"
-                >
-                  Group Chat
-                </a>
-                <a
-                  href="/video-call"
-                  className="text-white bg-[rgb(59,130,246)] hover:bg-[rgb(37,99,235)] px-4 py-2 rounded-md text-sm transition-colors"
-                >
-                  Video Call
-                </a>
-              </SignedIn>
-              <ThemeToggle />
-              <SignedOut>
-                <a
-                  href="/sign-in"
-                  className="text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-sm transition-colors"
-                >
-                  Go Private
-                </a>
-                <Button variant="outline">
-                  <Link href="/sign-in">Sign in</Link>
-                </Button>
-              </SignedOut>
-              <SignedIn>
-                <UserButton />
-              </SignedIn>
-            </>
             )}
           </div>
         </nav>
@@ -181,42 +179,41 @@ const Navbar: React.FC = () => {
                   >
                     Logout
                   </Button>
-                </>
-              ) : (<>
-                <Link
-                  href="/p2p"
-                  className="block text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-center"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Go Private
-                </Link>                <SignedIn>
+                </>) : (<>
                   <Link
-                    href="/group-chat"
-                    className="block text-white bg-[rgb(76,175,80)] hover:bg-[rgb(56,155,60)] px-4 py-2 rounded-md text-center mt-2"
+                    href="/p2p"
+                    className="block text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-center"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Group Chat
-                  </Link>
-                  <Link
-                    href="/video-call"
-                    className="block text-white bg-[rgb(59,130,246)] hover:bg-[rgb(37,99,235)] px-4 py-2 rounded-md text-center mt-2"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Video Call
-                  </Link>
-                </SignedIn>
-                <div className="flex justify-between items-center mt-2">
-                  <ThemeToggle />
-                  <SignedOut>
-                    <Link href="/sign-in" className="text-white underline">
-                      Sign in
+                    Go Private
+                  </Link><SignedIn>
+                    <Link
+                      href="/group-chat"
+                      className="block text-white bg-[rgb(76,175,80)] hover:bg-[rgb(56,155,60)] px-4 py-2 rounded-md text-center mt-2"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Group Chat
                     </Link>
-                  </SignedOut>
-                  <SignedIn>
-                    <UserButton />
+                    <Link
+                      href="/video-call"
+                      className="block text-white bg-[rgb(59,130,246)] hover:bg-[rgb(37,99,235)] px-4 py-2 rounded-md text-center mt-2"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Video Call
+                    </Link>
                   </SignedIn>
-                </div>
-              </>
+                  <div className="flex justify-between items-center mt-2">
+                    <ThemeToggle />
+                    <SignedOut>
+                      <Link href="/sign-in" className="text-white underline">
+                        Sign in
+                      </Link>
+                    </SignedOut>
+                    <SignedIn>
+                      <UserButton />
+                    </SignedIn>
+                  </div>
+                </>
               )}
             </div>
           </>
