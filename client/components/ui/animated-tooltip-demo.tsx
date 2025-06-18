@@ -2,7 +2,8 @@
 import React from "react";
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip";
 import Sagar from "@/public/Photos/sagar.jpg";
-
+import Atharva from "@/public/Photos/Atharva.jpg"
+import Akash from "@/public/Photos/Akash.jpg";
 const developers = [
   {
     id: 1,
@@ -14,14 +15,14 @@ const developers = [
     id: 2,
     name: "Atharva",
     designation: "Full Stack Developer",
-    image:Sagar,
+    image:Atharva,
   },
   {
     id: 3,
     name: "Aakash",
     designation: "Java Backend Developer",
     image:
-      Sagar,
+      Akash,
   },
 ];
 
