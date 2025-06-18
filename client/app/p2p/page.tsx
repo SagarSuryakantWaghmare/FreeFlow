@@ -71,9 +71,9 @@ export default function P2PLanding() {
     tap: {
       scale: 0.95,
     },
-  };  return (
+  }; return (
     <div className="min-h-screen">
-        <div className="container relative z-10 mx-auto px-4 md:px-6 pt-36 pb-8 md:pt-40 md:pb-24">
+      <div className="container relative z-10 mx-auto px-4 md:px-6 pt-36 pb-8 md:pt-40 md:pb-24">
         {/* Hero Section */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -84,7 +84,7 @@ export default function P2PLanding() {
           <div className="inline-block rounded-full bg-[hsl(263.4,70%,50.4%)/0.1] px-4 py-2 text-sm font-semibold text-[hsl(263.4,70%,50.4%)] mb-6">
             Secure. Private. Direct.
           </div>
-          
+
           <h1
             className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight tracking-wide mb-6 relative z-20"
             style={{ fontFamily: "'Bebas Neue', sans-serif" }}
@@ -93,7 +93,7 @@ export default function P2PLanding() {
             <br />
             Secure Communication
           </h1>
-          
+
           <p className="text-lg md:text-xl text-[hsl(217.9,10.6%,64.9%)] max-w-3xl mx-auto mb-12 relative z-20">
             Experience truly private conversations with direct peer-to-peer technology.
             No servers storing your messages, no third parties—just you and the people you chat with.
@@ -120,7 +120,7 @@ export default function P2PLanding() {
                 <li className="flex items-center"><span className="text-[hsl(263.4,70%,50.4%)] mr-2">•</span> Real-time direct connection</li>
               </ul>
             </div>
-            
+
             <div className="group bg-white/5 dark:bg-white/5 backdrop-blur-sm border border-white/10 dark:border-white/10 rounded-2xl p-8 text-left hover:bg-white/10 dark:hover:bg-white/10 transition-all duration-300 hover:scale-105">
               <Users className="h-12 w-12 text-green-500 mb-4" />
               <h3 className="text-2xl font-bold mb-3 text-white dark:text-white" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
@@ -156,7 +156,7 @@ export default function P2PLanding() {
               All your conversations are encrypted and decrypted only on your devices
             </p>
           </motion.div>
-          
+
           <motion.div
             variants={featureVariants}
             className="group bg-white/5 dark:bg-white/5 backdrop-blur-sm border border-white/10 dark:border-white/10 rounded-2xl p-8 text-center hover:bg-white/10 dark:hover:bg-white/10 transition-all duration-300 hover:scale-105"
@@ -169,7 +169,7 @@ export default function P2PLanding() {
               Your messages never touch a server, eliminating the risk of data breaches
             </p>
           </motion.div>
-          
+
           <motion.div
             variants={featureVariants}
             className="group bg-white/5 dark:bg-white/5 backdrop-blur-sm border border-white/10 dark:border-white/10 rounded-2xl p-8 text-center hover:bg-white/10 dark:hover:bg-white/10 transition-all duration-300 hover:scale-105"
@@ -200,7 +200,7 @@ export default function P2PLanding() {
           >
             <Button
               size="lg"
-              onClick={() => router.push('/simple-sign-in')}
+              onClick={() => { window.location.href = '/user/chat' }}
               className="bg-[hsl(263.4,70%,50.4%)] hover:bg-[hsl(263.4,70%,45%)] text-white text-lg px-8 py-6 h-auto rounded-2xl shadow-2xl transition-all duration-300 relative z-20"
             >
               Start P2P Chatting
@@ -230,8 +230,8 @@ export default function P2PLanding() {
             </Button>          </motion.div>
         </motion.div>
       </div>
-     
-      
+
+
     </div>
   );
 }
