@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Shield, Lock, Zap, ArrowRight, MessageCircle, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import { SignedIn, SignedOut } from '@clerk/nextjs';
 import { BackgroundBeamsWithCollision } from '@/components/ui/background-beams-with-collision';
 import { Footer } from '@/components/Home/footer';
 
@@ -198,20 +199,38 @@ export default function P2PLanding() {
             onHoverStart={() => setIsButtonHovered(true)}
             onHoverEnd={() => setIsButtonHovered(false)}
           >
-            <Button
-              size="lg"
-              onClick={() => { window.location.href = '/user/chat' }}
-              className="bg-[hsl(263.4,70%,50.4%)] hover:bg-[hsl(263.4,70%,45%)] text-white text-lg px-8 py-6 h-auto rounded-2xl shadow-2xl transition-all duration-300 relative z-20"
-            >
-              Start P2P Chatting
-              <motion.div
-                initial={{ x: 0 }}
-                animate={{ x: isButtonHovered ? 8 : 0 }}
-                transition={{ duration: 0.2 }}
+            <SignedIn>
+              <Button
+                size="lg"
+                onClick={() => { window.location.href = '/user/chat' }}
+                className="bg-[hsl(263.4,70%,50.4%)] cursor-pointer hover:bg-[hsl(263.4,70%,45%)] text-white text-lg px-8 py-6 h-auto rounded-2xl shadow-2xl transition-all duration-300 relative z-20"
               >
-                <ArrowRight className="ml-3 h-5 w-5" />
-              </motion.div>
-            </Button>
+                Start P2P Chatting
+                <motion.div
+                  initial={{ x: 0 }}
+                  animate={{ x: isButtonHovered ? 8 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ArrowRight className="ml-3 h-5 w-5" />
+                </motion.div>
+              </Button>
+            </SignedIn>
+            <SignedOut>
+              <Button
+                size="lg"
+                onClick={() => { window.location.href = '/sign-in' }}
+                className="bg-[hsl(263.4,70%,50.4%)] cursor-pointer hover:bg-[hsl(263.4,70%,45%)] text-white text-lg px-8 py-6 h-auto rounded-2xl shadow-2xl transition-all duration-300 relative z-20"
+              >
+                Start P2P Chatting
+                <motion.div
+                  initial={{ x: 0 }}
+                  animate={{ x: isButtonHovered ? 8 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ArrowRight className="ml-3 h-5 w-5" />
+                </motion.div>
+              </Button>
+            </SignedOut>
           </motion.div>
 
           <motion.div
@@ -219,15 +238,29 @@ export default function P2PLanding() {
             whileHover="hover"
             whileTap="tap"
           >
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => router.push('/group-chat')}
-              className="border-2 border-white/20 text-white hover:bg-white/10 hover:border-white/30 text-lg px-8 py-6 h-auto rounded-2xl shadow-2xl transition-all duration-300 backdrop-blur-sm relative z-20"
-            >
-              Join Group Chat
-              <ArrowRight className="ml-3 h-5 w-5" />
-            </Button>          </motion.div>
+            <SignedIn>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => router.push('/group-chat')}
+                className="border-2 border-white/20 cursor-pointer text-white hover:bg-white/10 hover:border-white/30 text-lg px-8 py-6 h-auto rounded-2xl shadow-2xl transition-all duration-300 backdrop-blur-sm relative z-20"
+              >
+                Join Group Chat
+                <ArrowRight className="ml-3 h-5 w-5" />
+              </Button>
+            </SignedIn>
+            <SignedOut>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => router.push('/sign-in')}
+                className="border-2 border-white/20 cursor-pointer hover:bg-white/10 hover:border-white/30 text-lg px-8 py-6 h-auto rounded-2xl shadow-2xl transition-all duration-300 backdrop-blur-sm relative z-20"
+              >
+                Join Group Chat
+                <ArrowRight className="ml-3 h-5 w-5" />
+              </Button>
+            </SignedOut>
+          </motion.div>
         </motion.div>
       </div>
 

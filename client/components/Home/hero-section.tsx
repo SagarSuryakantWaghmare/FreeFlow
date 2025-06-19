@@ -48,8 +48,8 @@ export function HeroSection() {
             <div className="flex flex-col sm:flex-row gap-4 pt-4 relative z-20">
               <SignedOut>
                 <>
-                  <Button className="cursor-pointer" onClick={() => { router.push('/sign-in') }} size="lg">
-                    Go Private Now
+                  <Button className="cursor-pointer" onClick={() => { router.push('/p2p') }} size="lg">
+                    Go Private
                   </Button>
                   <Button className="cursor-pointer" onClick={() => { router.push('/sign-in') }} size="lg" variant="outline">
                     <>
@@ -62,7 +62,7 @@ export function HeroSection() {
               <SignedIn>
                 <>
                   <Button className="cursor-pointer" onClick={() => { router.push('/user/chat') }} size="lg">
-                    Go Private Now
+                    Go Private
                   </Button>
                   <Button className="cursor-pointer" onClick={() => { router.push('/video-call') }} size="lg" variant="outline">
                     <>

@@ -25,7 +25,7 @@ export default function VideoCallPage() {
       toast({
         title: "Authentication Required",
         description: "Please sign in to use video calls",
-        variant: "destructive"
+        variant: "default"
       });
       router.push('/sign-in');
       return;
@@ -121,7 +121,7 @@ export default function VideoCallPage() {
         <div className="text-white text-center">
           <h2 className="text-2xl font-bold mb-4" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>Authentication Required</h2>
           <p className="mb-4">Please sign in to use video calls</p>
-          <button 
+          <button
             onClick={() => router.push('/sign-in')}
             className="bg-[hsl(263.4,70%,50.4%)] hover:bg-[hsl(263.4,70%,45%)] px-6 py-2 rounded-lg transition-colors text-white font-semibold"
           >
@@ -162,18 +162,18 @@ export default function VideoCallPage() {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-[hsl(263.4,70%,50.4%)/0.05]">
       {/* Debug Panel */}
       {process.env.NODE_ENV === 'development' && (
-        <div style={{ 
-          position: 'fixed', 
-          top: '10px', 
-          right: '10px', 
-          background: 'black', 
-          color: 'white', 
-          padding: '10px', 
-          borderRadius: '5px', 
+        <div style={{
+          position: 'fixed',
+          top: '10px',
+          right: '10px',
+          background: 'black',
+          color: 'white',
+          padding: '10px',
+          borderRadius: '5px',
           zIndex: 9999,
           fontSize: '12px'
         }}>
-          <button 
+          <button
             onClick={() => simpleVideoCallService.testConnection()}
             style={{ background: '#007bff', color: 'white', border: 'none', padding: '5px', borderRadius: '3px' }}
           >

@@ -83,26 +83,31 @@ const Navbar: React.FC = () => {
             <span className="text-2xl text-gray-600 font-semibold">FreeFlow</span>
           </Link>
 
-          {/* Hamburger Icon (Mobile Only) */}
-          <button
-            className="md:hidden text-white"
-            onClick={toggleMenu}
-            aria-label="Toggle navigation menu"
-          >
-            <svg viewBox="0 0 24 24" width={28} height={28}>
-              {isMenuOpen ? (
-                <path
-                  fill="currentColor"
-                  d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                />
-              ) : (
-                <path
-                  fill="currentColor"
-                  d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"
-                />
-              )}
-            </svg>
-          </button>
+          {/* Mobile: Hamburger + User Icon */}
+          <div className="flex items-center gap-4 md:hidden">
+            <button
+              className="text-white"
+              onClick={toggleMenu}
+              aria-label="Toggle navigation menu"
+            >
+              <svg viewBox="0 0 24 24" width={28} height={28}>
+                {isMenuOpen ? (
+                  <path
+                    fill="currentColor"
+                    d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                  />
+                ) : (
+                  <path
+                    fill="currentColor"
+                    d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"
+                  />
+                )}
+              </svg>
+            </button>
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
+          </div>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-4">
@@ -116,14 +121,15 @@ const Navbar: React.FC = () => {
             >
               Logout
             </Button> */}
-            <ThemeToggle />
-            {!isChatPage && (<Link
-              href="/p2p"
-              className="text-black bg-primary hover:bg-primary/90 px-4 py-2 rounded-md text-sm transition-colors"
-            >
-              Go Private
-            </Link>)}
             <SignedIn>
+              {!isChatPage && (
+                <a
+                  href="/user/chat"
+                  className="text-black bg-primary hover:bg-primary/90 px-4 py-2 rounded-md text-sm transition-colors"
+                >
+                  Go Private Now
+                </a>
+              )}
               <a
                 href="/group-chat"
                 className="text-white bg-secondary hover:bg-secondary/80 px-4 py-2 rounded-md text-sm transition-colors"
@@ -137,14 +143,11 @@ const Navbar: React.FC = () => {
                 Video Call
               </a>
             </SignedIn>
-            <ThemeToggle />
+            {/* <ThemeToggle /> */}
             <SignedOut>
-              <a
-                href="/sign-in"
-                className="text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-sm transition-colors"
-              >
+              <Button variant="default" className="cursor-pointer" onClick={() => router.push('/p2p')}>
                 Go Private
-              </a>
+              </Button>
               <Button variant="outline">
                 <Link href="/sign-in">Sign in</Link>
               </Button>
@@ -158,7 +161,6 @@ const Navbar: React.FC = () => {
         {isMenuOpen && (
           <>
             <div className="md:hidden bg-background px-6 py-3 space-y-2">
-
               {/* <Button
                     variant="outline"
                     onClick={() => {
@@ -170,13 +172,16 @@ const Navbar: React.FC = () => {
                     Logout
                   </Button> */}
 
-              {!isChatPage && (<Link
-                href="/p2p"
-                className="text-black bg-primary hover:bg-primary/90 px-4 py-2 rounded-md text-sm transition-colors"
-              >
-                Go Private
-              </Link>)}
               <SignedIn>
+                {!isChatPage && (
+                  <Link
+                    href="/p2p"
+                    className="block text-center text-black bg-primary hover:bg-primary/90 px-4 py-2 rounded-md text-sm transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Go Private
+                  </Link>
+                )}
                 <Link
                   href="/group-chat"
                   className="block text-white bg-secondary hover:bg-secondary/80 px-4 py-2 rounded-md text-center mt-2"
@@ -192,16 +197,24 @@ const Navbar: React.FC = () => {
                   Video Call
                 </Link>
               </SignedIn>
-              <div className="flex justify-between items-center mt-2">
-                <ThemeToggle />
+              <div className="flex justify-end gap-6 items-center mt-2">
+                {/* <ThemeToggle /> */}
                 <SignedOut>
+                  {!isChatPage && (
+                    <Link
+                      href="/p2p"
+                      className="text-black bg-primary hover:bg-primary/90 px-4 py-2 rounded-md text-sm transition-colors"
+                    >
+                      Go Private
+                    </Link>
+                  )}
                   <Link href="/sign-in" className="text-white underline">
                     Sign in
                   </Link>
                 </SignedOut>
-                <SignedIn>
+                {/* <SignedIn>
                   <UserButton />
-                </SignedIn>
+                </SignedIn> */}
               </div>
             </div>
           </>
