@@ -10,17 +10,19 @@ import {
 } from "@clerk/nextjs";
 import ConnectionAnimation from "@/components/Home/ConnectionAnimation";
 import { BackgroundBeamsWithCollision } from "@/components/ui/background-beams-with-collision";
+import { useRouter } from "next/navigation";
 
 export function HeroSection() {
   const [isVisible, setIsVisible] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
   return (
-    <BackgroundBeamsWithCollision className="relative   overflow-hidden pt-36 pb-16 md:pt-40 md:pb-24 min-h-screen bg-black dark:from-[hsl(224,71.4%,4.1%)] dark:via-[hsl(263.4,70%,50.4%)]/5 dark:to-[hsl(224,71.4%,4.1%)]">
+    <BackgroundBeamsWithCollision className="relative overflow-hidden pt-36 pb-16 md:pt-40 md:pb-24 min-h-screen bg-black dark:from-[hsl(224,71.4%,4.1%)] dark:via-[hsl(263.4,70%,50.4%)]/5 dark:to-[hsl(224,71.4%,4.1%)]">
       {/* Hero content */}
-      <div className="container relative z-10 mx-auto px-4 md:px-6 md:ml-12">
+      <div className="container relative z-10 mx-auto px-4 md:px-6 md:ml-12 md:mt-0 lg:mt-0 sm:mt-36">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div
             className={`space-y-6 transition-all duration-1000 ease-out ${isVisible
@@ -42,17 +44,34 @@ export function HeroSection() {
             <p className="text-lg md:text-xl text-[hsl(217.9,10.6%,64.9%)] max-w-xl relative z-20">
               Connect with anyone, anywhere through secure video calls and text chat –
               no downloads, no hassle, just communication that flows freely.
-            </p>            
+            </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4 relative z-20">
-              <Button size="lg" asChild>
-                <Link href="/p2p">Go Private Now</Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/video-call">
-                  <Video className="mr-2 h-5 w-5" />
-                  Video Call
-                </Link>
-              </Button>
+              <SignedOut>
+                <>
+                  <Button className="cursor-pointer" onClick={() => { router.push('/sign-in') }} size="lg">
+                    Go Private Now
+                  </Button>
+                  <Button className="cursor-pointer" onClick={() => { router.push('/sign-in') }} size="lg" variant="outline">
+                    <>
+                      <Video className="mr-2 h-5 w-5" />
+                      Video Call
+                    </>
+                  </Button>
+                </>
+              </SignedOut>
+              <SignedIn>
+                <>
+                  <Button className="cursor-pointer" onClick={() => { router.push('/user/chat') }} size="lg">
+                    Go Private Now
+                  </Button>
+                  <Button className="cursor-pointer" onClick={() => { router.push('/video-call') }} size="lg" variant="outline">
+                    <>
+                      <Video className="mr-2 h-5 w-5" />
+                      Video Call
+                    </>
+                  </Button>
+                </>
+              </SignedIn>
               <Button size="lg" variant="outline" asChild>
                 <Link href="/#features">Learn More</Link>
               </Button>
@@ -64,8 +83,8 @@ export function HeroSection() {
 
           <div
             className={`relative transition-all duration-1000 ease-out delay-300 z-20 ${isVisible
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 translate-y-10"
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-10"
               }`}
           >
             {/* Decorative elements */}

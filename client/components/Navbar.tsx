@@ -14,7 +14,6 @@ import { Button } from "./ui/button";
 import ConnectionStatus from "@/components/User/ConnectionStatus";
 import { SafeLocalStorage } from "@/lib/utils/SafeLocalStorage";
 import webSocketService from "@/lib/WebSocketService";
-import groupChatService from "@/lib/GroupChatService";
 import { useClerkAuth } from "@/hooks/use-clerk-auth";
 
 const Navbar: React.FC = () => {
@@ -24,7 +23,8 @@ const Navbar: React.FC = () => {
   const pathname = usePathname();
   const router = useRouter();
   const isChatPage = pathname?.includes('/user/chat');
-  const [navbarHeight, setNavbarHeight] = useState(0); const { isSignedIn, user, performLogoutCleanup } = useClerkAuth();
+  const [navbarHeight, setNavbarHeight] = useState(0);
+  const { isSignedIn, user, performLogoutCleanup } = useClerkAuth();
 
   useEffect(() => {
     if (isChatPage) {
@@ -60,24 +60,22 @@ const Navbar: React.FC = () => {
     const updateNavbarHeight = () => {
       const navElement = document.getElementById('navbar');
       if (navElement) {
-        const height = navElement.offsetHeight;
-        if (height !== navbarHeight) {
-          setNavbarHeight(height);
-        }
+        setNavbarHeight(navElement.offsetHeight);
       }
     };
 
-    // Initial measurement
     updateNavbarHeight();
-
-    // Listen for resize events
     window.addEventListener('resize', updateNavbarHeight);
-  }, [navbarHeight]);
+
+    return () => {
+      window.removeEventListener('resize', updateNavbarHeight);
+    };
+  }, [isMenuOpen]);
 
 
   return (
     <>
-      <header id="navbar" className="fixed container top-0 left-0 w-full z-50 border-b border-container backdrop-blur-md">
+      <header id="navbar" className="fixed top-0 left-0 w-full z-50 border-b border-container backdrop-blur-md">
         <nav className="flex items-center justify-between px-6 py-3 max-w-7xl mx-auto">
           {/* Logo Section */}
           <Link href="/" className="flex items-center">
@@ -108,68 +106,60 @@ const Navbar: React.FC = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-4">
-            {isChatPage ? (
-              <>
-                {username && <span className="text-gray-600">{username}</span>}
-                <ConnectionStatus />
-                <Button
-                  variant="outline"
-                  onClick={handleLogout}
-                  className="bg-whisper-purple cursor-pointer hover:bg-whisper-purple/90"
-                >
-                  Logout
-                </Button>
-                <ThemeToggle />
-              </>) : (<>
-                <Link
-                  href="/p2p"
-                  className="text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-sm transition-colors"
-                >
-                  Go Private
-                </Link><SignedIn>
-                  <a
-                    href="/group-chat"
-                    className="text-white bg-[rgb(76,175,80)] hover:bg-[rgb(56,155,60)] px-4 py-2 rounded-md text-sm transition-colors"
-                  >
-                    Group Chat
-                  </a>
-                  <a
-                    href="/video-call"
-                    className="text-white bg-[rgb(59,130,246)] hover:bg-[rgb(37,99,235)] px-4 py-2 rounded-md text-sm transition-colors"
-                  >
-                    Video Call
-                  </a>
-                </SignedIn>
-                <ThemeToggle />
-                <SignedOut>
-                  <a
-                    href="/sign-in"
-                    className="text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-sm transition-colors"
-                  >
-                    Go Private
-                  </a>
-                  <Button variant="outline">
-                    <Link href="/sign-in">Sign in</Link>
-                  </Button>
-                </SignedOut>
-                <SignedIn>
-                  <UserButton />
-                </SignedIn>
-              </>
-            )}
+
+            {/* {username && <span className="text-gray-600">{username}</span>}
+            <ConnectionStatus /> */}
+            {/* <Button
+              variant="outline"
+              onClick={handleLogout}
+              className="bg-whisper-purple cursor-pointer hover:bg-whisper-purple/90"
+            >
+              Logout
+            </Button> */}
+            <ThemeToggle />
+            {!isChatPage && (<Link
+              href="/p2p"
+              className="text-black bg-primary hover:bg-primary/90 px-4 py-2 rounded-md text-sm transition-colors"
+            >
+              Go Private
+            </Link>)}
+            <SignedIn>
+              <a
+                href="/group-chat"
+                className="text-white bg-secondary hover:bg-secondary/80 px-4 py-2 rounded-md text-sm transition-colors"
+              >
+                Group Chat
+              </a>
+              <a
+                href="/video-call"
+                className="text-white bg-accent hover:bg-accent/80 px-4 py-2 rounded-md text-sm transition-colors"
+              >
+                Video Call
+              </a>
+            </SignedIn>
+            <ThemeToggle />
+            <SignedOut>
+              <a
+                href="/sign-in"
+                className="text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-sm transition-colors"
+              >
+                Go Private
+              </a>
+              <Button variant="outline">
+                <Link href="/sign-in">Sign in</Link>
+              </Button>
+            </SignedOut>
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
           </div>
         </nav>
         {/* Mobile Menu Dropdown */}
         {isMenuOpen && (
           <>
-            <div className="md:hidden bg-black px-6 py-3 space-y-2">
-              {isChatPage ? (
-                <>
-                  {username && <span className="block text-white mb-2">{username}</span>}
-                  <div className="mb-2">
-                    <ConnectionStatus />
-                  </div>
-                  <Button
+            <div className="md:hidden bg-background px-6 py-3 space-y-2">
+
+              {/* <Button
                     variant="outline"
                     onClick={() => {
                       handleLogout();
@@ -178,43 +168,41 @@ const Navbar: React.FC = () => {
                     className="w-full cursor-pointer bg-whisper-purple hover:bg-whisper-purple/90"
                   >
                     Logout
-                  </Button>
-                </>) : (<>
-                  <Link
-                    href="/p2p"
-                    className="block text-white bg-[rgb(116,76,197)] hover:bg-[rgb(96,60,180)] px-4 py-2 rounded-md text-center"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Go Private
-                  </Link><SignedIn>
-                    <Link
-                      href="/group-chat"
-                      className="block text-white bg-[rgb(76,175,80)] hover:bg-[rgb(56,155,60)] px-4 py-2 rounded-md text-center mt-2"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Group Chat
-                    </Link>
-                    <Link
-                      href="/video-call"
-                      className="block text-white bg-[rgb(59,130,246)] hover:bg-[rgb(37,99,235)] px-4 py-2 rounded-md text-center mt-2"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Video Call
-                    </Link>
-                  </SignedIn>
-                  <div className="flex justify-between items-center mt-2">
-                    <ThemeToggle />
-                    <SignedOut>
-                      <Link href="/sign-in" className="text-white underline">
-                        Sign in
-                      </Link>
-                    </SignedOut>
-                    <SignedIn>
-                      <UserButton />
-                    </SignedIn>
-                  </div>
-                </>
-              )}
+                  </Button> */}
+
+              {!isChatPage && (<Link
+                href="/p2p"
+                className="text-black bg-primary hover:bg-primary/90 px-4 py-2 rounded-md text-sm transition-colors"
+              >
+                Go Private
+              </Link>)}
+              <SignedIn>
+                <Link
+                  href="/group-chat"
+                  className="block text-white bg-secondary hover:bg-secondary/80 px-4 py-2 rounded-md text-center mt-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Group Chat
+                </Link>
+                <Link
+                  href="/video-call"
+                  className="block text-white bg-accent hover:bg-accent/80 px-4 py-2 rounded-md text-center mt-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Video Call
+                </Link>
+              </SignedIn>
+              <div className="flex justify-between items-center mt-2">
+                <ThemeToggle />
+                <SignedOut>
+                  <Link href="/sign-in" className="text-white underline">
+                    Sign in
+                  </Link>
+                </SignedOut>
+                <SignedIn>
+                  <UserButton />
+                </SignedIn>
+              </div>
             </div>
           </>
         )}

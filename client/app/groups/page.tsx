@@ -35,11 +35,11 @@ export default function GroupsPage() {
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold mb-2">Groups</h1>
           <p className="text-muted-foreground">
-            Welcome, {user.firstName || user.emailAddresses[0]?.emailAddress}! 
+            Welcome, {user.firstName || user.emailAddresses[0]?.emailAddress}!
             Manage your group conversations here.
           </p>
         </div>
-        
+
         <GroupList />
       </div>
     </div>

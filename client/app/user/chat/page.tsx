@@ -23,7 +23,7 @@ import groupChatService from '@/lib/GroupChatService';
 const Chat = () => {
   const router = useRouter();
   const [message, setMessage] = useState('');
-  
+
   const [messages, setMessages] = useState<{
     id: string;
     sender: string;
@@ -42,14 +42,14 @@ const Chat = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  
+
   // Connection request dialog state
   const [connectionRequest, setConnectionRequest] = useState<{
     fromUserId: string;
     fromUserName: string;
     timestamp: Date;
   } | null>(null);
-  
+
   const username = useRef<string>('');
   const userId = useRef<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -62,7 +62,7 @@ const Chat = () => {
     if (!storedUsername || !storedUserId) {
       router.push('/simple-sign-in');
       return;
-    }    username.current = storedUsername;
+    } username.current = storedUsername;
     userId.current = storedUserId;
 
     webRTCService.initialize(userId.current);
@@ -82,16 +82,16 @@ const Chat = () => {
     const handleLogoutNotification = (data: any) => {
       if (data.fromUserId && data.fromUserId !== userId.current) {
         console.log(`User ${data.fromUserId} logged out, clearing their chat data`);
-        
+
         // Clear all messages and unread counts for this user
         chatStorageService.clearMessagesForUser(data.fromUserId);
-        
+
         // Close WebRTC connection if exists
         webRTCService.closePeerConnection(data.fromUserId);
-        
+
         // Update connection status in connection manager
         connectionManagerService.updateConnectionStatus(data.fromUserId, 'disconnected');
-        
+
         // If we were chatting with this user, close the chat and go back to user list
         if (selectedUser === data.fromUserId) {
           setSelectedUser(null);
@@ -100,7 +100,7 @@ const Chat = () => {
           const loggedOutUser = users.find(user => user.id === data.fromUserId);
           toast.info(`${loggedOutUser?.name || 'User'} has logged out. Chat closed.`);
         }
-        
+
         // Remove from users list
         setUsers(prev => prev.filter(user => user.id !== data.fromUserId));
       }
@@ -109,7 +109,7 @@ const Chat = () => {
     const autoReconnectToPeers = () => {
       const existingConnections = connectionManagerService.getAllConnections();
       console.log('Found existing connections for auto-reconnect:', existingConnections);
-      
+
       existingConnections.forEach(connection => {
         // Only auto-reconnect if they were previously connected and not blacklisted
         if (connection.status === 'connected' && !connectionManagerService.isBlacklisted(connection.userId)) {
@@ -231,7 +231,7 @@ const Chat = () => {
   const handleRTCMessage = (message: any) => {
     // Update UI if this message is relevant to the current chat
     const messageFromUser = message.fromUserId || message.sender; // Get the actual sender
-    
+
     if (selectedUser && messageFromUser === selectedUser) {
       const newMessage = {
         id: message.id,
@@ -284,7 +284,7 @@ const Chat = () => {
   const handleConnectionStateChange = (remoteUserId: string, state: 'connected' | 'disconnected') => {
     if (state === 'connected') {
       toast.success(`Connected to ${remoteUserId}`);
-      
+
       // If this is the user we're trying to chat with, open the chat automatically
       if (selectedUser === remoteUserId) {
         // Refresh messages to load any new ones
@@ -336,7 +336,7 @@ const Chat = () => {
       webRTCService.requestConnection(selectedUser);
       toast.error('Not connected to peer. Trying to establish connection...');
     }
-  };  const handleSelectUser = (userId: string) => {
+  }; const handleSelectUser = (userId: string) => {
     setSelectedUser(userId);
     setSidebarOpen(false); // Close sidebar on mobile after selecting a user
 
@@ -374,26 +374,26 @@ const Chat = () => {
         chatStorageService.removeNewMessageCallback(handleNewMessage);
       };
     }
-  }, [selectedUser]);  const handleLogout = () => {
+  }, [selectedUser]); const handleLogout = () => {
     // Get connected users before clearing everything
     const connectedUserIds = connectionManagerService.getConnectedUserIds();
-    
+
     // Send logout notification to all connected peers
     if (connectedUserIds.length > 0 && userId.current) {
       webSocketService.sendLogoutNotification(userId.current, connectedUserIds);
     }
-      // Close all WebRTC connections
+    // Close all WebRTC connections
     webRTCService.closeAllConnections();
-    
+
     // Disconnect from WebSocket
     webSocketService.disconnect();
-    
+
     // Disconnect from group chat service
     groupChatService.disconnect();
-    
+
     // Clear all user-specific data from localStorage
     connectionManagerService.clearAllUserData();
-    
+
     // Clear all chat messages from localStorage (already handled by clearAllUserData)
     chatStorageService.clearAllMessages();
 
@@ -444,15 +444,28 @@ const Chat = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col bg-gray-50 dark:bg-black text-foreground dark:text-white overflow-hidden">
-      <div className="flex flex-1 overflow-hidden max-h-full">
-        {/* Sidebar - Online Users (hidden on mobile when closed) */}        <aside
-          className={`bg-white dark:bg-zinc-900 flex flex-col border-r border-gray-200 dark:border-zinc-800 h-full overflow-hidden transition-all duration-300 
-            md:w-64 md:relative md:translate-x-0 md:shadow-none
-            ${sidebarOpen
-              ? 'w-full absolute z-20 translate-x-0 shadow-xl'
-              : 'w-64 absolute z-20 -translate-x-full shadow-xl'}`}
-        >          <div className="p-4 bg-white dark:bg-zinc-900 shrink-0">
+    <div className="h-screen w-screen flex flex-col bg-gradient-to-br from-purple-100 via-white to-purple-200 dark:from-zinc-900 dark:via-black dark:to-zinc-900 text-foreground dark:text-white overflow-hidden fixed inset-0">
+      {/* Add a top spacer to account for the navbar height (e.g., 64px) */}
+      <div className="flex-1 flex overflow-hidden max-h-full pt-[64px] relative">
+        {/* Hamburger menu for mobile/tablet (always visible in top left on small screens) */}
+        <button
+          className="fixed top-[68px] left-2 z-40 p-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 md:hidden"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open sidebar"
+          type="button"
+          style={{ display: sidebarOpen ? 'none' : 'block' }}
+        >
+          <Menu className="h-6 w-6 text-slate-700 dark:text-purple-400" />
+        </button>
+        {/* Sidebar - Online Users (hidden on mobile/tablet when closed) */}
+        <aside
+          className={`bg-white dark:bg-zinc-900 flex flex-col border-r border-gray-200 dark:border-zinc-800 h-[calc(100vh-64px)] overflow-y-auto transition-all duration-300
+            w-64 fixed z-30 left-0 top-[64px] md:relative md:top-0 md:left-0 md:w-64 md:z-0
+            ${sidebarOpen ? 'block' : 'hidden'}
+            md:block`}
+          style={{ margin: 0, borderTop: 0 }}
+        >
+          <div className="p-4 bg-white dark:bg-zinc-900 shrink-0">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-slate-700 dark:text-purple-400" />
@@ -502,134 +515,97 @@ const Chat = () => {
             </>
           )}
         </aside>
-
-        {/* Overlay for mobile when sidebar is open */}
+        {/* Overlay for mobile/tablet when sidebar is open */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/20 z-10 md:hidden"
+            className="fixed inset-0 bg-black/30 z-20 md:hidden"
             onClick={() => setSidebarOpen(false)}
           />
-        )}        {/* Main Chat Area */}
-        <main className="flex-1 flex flex-col h-full overflow-hidden relative bg-white dark:bg-zinc-950">
-          {/* Mobile header with menu button */}
-          <div className="p-3 border-b border-gray-200 dark:border-zinc-800 flex items-center gap-2 shrink-0 md:hidden bg-white dark:bg-zinc-900">
-            <Button
-              variant="ghost"
-              size="icon" className="h-8 w-8 mr-1"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="h-5 w-5 text-slate-700 dark:text-purple-400" />
-            </Button>            {selectedUser && (
-              <>
-                <User className="h-5 w-5 text-blue-600 dark:text-purple-400" />
-                <span className="font-medium truncate text-slate-900 dark:text-white">
-                  {users.find(u => u.id === selectedUser)?.name || selectedUser}
-                </span>                
-                <span className="text-xs ml-auto mr-2">
-                  {webRTCService.isConnectedToPeer(selectedUser)
-                    ? <span className="text-green-600 dark:text-green-400">(Connected)</span>
-                    : <span className="text-amber-600 dark:text-yellow-400">(Connecting...)</span>}
-                </span>
-                
-                {/* Close chat button for mobile */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={handleCloseChat}
-                  title="Close chat"
-                >
-                  <X className="h-4 w-4 text-slate-700 dark:text-purple-400" />
-                </Button>
-              </>
-            )}
+        )}
+        {/* Main Chat Area */}
+        <main className="flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden relative bg-white dark:bg-zinc-950 shadow-lg m-0">
+          {/* Chat Header (sticky on all screens) */}
+          <div className="sticky top-0 z-10 p-3 border-b border-gray-200 dark:border-zinc-800 flex items-center gap-2 shrink-0 bg-white/90 dark:bg-zinc-900/90 backdrop-blur shadow-sm">
+            {/* Add left padding on small screens to prevent overlap with hamburger */}
+            <div className="flex items-center w-full" style={{ paddingLeft: '44px' }}>
+              {selectedUser ? (
+                <>
+                  <User className="h-5 w-5 text-blue-600 dark:text-purple-400 mr-2" />
+                  <span className="font-medium truncate text-slate-900 dark:text-white">
+                    {users.find(u => u.id === selectedUser)?.name || selectedUser}
+                  </span>
+                  <span className="text-xs ml-auto mr-2">
+                    {selectedUser && webRTCService.isConnectedToPeer(selectedUser)
+                      ? <span className="text-green-600 dark:text-green-400 animate-pulse">Connected</span>
+                      : <span className="text-amber-600 dark:text-yellow-400 animate-pulse">Connecting...</span>}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 ml-2"
+                    onClick={handleCloseChat}
+                    title="Close chat"
+                  >
+                    <X className="h-4 w-4 text-slate-700 dark:text-purple-400" />
+                  </Button>
+                </>
+              ) : (
+                <span className="font-medium text-slate-900 dark:text-white">Select a chat</span>
+              )}
+            </div>
           </div>
 
-          {selectedUser ? (
-            <>              {/* Chat Header (desktop only) */}
-              <div className="p-3 border-b border-gray-200 dark:border-zinc-800 hidden md:flex items-center gap-2 shrink-0 bg-white dark:bg-zinc-900">
-                <User className="h-5 w-5 text-blue-600 dark:text-purple-400" />
-                <span className="font-medium text-slate-900 dark:text-white">
-                  {users.find(u => u.id === selectedUser)?.name || selectedUser}
-                </span>
-                <span className="text-xs ml-2">
-                  {selectedUser && webRTCService.isConnectedToPeer(selectedUser)
-                    ? <span className="text-green-600 dark:text-green-400">(Connected)</span>
-                    : <span className="text-amber-600 dark:text-yellow-400">(Connecting...)</span>}
-                </span>
-                
-                {/* Close chat button for desktop */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 ml-auto"
-                  onClick={handleCloseChat}
-                  title="Close chat"
-                >
-                  <X className="h-4 w-4 text-slate-700 dark:text-purple-400" />
-                </Button>
-              </div>{/* Messages */}
-              <ScrollArea className="flex-1 p-2 sm:p-4 overflow-y-auto bg-gray-50 dark:bg-zinc-950">
-                <div className="flex flex-col gap-3 min-h-full">
-                  {messages.length > 0 ? (
-                    messages.map(msg => (
-                      <ChatMessage
-                        key={msg.id}
-                        message={msg}
-                      />
-                    ))
-                  ) : (
-                    <div className="text-center text-slate-500 dark:text-zinc-400 py-8">
-                      Start a conversation with {users.find(u => u.id === selectedUser)?.name || selectedUser}
-                    </div>
-                  )}
-                  <div ref={messagesEndRef} />
+          {/* Chat Messages Area (fixed height, scrollable) */}
+          <div className="flex-1 overflow-y-auto px-2 sm:px-4 py-4 bg-gradient-to-b from-white/80 to-purple-50 dark:from-zinc-950 dark:to-zinc-900" style={{ minHeight: '300px', maxHeight: 'calc(100vh - 220px)' }}>
+            <div className="flex flex-col gap-3 min-h-full">
+              {selectedUser && messages.length > 0 ? (
+                messages.map(msg => (
+                  <ChatMessage
+                    key={msg.id}
+                    message={msg}
+                  />
+                ))
+              ) : selectedUser ? (
+                <div className="text-center text-slate-500 dark:text-zinc-400 py-8">
+                  Start a conversation with {users.find(u => u.id === selectedUser)?.name || selectedUser}
                 </div>
-              </ScrollArea>              {/* Message Input */}
-              <form onSubmit={handleSendMessage} className="border-t border-gray-200 dark:border-zinc-800 p-2 sm:p-3 flex gap-2 shrink-0 bg-white dark:bg-zinc-900">
-                <Input
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Type a message..."
-                  className="flex-1 bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-slate-900 dark:text-white focus-visible:ring-purple-500 dark:focus-visible:ring-purple-500"
-                  disabled={!selectedUser || !webRTCService.isConnectedToPeer(selectedUser)}
-                />
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={!message.trim() || !selectedUser || !webRTCService.isConnectedToPeer(selectedUser)}
-                  className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-700 text-white min-w-9 sm:min-w-10 h-10 flex items-center justify-center"
-                >
-                  <Send className="h-4 w-4 sm:h-5 sm:w-5" />
-                </Button>
-              </form>
-            </>
-          ) : (
-            <>
-              {/* Mobile header when no chat is selected */}
-              <div className="p-3 border-b border-gray-200 dark:border-zinc-800 flex items-center gap-2 shrink-0 md:hidden bg-white dark:bg-zinc-900">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 mr-1"
-                  onClick={() => setSidebarOpen(true)}
-                >
-                  <Menu className="h-5 w-5 text-slate-700 dark:text-purple-400" />
-                </Button>
-                <span className="font-medium text-slate-900 dark:text-white">Select a chat</span>
-              </div>
-              <EmptyChat />
-            </>
-          )}        </main>
+              ) : (
+                <EmptyChat />
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+
+          {/* Message Input (sticky at bottom) */}
+          {selectedUser && (
+            <form onSubmit={handleSendMessage} className="sticky bottom-0 z-10 border-t border-gray-200 dark:border-zinc-800 p-2 sm:p-3 flex gap-2 shrink-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur">
+              <Input
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Type a message..."
+                className="flex-1 bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-slate-900 dark:text-white focus-visible:ring-purple-500 dark:focus-visible:ring-purple-500 px-4 py-2 shadow-sm"
+                disabled={!selectedUser || !webRTCService.isConnectedToPeer(selectedUser)}
+                autoFocus
+              />
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!message.trim() || !selectedUser || !webRTCService.isConnectedToPeer(selectedUser)}
+                className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white min-w-9 sm:min-w-10 h-10 flex items-center justify-center shadow-md"
+              >
+                <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Button>
+            </form>
+          )}
+        </main>
       </div>
-        {/* Connection Request Dialog */}
+      {/* Connection Request Dialog */}
       <ConnectionRequestDialog
         request={connectionRequest}
         onAccept={handleAcceptConnection}
         onReject={handleRejectConnection}
         onClose={handleIgnoreConnection}
       />
-      
       {/* Pending Requests Notification */}
       <PendingRequestsNotification />
     </div>

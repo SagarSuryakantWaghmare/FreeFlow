@@ -24,6 +24,14 @@ export const AnimatedTestimonials = ({
 }) => {
   const [active, setActive] = useState(0);
   const [direction, setDirection] = useState(1);
+  const [rotations, setRotations] = useState<number[]>([]);
+
+  useEffect(() => {
+    const newRotations = testimonials.map(
+      () => Math.floor(Math.random() * 21) - 10
+    );
+    setRotations(newRotations);
+  }, [testimonials.length]);
 
   const handleNext = () => {
     setDirection(1);
@@ -35,16 +43,12 @@ export const AnimatedTestimonials = ({
     setActive((prev) => (prev - 1 + testimonials.length) % testimonials.length);
   };
 
-  const randomRotateY = () => {
-    return Math.floor(Math.random() * 21) - 10;
-  };
-
   useEffect(() => {
     if (autoplay) {
       const interval = setInterval(handleNext, autoplayInterval);
       return () => clearInterval(interval);
     }
-  }, [autoplay, autoplayInterval]);
+  }, [autoplay, autoplayInterval, handleNext]);
 
   return (
     <div className={cn("max-w-sm md:max-w-4xl mx-auto antialiased font-sans px-4 md:px-8 lg:px-12 py-20", className)}>
@@ -59,20 +63,21 @@ export const AnimatedTestimonials = ({
                     opacity: 0,
                     scale: 0.9,
                     z: -100,
-                    rotate: randomRotateY(),
+                    rotate: rotations[index] ?? 0,
                   }}
                   animate={{
                     opacity: index === active ? 1 : 0.7,
                     scale: index === active ? 1 : 0.95,
                     z: index === active ? 0 : -100,
-                    rotate: index === active ? 0 : randomRotateY(),
-                    zIndex: index === active ? 999 : testimonials.length + 2 - index,
+                    rotate: index === active ? 0 : rotations[index] ?? 0,
+                    zIndex:
+                      index === active ? 999 : testimonials.length + 2 - index,
                   }}
                   exit={{
                     opacity: 0,
                     scale: 0.9,
                     z: 100,
-                    rotate: randomRotateY(),
+                    rotate: rotations[index] ?? 0,
                   }}
                   transition={{
                     duration: 0.4,
