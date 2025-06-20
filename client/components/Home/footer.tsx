@@ -8,7 +8,7 @@ import DeveloperTooltip from "@/components/ui/animated-tooltip-demo";
 
 export function Footer() {
   return (
-    <footer className="bg-white  dark:bg-[hsl(224,71.4%,4.1%)] border-t border-gray-200 dark:border-[hsl(215,27.9%,16.9%)]">
+    <footer className="bg-black  dark:bg-[hsl(0, 0.00%, 0.00%)] border-t border-gray-200 dark:border-[hsl(215,27.9%,16.9%)]">
       <div className="container max-w-7xl mx-auto px-4 md:px-6 py-8">
         {/* Main Content */}
         <div className="text-center space-y-6">
