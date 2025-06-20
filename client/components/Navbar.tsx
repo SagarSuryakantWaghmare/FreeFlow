@@ -182,20 +182,20 @@ const Navbar: React.FC = () => {
                     Go Private
                   </Link>
                 )}
-                <Link
+                <a
                   href="/group-chat"
                   className="block text-white bg-secondary hover:bg-secondary/80 px-4 py-2 rounded-md text-center mt-2"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Group Chat
-                </Link>
-                <Link
+                </a>
+                <a
                   href="/video-call"
                   className="block text-white bg-accent hover:bg-accent/80 px-4 py-2 rounded-md text-center mt-2"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Video Call
-                </Link>
+                </a>
               </SignedIn>
               <div className="flex justify-end gap-6 items-center mt-2">
                 {/* <ThemeToggle /> */}

@@ -58,12 +58,25 @@ export function useClerkAuth() {
     SafeLocalStorage.removeItem('connectedUsers');
     SafeLocalStorage.removeItem('connectionHistory');
     SafeLocalStorage.removeItem('blacklistedUsers');
-    
-    // Group chat data
+      // Group chat data
     SafeLocalStorage.removeItem('groups');
     SafeLocalStorage.removeItem('groupNotifications');
     SafeLocalStorage.removeItem('groupRequests');
     SafeLocalStorage.removeItem('currentGroup');
+    SafeLocalStorage.removeItem('group_connections');
+    SafeLocalStorage.removeItem('group_notifications');
+      // Remove user-specific group data (using pattern matching)
+    const keys = Object.keys(localStorage);
+    keys.forEach(key => {
+      if (key.startsWith('group_info_user-') || 
+          key.startsWith('group_messages_user-') ||
+          key.startsWith('group_unread_user-') ||
+          key.startsWith('unread_count_user_') ||
+          key.startsWith('user_groups_user-') ||
+          key.startsWith('freeflow_connections_user_')) {
+        SafeLocalStorage.removeItem(key);
+      }
+    });
     
     // Video call data
     SafeLocalStorage.removeItem('videoRooms');

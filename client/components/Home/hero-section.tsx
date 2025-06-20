@@ -30,9 +30,9 @@ export function HeroSection() {
               : "opacity-0 translate-y-10"
               }`}
           >
-            <div className="inline-block rounded-full bg-[hsl(263.4,70%,50.4%)/0.1] px-4 py-2 text-sm font-semibold text-[hsl(263.4,70%,50.4%)]">
+            {/* <div className="inline-block rounded-full bg-[hsl(263.4,70%,50.4%)/0.1] px-4 py-2 text-sm font-semibold text-[hsl(263.4,70%,50.4%)]">
               Simple. Secure. Free.
-            </div>
+            </div> */}
             <h1
               className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight tracking-wide relative z-20"
               style={{ fontFamily: "'Bebas Neue', sans-serif" }}
