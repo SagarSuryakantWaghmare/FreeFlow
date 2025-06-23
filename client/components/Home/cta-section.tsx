@@ -4,7 +4,7 @@ import { Check } from "lucide-react";
 
 export function CtaSection() {
   return (
-    <section className="py-20 md:py-28 text-[hsl(263.4,70%,50.4%)] relative overflow-hidden">
+    <section className="bg-black py-20 md:py-28 text-[hsl(263.4,70%,50.4%)] relative overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full  " />

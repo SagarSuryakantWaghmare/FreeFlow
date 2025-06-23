@@ -73,7 +73,7 @@ const features: Feature[] = [
 
 export function AnimatedFeaturesDemo() {
   return (
-    <section id="features" className="py-20 md:py-28">
+    <section id="features" className="py-20 bg-black md:py-28">
       <div className="container mx-auto px-4 md:px-6">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
