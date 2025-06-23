@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "@/public/1.png";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { usePathname, useRouter } from "next/navigation";
 import {
   SignedIn,
@@ -11,7 +10,6 @@ import {
   UserButton
 } from "@clerk/nextjs";
 import { Button } from "./ui/button";
-import ConnectionStatus from "@/components/User/ConnectionStatus";
 import { SafeLocalStorage } from "@/lib/utils/SafeLocalStorage";
 import webSocketService from "@/lib/WebSocketService";
 import { useClerkAuth } from "@/hooks/use-clerk-auth";
@@ -23,7 +21,6 @@ const Navbar: React.FC = () => {
   const pathname = usePathname();
   const router = useRouter();
   const isChatPage = pathname?.includes('/user/chat');
-  const [navbarHeight, setNavbarHeight] = useState(0);
   const { isSignedIn, user, performLogoutCleanup } = useClerkAuth();
 
   useEffect(() => {
@@ -51,46 +48,36 @@ const Navbar: React.FC = () => {
     performLogoutCleanup();
     router.push('/');
   };
-
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  useEffect(() => {
-    const updateNavbarHeight = () => {
-      const navElement = document.getElementById('navbar');
-      if (navElement) {
-        setNavbarHeight(navElement.offsetHeight);
-      }
-    };
-
-    updateNavbarHeight();
-    window.addEventListener('resize', updateNavbarHeight);
-
-    return () => {
-      window.removeEventListener('resize', updateNavbarHeight);
-    };
-  }, [isMenuOpen]);
-
-
   return (
     <>
-      <header id="navbar" className="fixed top-0 left-0 w-full z-50 border-b border-container backdrop-blur-md">
-        <nav className="flex items-center justify-between px-6 py-3 max-w-7xl mx-auto">
+      <header id="navbar" className="fixed top-0 left-0 w-full z-50 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-white/20 dark:border-gray-800/50 transition-all duration-300">
+        <nav className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 max-w-7xl mx-auto">
           {/* Logo Section */}
-          <Link href="/" className="flex items-center">
-            <Image src={logo} alt="FreeFlow Logo" width={40} height={40} />
-            <span className="text-2xl text-gray-600 font-semibold">FreeFlow</span>
-          </Link>
-
-          {/* Mobile: Hamburger + User Icon */}
-          <div className="flex items-center gap-4 md:hidden">
+          <Link href="/" className="flex items-center space-x-3 group">
+            <div className="relative">
+              <Image 
+                src={logo} 
+                alt="FreeFlow Logo" 
+                width={40} 
+                height={40} 
+                className="transition-transform duration-300 group-hover:scale-110 rounded-lg shadow-sm"
+              />
+            </div>
+            <span className="text-2xl text-gray-600 dark:text-gray-300 font-semibold tracking-tight transition-colors duration-300 group-hover:text-gray-800 dark:group-hover:text-white">
+              FreeFlow
+            </span>
+          </Link>          {/* Mobile: Hamburger + User Icon */}
+          <div className="flex items-center gap-3 md:hidden">
             <button
-              className="text-white"
+              className="p-2 rounded-xl bg-white/10 dark:bg-black/20 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-white/20 dark:hover:bg-black/40 hover:text-gray-900 dark:hover:text-white transition-all duration-300 shadow-sm hover:shadow-md"
               onClick={toggleMenu}
               aria-label="Toggle navigation menu"
             >
-              <svg viewBox="0 0 24 24" width={28} height={28}>
+              <svg viewBox="0 0 24 24" width={20} height={20} className="transition-transform duration-300">
                 {isMenuOpen ? (
                   <path
                     fill="currentColor"
@@ -105,78 +92,67 @@ const Navbar: React.FC = () => {
               </svg>
             </button>
             <SignedIn>
-              <UserButton />
+              <div className="p-1 rounded-xl bg-white/10 dark:bg-black/20 backdrop-blur-sm border border-white/20 dark:border-gray-700/50">
+                <UserButton />
+              </div>
             </SignedIn>
-          </div>
-
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-4">
-
-            {/* {username && <span className="text-gray-600">{username}</span>}
-            <ConnectionStatus /> */}
-            {/* <Button
-              variant="outline"
-              onClick={handleLogout}
-              className="bg-whisper-purple cursor-pointer hover:bg-whisper-purple/90"
-            >
-              Logout
-            </Button> */}
+          </div>          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center gap-2 lg:gap-4">
             <SignedIn>
               {!isChatPage && (
                 <a
                   href="/user/chat"
-                  className="text-black bg-primary hover:bg-primary/90 px-4 py-2 rounded-md text-sm transition-colors"
+                  className="relative group px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gradient-to-r from-primary/10 to-primary/20 hover:from-primary hover:to-primary/90 hover:text-white rounded-xl border border-primary/20 hover:border-primary transition-all duration-300 shadow-sm hover:shadow-lg hover:scale-105 backdrop-blur-sm"
                 >
-                  Go Private Now
+                  <span className="relative z-10">Go Private Now</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300"></div>
                 </a>
               )}
               <a
                 href="/group-chat"
-                className="text-white bg-secondary hover:bg-secondary/80 px-4 py-2 rounded-md text-sm transition-colors"
+                className="relative group px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white/10 dark:bg-black/20 hover:bg-secondary/80 hover:text-white rounded-xl border border-white/20 dark:border-gray-700/50 hover:border-secondary transition-all duration-300 shadow-sm hover:shadow-lg hover:scale-105 backdrop-blur-sm"
               >
-                Group Chat
+                <span className="relative z-10">Group Chat</span>
               </a>
               <a
                 href="/video-call"
-                className="text-white bg-accent hover:bg-accent/80 px-4 py-2 rounded-md text-sm transition-colors"
+                className="relative group px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white/10 dark:bg-black/20 hover:bg-accent/80 hover:text-white rounded-xl border border-white/20 dark:border-gray-700/50 hover:border-accent transition-all duration-300 shadow-sm hover:shadow-lg hover:scale-105 backdrop-blur-sm"
               >
-                Video Call
+                <span className="relative z-10">Video Call</span>
               </a>
             </SignedIn>
-            {/* <ThemeToggle /> */}
+            
             <SignedOut>
-              <Button variant="default" className="cursor-pointer" onClick={() => router.push('/p2p')}>
+              <Button 
+                variant="default" 
+                className="cursor-pointer px-6 py-2.5 text-sm font-medium rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-105" 
+                onClick={() => router.push('/p2p')}
+              >
                 Go Private
               </Button>
-              <Button variant="outline">
+              <Button 
+                variant="outline" 
+                className="px-6 py-2.5 text-sm font-medium rounded-xl border-2 bg-white/10 dark:bg-black/20 backdrop-blur-sm hover:bg-white/20 dark:hover:bg-black/40 transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-lg"
+              >
                 <Link href="/sign-in">Sign in</Link>
               </Button>
             </SignedOut>
+            
             <SignedIn>
-              <UserButton />
+              <div className="ml-2 p-1 rounded-xl bg-white/10 dark:bg-black/20 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 shadow-sm hover:shadow-md transition-all duration-300">
+                <UserButton />
+              </div>
             </SignedIn>
           </div>
-        </nav>
-        {/* Mobile Menu Dropdown */}
+        </nav>        {/* Mobile Menu Dropdown */}
         {isMenuOpen && (
-          <>
-            <div className="md:hidden bg-background px-6 py-3 space-y-2">
-              {/* <Button
-                    variant="outline"
-                    onClick={() => {
-                      handleLogout();
-                      setIsMenuOpen(false);
-                    }}
-                    className="w-full cursor-pointer bg-whisper-purple hover:bg-whisper-purple/90"
-                  >
-                    Logout
-                  </Button> */}
-
+          <div className="md:hidden bg-white/95 dark:bg-black/95 backdrop-blur-lg border-t border-white/20 dark:border-gray-800/50 shadow-lg animate-in slide-in-from-top-2 duration-300">
+            <div className="px-4 py-6 space-y-3 max-w-7xl mx-auto">
               <SignedIn>
                 {!isChatPage && (
                   <Link
                     href="/p2p"
-                    className="block text-center text-black bg-primary hover:bg-primary/90 px-4 py-2 rounded-md text-sm transition-colors"
+                    className="block w-full text-center font-medium text-gray-700 dark:text-white bg-gradient-to-r from-primary/10 to-primary/20 hover:from-primary hover:to-primary/90 hover:text-white px-6 py-3 rounded-xl text-sm transition-all duration-300 shadow-sm hover:shadow-lg border border-primary/20 hover:border-primary transform hover:scale-[1.02]"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Go Private
@@ -184,44 +160,45 @@ const Navbar: React.FC = () => {
                 )}
                 <a
                   href="/group-chat"
-                  className="block text-white bg-secondary hover:bg-secondary/80 px-4 py-2 rounded-md text-center mt-2"
+                  className="block w-full text-center font-medium text-gray-700 dark:text-gray-300 bg-white/20 dark:bg-black/40 hover:bg-secondary/80 hover:text-white px-6 py-3 rounded-xl border border-white/30 dark:border-gray-600/50 hover:border-secondary transition-all duration-300 shadow-sm hover:shadow-lg backdrop-blur-sm transform hover:scale-[1.02]"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Group Chat
                 </a>
                 <a
                   href="/video-call"
-                  className="block text-white bg-accent hover:bg-accent/80 px-4 py-2 rounded-md text-center mt-2"
+                  className="block w-full text-center font-medium text-gray-700 dark:text-gray-300 bg-white/20 dark:bg-black/40 hover:bg-accent/80 hover:text-white px-6 py-3 rounded-xl border border-white/30 dark:border-gray-600/50 hover:border-accent transition-all duration-300 shadow-sm hover:shadow-lg backdrop-blur-sm transform hover:scale-[1.02]"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Video Call
                 </a>
               </SignedIn>
-              <div className="flex justify-end gap-6 items-center mt-2">
-                {/* <ThemeToggle /> */}
-                <SignedOut>
+              
+              <SignedOut>
+                <div className="space-y-3">
                   {!isChatPage && (
                     <Link
                       href="/p2p"
-                      className="text-black bg-primary hover:bg-primary/90 px-4 py-2 rounded-md text-sm transition-colors"
+                      className="block w-full text-center font-medium text-white bg-primary hover:bg-primary/90 px-6 py-3 rounded-xl text-sm transition-all duration-300 shadow-sm hover:shadow-lg transform hover:scale-[1.02]"
+                      onClick={() => setIsMenuOpen(false)}
                     >
                       Go Private
                     </Link>
                   )}
-                  <Link href="/sign-in" className="text-white underline">
+                  <Link 
+                    href="/sign-in" 
+                    className="block w-full text-center font-medium text-gray-700 dark:text-gray-300 bg-white/20 dark:bg-black/40 hover:bg-white/30 dark:hover:bg-black/60 px-6 py-3 rounded-xl border border-white/30 dark:border-gray-600/50 transition-all duration-300 shadow-sm hover:shadow-lg backdrop-blur-sm transform hover:scale-[1.02]"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
                     Sign in
                   </Link>
-                </SignedOut>
-                {/* <SignedIn>
-                  <UserButton />
-                </SignedIn> */}
-              </div>
+                </div>
+              </SignedOut>
             </div>
-          </>
-        )}
-      </header>
+          </div>
+        )}</header>
       {/* Spacer to prevent content from being hidden behind the fixed header */}
-      <div className="spacer" style={{ height: `${navbarHeight}px` }}></div>
+      <div className="h-[72px] sm:h-[80px]" aria-hidden="true"></div>
     </>
   );
 };
