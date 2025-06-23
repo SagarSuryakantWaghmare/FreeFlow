@@ -54,28 +54,50 @@ const ConnectionStats: React.FC = () => {
       connectionManagerService.removeConnectionStatusChangeCallback(handleConnectionChange);
     };
   }, []);
-
   return (
-    <div className="p-3 bg-gray-50 dark:bg-zinc-800 border-t border-gray-200 dark:border-zinc-700">
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <div className="flex items-center gap-1 text-slate-600 dark:text-zinc-400">
-          <Wifi className="h-3 w-3" />
-          <span>{stats.activeConnections} active</span>
+    <div className="p-4 sm:p-6 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border-t border-gray-200/50 dark:border-zinc-700/50 shadow-lg">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+        <div className="flex items-center gap-2 p-2 sm:p-3 rounded-xl bg-white/50 dark:bg-zinc-900/50 border border-gray-200/30 dark:border-zinc-700/30">
+          <div className="p-1.5 rounded-lg bg-green-100 dark:bg-green-900/30">
+            <Wifi className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 dark:text-green-400" />
+          </div>
+          <div>
+            <p className="font-semibold text-slate-900 dark:text-white">{stats.activeConnections}</p>
+            <p className="text-xs text-slate-500 dark:text-zinc-400">active</p>
+          </div>
         </div>
-        <div className="flex items-center gap-1 text-slate-600 dark:text-zinc-400">
-          <Users className="h-3 w-3" />
-          <span>{stats.totalConnections} total</span>
+        
+        <div className="flex items-center gap-2 p-2 sm:p-3 rounded-xl bg-white/50 dark:bg-zinc-900/50 border border-gray-200/30 dark:border-zinc-700/30">
+          <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+            <Users className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <p className="font-semibold text-slate-900 dark:text-white">{stats.totalConnections}</p>
+            <p className="text-xs text-slate-500 dark:text-zinc-400">total</p>
+          </div>
         </div>
+        
         {stats.totalUnreadMessages > 0 && (
-          <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400">
-            <MessageCircle className="h-3 w-3" />
-            <span>{stats.totalUnreadMessages} unread</span>
+          <div className="flex items-center gap-2 p-2 sm:p-3 rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-200/50 dark:border-orange-800/50">
+            <div className="p-1.5 rounded-lg bg-orange-100 dark:bg-orange-900/30">
+              <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 text-orange-600 dark:text-orange-400" />
+            </div>
+            <div>
+              <p className="font-semibold text-orange-800 dark:text-orange-300">{stats.totalUnreadMessages}</p>
+              <p className="text-xs text-orange-600 dark:text-orange-500">unread</p>
+            </div>
           </div>
         )}
+        
         {stats.blacklistedUsers > 0 && (
-          <div className="flex items-center gap-1 text-red-600 dark:text-red-400">
-            <Shield className="h-3 w-3" />
-            <span>{stats.blacklistedUsers} blocked</span>
+          <div className="flex items-center gap-2 p-2 sm:p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200/50 dark:border-red-800/50">
+            <div className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30">
+              <Shield className="h-3 w-3 sm:h-4 sm:w-4 text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <p className="font-semibold text-red-800 dark:text-red-300">{stats.blacklistedUsers}</p>
+              <p className="text-xs text-red-600 dark:text-red-500">blocked</p>
+            </div>
           </div>
         )}
       </div>

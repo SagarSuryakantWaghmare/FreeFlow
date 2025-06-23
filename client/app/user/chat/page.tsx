@@ -442,65 +442,76 @@ const Chat = () => {
     setMessages([]);
     toast.info('Chat closed');
   };
-
   return (
-    <div className="h-screen w-screen flex flex-col bg-gradient-to-br from-purple-100 via-white to-purple-200 dark:from-zinc-900 dark:via-black dark:to-zinc-900 text-foreground dark:text-white overflow-hidden fixed inset-0">
-      {/* Add a top spacer to account for the navbar height (e.g., 64px) */}
-      <div className="flex-1 flex overflow-hidden max-h-full pt-[64px] relative">
-        {/* Hamburger menu for mobile/tablet (always visible in top left on small screens) */}
+    <div className="h-screen w-screen flex flex-col bg-white dark:bg-zinc-950 text-foreground dark:text-white overflow-hidden fixed inset-0">
+      {/* Background decoration */}
+      <div className="absolute inset-0 opacity-30 dark:opacity-20">
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-[hsl(263.4,70%,50.4%)] opacity-10 blur-3xl"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-[hsl(263.4,70%,50.4%)] opacity-5 blur-3xl"></div>
+      </div>
+      
+      {/* Main content with top spacing for navbar */}
+      <div className="relative flex-1 flex overflow-hidden max-h-full pt-16 sm:pt-[64px]">        {/* Mobile hamburger menu */}
         <button
-          className="fixed top-[68px] left-2 z-40 p-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 md:hidden"
+          className="fixed top-[68px] left-3 z-40 p-2 rounded-lg bg-white/90 dark:bg-zinc-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-zinc-700/50 shadow-lg md:hidden transition-all duration-200 hover:scale-105"
           onClick={() => setSidebarOpen(true)}
           aria-label="Open sidebar"
           type="button"
-          style={{ display: sidebarOpen ? 'none' : 'block' }}
+          style={{ display: sidebarOpen ? 'none' : 'flex' }}
         >
-          <Menu className="h-6 w-6 text-slate-700 dark:text-purple-400" />
+          <Menu className="h-5 w-5 text-slate-700 dark:text-purple-400" />
         </button>
-        {/* Sidebar - Online Users (hidden on mobile/tablet when closed) */}
+
+        {/* Enhanced Sidebar */}
         <aside
-          className={`bg-white dark:bg-zinc-900 flex flex-col border-r border-gray-200 dark:border-zinc-800 h-[calc(100vh-64px)] overflow-y-auto transition-all duration-300
-            w-64 fixed z-30 left-0 top-[64px] md:relative md:top-0 md:left-0 md:w-64 md:z-0
-            ${sidebarOpen ? 'block' : 'hidden'}
-            md:block`}
-          style={{ margin: 0, borderTop: 0 }}
-        >
-          <div className="p-4 bg-white dark:bg-zinc-900 shrink-0">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-slate-700 dark:text-purple-400" />
-                <h2 className="font-medium text-slate-900 dark:text-white">Online Users</h2>
+          className={`bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md flex flex-col border-r border-gray-200/50 dark:border-zinc-700/50 h-[calc(100vh-64px)] overflow-y-auto transition-all duration-300 shadow-xl
+            w-72 sm:w-80 fixed z-30 left-0 top-[64px] md:relative md:top-0 md:left-0 md:w-72 lg:w-80 md:z-0
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            md:translate-x-0`}
+        >          {/* Enhanced Sidebar Header */}
+          <div className="p-4 sm:p-6 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm shrink-0 border-b border-gray-200/50 dark:border-zinc-700/50">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-[hsl(263.4,70%,50.4%)] bg-opacity-10 border border-[hsl(263.4,70%,50.4%)] border-opacity-20">
+                  <Users className="h-5 w-5 text-[hsl(263.4,70%,50.4%)]" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-slate-900 dark:text-white text-sm sm:text-base">Online Users</h2>
+                  <p className="text-xs text-slate-500 dark:text-zinc-400">{users.length} users online</p>
+                </div>
               </div>
+              
               <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
-                  size="icon" className="h-8 w-8"
+                  size="icon" 
+                  className="h-8 w-8 rounded-full hover:bg-[hsl(263.4,70%,50.4%)] hover:bg-opacity-10 transition-colors"
                   onClick={() => setShowHelp(!showHelp)}
                   title="Help & Information"
                 >
-                  <HelpCircle className="h-4 w-4 text-slate-700 dark:text-purple-400" />
+                  <HelpCircle className="h-4 w-4 text-[hsl(263.4,70%,50.4%)]" />
                 </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleLogout}
-                  title="Logout"
-                  className="h-8 cursor-pointer bg-transparent hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent text-slate-700 dark:text-purple-400"
-                >
-                  <LogOut className="h-4 w-4 text-slate-700 dark:text-purple-400" />
-                </Button>
-                {/* Close button for mobile */}
                 <Button
                   variant="ghost"
-                  size="icon" className="h-8 w-8 md:hidden"
+                  size="icon"
+                  onClick={handleLogout}
+                  title="Logout"
+                  className="h-8 w-8 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  <LogOut className="h-4 w-4 text-red-500" />
+                </Button>
+                {/* Enhanced mobile close button */}
+                <Button
+                  variant="ghost"
+                  size="icon" 
+                  className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 md:hidden transition-colors"
                   onClick={() => setSidebarOpen(false)}
                 >
-                  <X className="h-4 w-4 text-slate-700 dark:text-purple-400" />
+                  <X className="h-4 w-4 text-slate-700 dark:text-zinc-300" />
                 </Button>
               </div>
             </div>
-            <Separator className="my-2 bg-gray-200 dark:bg-zinc-700" />
-          </div>          {showHelp ? (
+          </div>{showHelp ? (
             <HelpInfo className="mx-2 mb-4 overflow-y-auto" />
           ) : (
             <>
@@ -514,50 +525,65 @@ const Chat = () => {
               <ConnectionStats />
             </>
           )}
-        </aside>
-        {/* Overlay for mobile/tablet when sidebar is open */}
+        </aside>        {/* Enhanced overlay for mobile */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/30 z-20 md:hidden"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-20 md:hidden transition-opacity duration-300"
             onClick={() => setSidebarOpen(false)}
           />
         )}
-        {/* Main Chat Area */}
-        <main className="flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden relative bg-white dark:bg-zinc-950 shadow-lg m-0">
-          {/* Chat Header (sticky on all screens) */}
-          <div className="sticky top-0 z-10 p-3 border-b border-gray-200 dark:border-zinc-800 flex items-center gap-2 shrink-0 bg-white/90 dark:bg-zinc-900/90 backdrop-blur shadow-sm">
-            {/* Add left padding on small screens to prevent overlap with hamburger */}
-            <div className="flex items-center w-full" style={{ paddingLeft: '44px' }}>
+
+        {/* Enhanced Main Chat Area */}
+        <main className="flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden relative bg-white/90 dark:bg-zinc-950/90 backdrop-blur-sm shadow-2xl border border-gray-200/50 dark:border-zinc-700/50 rounded-tl-2xl md:rounded-none m-0">          {/* Enhanced Chat Header */}
+          <div className="sticky top-0 z-10 p-3 sm:p-4 border-b border-gray-200/50 dark:border-zinc-700/50 flex items-center gap-3 shrink-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md shadow-sm">
+            <div className="flex items-center w-full pl-0 sm:pl-2">
               {selectedUser ? (
                 <>
-                  <User className="h-5 w-5 text-blue-600 dark:text-purple-400 mr-2" />
-                  <span className="font-medium truncate text-slate-900 dark:text-white">
-                    {users.find(u => u.id === selectedUser)?.name || selectedUser}
-                  </span>
-                  <span className="text-xs ml-auto mr-2">
-                    {selectedUser && webRTCService.isConnectedToPeer(selectedUser)
-                      ? <span className="text-green-600 dark:text-green-400 animate-pulse">Connected</span>
-                      : <span className="text-amber-600 dark:text-yellow-400 animate-pulse">Connecting...</span>}
-                  </span>
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="p-2 rounded-full bg-[hsl(263.4,70%,50.4%)] bg-opacity-10 border border-[hsl(263.4,70%,50.4%)] border-opacity-20 shrink-0">
+                      <User className="h-4 w-4 text-[hsl(263.4,70%,50.4%)]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold truncate text-slate-900 dark:text-white text-sm sm:text-base">
+                        {users.find(u => u.id === selectedUser)?.name || selectedUser}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <div className={`h-2 w-2 rounded-full ${
+                          selectedUser && webRTCService.isConnectedToPeer(selectedUser)
+                            ? 'bg-green-500 animate-pulse'
+                            : 'bg-amber-500 animate-pulse'
+                        }`}></div>
+                        <span className="text-xs text-slate-500 dark:text-zinc-400">
+                          {selectedUser && webRTCService.isConnectedToPeer(selectedUser)
+                            ? 'Connected'
+                            : 'Connecting...'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 ml-2"
+                    className="h-8 w-8 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 shrink-0"
                     onClick={handleCloseChat}
                     title="Close chat"
                   >
-                    <X className="h-4 w-4 text-slate-700 dark:text-purple-400" />
+                    <X className="h-4 w-4 text-red-500" />
                   </Button>
                 </>
               ) : (
-                <span className="font-medium text-slate-900 dark:text-white">Select a chat</span>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-gray-100 dark:bg-zinc-800">
+                    <User className="h-4 w-4 text-gray-500 dark:text-zinc-400" />
+                  </div>
+                  <span className="font-medium text-slate-900 dark:text-white text-sm sm:text-base">Select a chat</span>
+                </div>
               )}
             </div>
-          </div>
-
-          {/* Chat Messages Area (fixed height, scrollable) */}
-          <div className="flex-1 overflow-y-auto px-2 sm:px-4 py-4 bg-gradient-to-b from-white/80 to-purple-50 dark:from-zinc-950 dark:to-zinc-900" style={{ minHeight: '300px', maxHeight: 'calc(100vh - 220px)' }}>
-            <div className="flex flex-col gap-3 min-h-full">
+          </div>          {/* Enhanced Messages Area */}
+          <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-6 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-sm" 
+               style={{ minHeight: '300px', maxHeight: 'calc(100vh - 220px)' }}>
+            <div className="flex flex-col gap-3 sm:gap-4 min-h-full max-w-4xl mx-auto">
               {selectedUser && messages.length > 0 ? (
                 messages.map(msg => (
                   <ChatMessage
@@ -566,34 +592,44 @@ const Chat = () => {
                   />
                 ))
               ) : selectedUser ? (
-                <div className="text-center text-slate-500 dark:text-zinc-400 py-8">
-                  Start a conversation with {users.find(u => u.id === selectedUser)?.name || selectedUser}
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="text-center py-8 sm:py-12">
+                    <div className="p-4 rounded-full bg-[hsl(263.4,70%,50.4%)] bg-opacity-10 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                      <User className="h-8 w-8 text-[hsl(263.4,70%,50.4%)]" />
+                    </div>
+                    <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
+                      Start a conversation
+                    </h3>
+                    <p className="text-sm text-slate-500 dark:text-zinc-400">
+                      Send a message to {users.find(u => u.id === selectedUser)?.name || selectedUser}
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <EmptyChat />
               )}
               <div ref={messagesEndRef} />
             </div>
-          </div>
-
-          {/* Message Input (sticky at bottom) */}
+          </div>          {/* Enhanced Message Input */}
           {selectedUser && (
-            <form onSubmit={handleSendMessage} className="sticky bottom-0 z-10 border-t border-gray-200 dark:border-zinc-800 p-2 sm:p-3 flex gap-2 shrink-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur">
-              <Input
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Type a message..."
-                className="flex-1 bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 text-slate-900 dark:text-white focus-visible:ring-purple-500 dark:focus-visible:ring-purple-500 px-4 py-2 shadow-sm"
-                disabled={!selectedUser || !webRTCService.isConnectedToPeer(selectedUser)}
-                autoFocus
-              />
+            <form onSubmit={handleSendMessage} className="sticky bottom-0 z-10 border-t border-gray-200/50 dark:border-zinc-700/50 p-3 sm:p-4 flex gap-3 shrink-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md shadow-lg">
+              <div className="flex-1 relative">
+                <Input
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Type a message..."
+                  className="w-full bg-gray-50 dark:bg-zinc-800/50 border-gray-200 dark:border-zinc-700 text-slate-900 dark:text-white focus-visible:ring-[hsl(263.4,70%,50.4%)] focus-visible:border-[hsl(263.4,70%,50.4%)] px-4 py-3 rounded-xl shadow-sm backdrop-blur-sm"
+                  disabled={!selectedUser || !webRTCService.isConnectedToPeer(selectedUser)}
+                  autoFocus
+                />
+              </div>
               <Button
                 type="submit"
-                size="sm"
+                size="lg"
                 disabled={!message.trim() || !selectedUser || !webRTCService.isConnectedToPeer(selectedUser)}
-                className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white min-w-9 sm:min-w-10 h-10 flex items-center justify-center shadow-md"
+                className="bg-[hsl(263.4,70%,50.4%)] hover:bg-[hsl(263.4,70%,45%)] disabled:bg-gray-300 dark:disabled:bg-zinc-700 text-white min-w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
               >
-                <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+                <Send className="h-5 w-5" />
               </Button>
             </form>
           )}
