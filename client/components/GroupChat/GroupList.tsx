@@ -91,66 +91,77 @@ export default function GroupList({
   const handleGroupClick = (group: GroupInfo) => {
     onSelectGroup(group);
   };
-
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-zinc-900">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-zinc-800">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-            Group Chats
-          </h2>
-          <Badge variant="secondary" className="text-xs">
-            {groups.length} groups
-          </Badge>
+    <div className="h-full flex flex-col bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm">
+      {/* Enhanced Header */}
+      <div className="p-4 sm:p-6 border-b border-gray-200/50 dark:border-zinc-700/50 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-[hsl(263.4,70%,50.4%)] bg-opacity-10 border border-[hsl(263.4,70%,50.4%)] border-opacity-20">
+              <Users className="h-5 w-5 text-[hsl(263.4,70%,50.4%)]" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                Group Chats
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-zinc-400">
+                {groups.length} active groups
+              </p>
+            </div>
+          </div>
+          <div className="px-3 py-1.5 rounded-full bg-[hsl(263.4,70%,50.4%)] bg-opacity-10 border border-[hsl(263.4,70%,50.4%)] border-opacity-20">
+            <span className="text-xs font-semibold text-[hsl(263.4,70%,50.4%)]">{groups.length}</span>
+          </div>
         </div>
         
-        {/* Action buttons */}
-        <div className="flex gap-2">
+        {/* Enhanced action buttons */}
+        <div className="flex gap-3">
           <Button
             onClick={onCreateGroup}
             size="sm"
-            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+            className="flex-1 h-11 bg-[hsl(263.4,70%,50.4%)] hover:bg-[hsl(263.4,70%,45%)] text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
           >
-            <Plus className="h-4 w-4 mr-1" />
+            <Plus className="h-4 w-4 mr-2" />
             Create
           </Button>
           
           <Button
             onClick={onJoinGroup}
             size="sm"
-            variant="outline"
-            className="flex-1"
+            className="flex-1 h-11 bg-green-500 hover:bg-green-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
           >
-            <UserPlus className="h-4 w-4 mr-1" />
+            <UserPlus className="h-4 w-4 mr-2" />
             Join
           </Button>
         </div>
-      </div>
-
-      {/* Groups list */}
+      </div>      {/* Enhanced Groups list */}
       <ScrollArea className="flex-1">
-        <div className="p-2">
+        <div className="p-3 sm:p-4">
           {groups.length === 0 ? (
-            <div className="text-center py-8">
-              <Users className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 dark:text-zinc-400 mb-4">
-                No group chats yet
+            <div className="text-center py-12">
+              <div className="relative mb-6">
+                <div className="absolute inset-0 bg-gray-400 bg-opacity-10 rounded-full blur-xl w-20 h-20 mx-auto animate-pulse"></div>
+                <div className="relative w-16 h-16 bg-gray-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+                  <Users className="h-8 w-8 text-gray-400 dark:text-zinc-500" />
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No group chats yet</h3>
+              <p className="text-sm text-slate-500 dark:text-zinc-400 mb-6 max-w-xs mx-auto leading-relaxed">
+                Create your first group or join an existing one to start chatting
               </p>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Button 
                   onClick={onCreateGroup}
                   size="sm"
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                  className="w-full bg-[hsl(263.4,70%,50.4%)] hover:bg-[hsl(263.4,70%,45%)] text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Create your first group
                 </Button>
-                <br />
                 <Button 
                   onClick={onJoinGroup}
                   size="sm"
-                  variant="outline"
+                  className="w-full bg-green-500 hover:bg-green-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
                   Join existing group
@@ -158,59 +169,55 @@ export default function GroupList({
               </div>
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-3">
               {groups.map((group) => (
                 <Card
                   key={group.groupId}
-                  className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+                  className={`cursor-pointer transition-all duration-200 hover:shadow-lg backdrop-blur-sm rounded-2xl ${
                     selectedGroupId === group.groupId
-                      ? 'ring-2 ring-purple-500 bg-purple-50 dark:bg-purple-950/30'
-                      : 'hover:bg-gray-50 dark:hover:bg-zinc-800'
+                      ? 'ring-2 ring-[hsl(263.4,70%,50.4%)] bg-[hsl(263.4,70%,50.4%)] bg-opacity-10 border-[hsl(263.4,70%,50.4%)] border-opacity-30'
+                      : 'hover:bg-gray-50 dark:hover:bg-zinc-800/50 border-gray-200/50 dark:border-zinc-700/50 hover:scale-[1.02]'
                   }`}
                   onClick={() => handleGroupClick(group)}
                 >
-                  <CardContent className="p-3">
+                  <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                          <Users className="h-5 w-5 text-white" />
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-medium text-slate-900 dark:text-white truncate">
-                              {group.groupName}
-                            </h3>
-                            {group.isOwner && (
-                              <Crown className="h-4 w-4 text-yellow-500 flex-shrink-0" />
-                            )}
+                        <div className="relative">
+                          <div className="w-12 h-12 bg-[hsl(263.4,70%,50.4%)] bg-opacity-10 rounded-xl flex items-center justify-center border border-[hsl(263.4,70%,50.4%)] border-opacity-20">
+                            <Users className="h-6 w-6 text-[hsl(263.4,70%,50.4%)]" />
                           </div>
-                          
-                          <div className="flex items-center gap-2 mt-1">
-                            <p className="text-xs text-slate-500 dark:text-zinc-400">
-                              {group.members.length} member{group.members.length !== 1 ? 's' : ''}
-                            </p>
-                            <Separator orientation="vertical" className="h-3" />
-                            <p className="text-xs text-slate-500 dark:text-zinc-400 flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
+                          {unreadCounts[group.groupId] > 0 && (
+                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                              <span className="text-xs font-bold text-white">
+                                {unreadCounts[group.groupId] > 9 ? '9+' : unreadCounts[group.groupId]}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-sm sm:text-base text-slate-900 dark:text-white truncate mb-1">
+                            {group.groupName}
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-slate-500 dark:text-zinc-400">
+                              {group.members?.length || 0} members
+                            </span>
+                            <span className="text-xs text-slate-500 dark:text-zinc-400">•</span>
+                            <span className="text-xs text-slate-500 dark:text-zinc-400">
                               {formatLastActivity(group.lastActivity)}
-                            </p>
+                            </span>
                           </div>
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {unreadCounts[group.groupId] > 0 && (
-                          <Badge 
-                            variant="default" 
-                            className="bg-red-500 text-white text-xs px-2 py-1 min-w-[20px] h-5 flex items-center justify-center"
-                          >
-                            {unreadCounts[group.groupId] > 99 ? '99+' : unreadCounts[group.groupId]}
-                          </Badge>
-                        )}
-                        
-                        <ChevronRight className="h-4 w-4 text-gray-400" />
-                      </div>
+                      {unreadCounts[group.groupId] > 0 && (
+                        <div className="ml-2">
+                          <div className="px-2 py-1 bg-red-500 text-white text-xs rounded-full font-semibold shadow-sm">
+                            {unreadCounts[group.groupId]}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -219,6 +226,7 @@ export default function GroupList({
           )}
         </div>
       </ScrollArea>
+                    
 
       {/* Footer with total unread count */}
       {groups.length > 0 && (

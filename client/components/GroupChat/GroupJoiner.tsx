@@ -50,40 +50,43 @@ export default function GroupJoiner({ userId, onGroupJoined, onBack }: GroupJoin
     } finally {
       setIsJoining(false);
     }
-  };
-  return (
-    <div className="space-y-6">
+  };  return (
+    <div className="space-y-6 sm:space-y-8">
       {/* Back button */}
       {onBack && (
         <Button
           variant="ghost"
           size="sm"
           onClick={onBack}
-          className="text-muted-foreground hover:text-foreground"
+          className="text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all duration-200"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Groups
         </Button>
       )}
       
-      {/* Decorative header */}
+      {/* Enhanced header */}
       <div className="text-center">
-        <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
-          <LogIn className="h-8 w-8 text-white" />
+        <div className="relative mb-6">
+          <div className="absolute inset-0 bg-green-500 bg-opacity-10 rounded-full blur-xl w-20 h-20 mx-auto animate-pulse"></div>
+          <div className="relative w-16 h-16 bg-green-500 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
+            <LogIn className="h-8 w-8 text-white" />
+          </div>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-2">Join Group</h3>
+        <p className="text-sm text-slate-600 dark:text-zinc-400 max-w-md mx-auto leading-relaxed">
           Enter the invite token you received to join the conversation
         </p>
       </div>
 
-      {/* Form */}
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <label htmlFor="inviteToken" className="text-sm font-medium text-foreground">
+      {/* Enhanced form */}
+      <div className="space-y-6">
+        <div className="space-y-3">
+          <label htmlFor="inviteToken" className="text-sm font-semibold text-slate-900 dark:text-white">
             Invite Token *
           </label>
           <div className="relative">
-            <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Key className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-500 dark:text-zinc-400" />
             <Input
               id="inviteToken"
               type="text"
@@ -91,11 +94,11 @@ export default function GroupJoiner({ userId, onGroupJoined, onBack }: GroupJoin
               value={inviteToken}
               onChange={(e) => setInviteToken(e.target.value)}
               disabled={isJoining}
-              className="h-12 pl-10 bg-background/50 border-2 border-emerald-500/20 focus:border-emerald-500 transition-colors"
+              className="h-12 sm:h-14 pl-12 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 focus:border-green-500 focus:ring-green-500 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-zinc-400 transition-all duration-200"
               onKeyPress={(e) => e.key === 'Enter' && !isJoining && handleJoinGroup()}
             />
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-slate-500 dark:text-zinc-500">
             Ask the group creator for this unique token
           </p>
         </div>
@@ -103,7 +106,7 @@ export default function GroupJoiner({ userId, onGroupJoined, onBack }: GroupJoin
         <Button
           onClick={handleJoinGroup}
           disabled={!inviteToken.trim() || isJoining}
-          className="w-full h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300"
+          className="w-full h-12 sm:h-14 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 dark:disabled:bg-zinc-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
           size="lg"
         >
           {isJoining ? (
@@ -120,20 +123,32 @@ export default function GroupJoiner({ userId, onGroupJoined, onBack }: GroupJoin
         </Button>
       </div>
 
-      {/* Info card */}
-      <Card className="bg-emerald-500/5 border-emerald-500/20">
-        <CardContent className="pt-4">
-          <div className="flex items-start space-x-3">
-            <div className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Users className="h-4 w-4 text-emerald-600" />
+      {/* Enhanced info card */}
+      <Card className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm border border-gray-200/50 dark:border-zinc-700/50 rounded-2xl shadow-sm">
+        <CardContent className="pt-4 sm:pt-6">
+          <div className="flex items-start space-x-4">
+            <div className="w-10 h-10 bg-green-500 bg-opacity-10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Users className="h-5 w-5 text-green-600" />
             </div>
-            <div>
-              <h4 className="font-semibold text-sm mb-1">Joining a Group</h4>
-              <ul className="text-xs text-muted-foreground space-y-1">
-                <li>• Get an invite token from the group creator</li>
-                <li>• Token is unique and expires if unused</li>
-                <li>• You'll see all previous messages once joined</li>
-                <li>• Start participating in the conversation immediately</li>
+            <div className="flex-1">
+              <h4 className="font-semibold text-sm sm:text-base mb-2 text-slate-900 dark:text-white">Joining a Group</h4>
+              <ul className="text-xs sm:text-sm text-slate-600 dark:text-zinc-400 space-y-1.5 leading-relaxed">
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-2">•</span>
+                  Get an invite token from the group creator
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-2">•</span>
+                  Token is unique and expires if unused
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-2">•</span>
+                  You'll see all previous messages once joined
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-2">•</span>
+                  Start participating in the conversation immediately
+                </li>
               </ul>
             </div>
           </div>

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Plus, LogIn, Sparkles } from 'lucide-react';
+import { Users, Plus, LogIn, Sparkles, ArrowLeft } from 'lucide-react';
 import GroupCreator from './GroupCreator';
 import GroupJoiner from './GroupJoiner';
 import GroupChatRoom from './GroupChatRoom';
@@ -92,58 +92,59 @@ export default function GroupChatMain({ userId: propUserId, groupId }: GroupChat
       />
     );
   }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-[hsl(263.4,70%,50.4%)/0.05] p-4">
-      {/* Background decorative elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-[hsl(263.4,70%,50.4%)/0.1] rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[hsl(263.4,70%,50.4%)/0.1] rounded-full blur-3xl" />
+    <div className="min-h-screen bg-white dark:bg-zinc-950 p-4 sm:p-6">
+      {/* Background decoration */}
+      <div className="absolute inset-0 opacity-30 dark:opacity-20">
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-[hsl(263.4,70%,50.4%)] opacity-10 blur-3xl"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-[hsl(263.4,70%,50.4%)] opacity-5 blur-3xl"></div>
       </div>
 
-      <div className="container mx-auto max-w-4xl relative z-10">
-        {/* Header */}
-        <div className="text-center mb-12 pt-8">
-          <div className="inline-block rounded-full bg-[hsl(263.4,70%,50.4%)/0.1] px-4 py-2 text-sm font-semibold text-[hsl(263.4,70%,50.4%)] mb-6">
-            <Sparkles className="inline-block w-4 h-4 mr-2" />
+      <div className="container mx-auto max-w-6xl relative z-10">
+        {/* Enhanced header */}
+        <div className="text-center mb-12 sm:mb-16 pt-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[hsl(263.4,70%,50.4%)] bg-opacity-10 border border-[hsl(263.4,70%,50.4%)] border-opacity-20 text-[hsl(263.4,70%,50.4%)] text-sm font-semibold mb-6">
+            <Sparkles className="w-4 h-4" />
             Group Communication
           </div>
           <h1 
-            className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-foreground via-foreground to-[hsl(263.4,70%,50.4%)] bg-clip-text text-transparent"
+            className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 text-slate-900 dark:text-white"
             style={{ fontFamily: "'Bebas Neue', sans-serif" }}
           >
-            GROUP CHAT
+            GROUP CHAT HUB
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-slate-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">
             Create or join group conversations. Connect with multiple people in real-time with our secure messaging platform.
           </p>
         </div>
 
-        {/* Connection Status */}
-        <div className="flex justify-center mb-8">
-          <Badge 
-            variant={isConnected ? "default" : "secondary"} 
-            className={`px-4 py-2 text-sm font-medium ${
-              isConnected 
-                ? "bg-[hsl(263.4,70%,50.4%)] text-primary-foreground border-[hsl(263.4,70%,50.4%)]" 
-                : "bg-muted text-muted-foreground"
-            }`}
-          >
-            <div className={`w-2 h-2 rounded-full mr-2 ${isConnected ? 'bg-green-400' : 'bg-gray-400'}`} />
-            {isConnected ? 'Connected' : 'Connecting...'}
-          </Badge>
-        </div>
-
-        {currentView === 'main' && (
-          <div className="grid md:grid-cols-2 gap-8">
+        {/* Enhanced connection status */}
+        <div className="flex justify-center mb-8 sm:mb-12">
+          <div className={`px-6 py-3 rounded-2xl border backdrop-blur-sm transition-all duration-200 ${
+            isConnected 
+              ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300" 
+              : "bg-gray-50 dark:bg-zinc-800/50 border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400"
+          }`}>
+            <div className="flex items-center gap-3">
+              <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
+              <span className="font-medium">
+                {isConnected ? 'Connected ✨ Ready for group chat' : 'Connecting...'}
+              </span>
+            </div>
+          </div>
+        </div>        {currentView === 'main' && (
+          <div className="grid md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
             {/* Create Group Card */}
-            <Card className="group hover:shadow-2xl hover:shadow-[hsl(263.4,70%,50.4%)/0.25] transition-all duration-500 border-2 hover:border-[hsl(263.4,70%,50.4%)/0.5] bg-card/50 backdrop-blur-sm">
-              <CardHeader className="pb-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-[hsl(263.4,70%,50.4%)] to-[hsl(263.4,70%,60.4%)] rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <Plus className="h-8 w-8 text-white" />
+            <Card className="group hover:shadow-2xl transition-all duration-300 border border-gray-200/50 dark:border-zinc-700/50 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm rounded-2xl hover:scale-105">
+              <CardHeader className="pb-6 text-center">
+                <div className="relative mx-auto mb-6">
+                  <div className="absolute inset-0 bg-[hsl(263.4,70%,50.4%)] bg-opacity-10 rounded-full blur-xl w-20 h-20 animate-pulse"></div>
+                  <div className="relative w-16 h-16 bg-[hsl(263.4,70%,50.4%)] rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <Plus className="h-8 w-8 text-white" />
+                  </div>
                 </div>
-                <CardTitle className="text-2xl font-bold">Create New Group</CardTitle>
-                <p className="text-muted-foreground">
+                <CardTitle className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-3">Create New Group</CardTitle>
+                <p className="text-sm sm:text-base text-slate-600 dark:text-zinc-400 leading-relaxed">
                   Start a new group conversation and invite others to join
                 </p>
               </CardHeader>
@@ -151,7 +152,7 @@ export default function GroupChatMain({ userId: propUserId, groupId }: GroupChat
                 <Button 
                   onClick={() => setCurrentView('create')}
                   disabled={!isConnected}
-                  className="w-full bg-gradient-to-r from-[hsl(263.4,70%,50.4%)] to-[hsl(263.4,70%,60.4%)] hover:from-[hsl(263.4,70%,45.4%)] hover:to-[hsl(263.4,70%,55.4%)] text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="w-full h-12 sm:h-14 bg-[hsl(263.4,70%,50.4%)] hover:bg-[hsl(263.4,70%,45%)] disabled:bg-gray-300 dark:disabled:bg-zinc-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
                   size="lg"
                 >
                   <Plus className="h-5 w-5 mr-2" />
@@ -161,13 +162,16 @@ export default function GroupChatMain({ userId: propUserId, groupId }: GroupChat
             </Card>
 
             {/* Join Group Card */}
-            <Card className="group hover:shadow-2xl hover:shadow-[hsl(263.4,70%,50.4%)/0.25] transition-all duration-500 border-2 hover:border-[hsl(263.4,70%,50.4%)/0.5] bg-card/50 backdrop-blur-sm">
-              <CardHeader className="pb-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <LogIn className="h-8 w-8 text-white" />
+            <Card className="group hover:shadow-2xl transition-all duration-300 border border-gray-200/50 dark:border-zinc-700/50 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm rounded-2xl hover:scale-105">
+              <CardHeader className="pb-6 text-center">
+                <div className="relative mx-auto mb-6">
+                  <div className="absolute inset-0 bg-green-500 bg-opacity-10 rounded-full blur-xl w-20 h-20 animate-pulse"></div>
+                  <div className="relative w-16 h-16 bg-green-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <LogIn className="h-8 w-8 text-white" />
+                  </div>
                 </div>
-                <CardTitle className="text-2xl font-bold">Join Existing Group</CardTitle>
-                <p className="text-muted-foreground">
+                <CardTitle className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-3">Join Existing Group</CardTitle>
+                <p className="text-sm sm:text-base text-slate-600 dark:text-zinc-400 leading-relaxed">
                   Enter an invite token to join an existing group conversation
                 </p>
               </CardHeader>
@@ -175,8 +179,7 @@ export default function GroupChatMain({ userId: propUserId, groupId }: GroupChat
                 <Button 
                   onClick={() => setCurrentView('join')}
                   disabled={!isConnected}
-                  variant="outline"
-                  className="w-full border-2 border-[hsl(263.4,70%,50.4%)/0.5] text-[hsl(263.4,70%,50.4%)] hover:bg-[hsl(263.4,70%,50.4%)] hover:text-white transition-all duration-300"
+                  className="w-full h-12 sm:h-14 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 dark:disabled:bg-zinc-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
                   size="lg"
                 >
                   <LogIn className="h-5 w-5 mr-2" />
@@ -185,29 +188,29 @@ export default function GroupChatMain({ userId: propUserId, groupId }: GroupChat
               </CardContent>
             </Card>
           </div>
-        )}
-
-        {currentView === 'create' && (
+        )}        {currentView === 'create' && (
           <div className="max-w-2xl mx-auto">
-            <Card className="border-2 border-[hsl(263.4,70%,50.4%)/0.2] bg-card/50 backdrop-blur-sm shadow-2xl">
-              <CardHeader>
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-[hsl(263.4,70%,50.4%)] to-[hsl(263.4,70%,60.4%)] rounded-xl flex items-center justify-center">
+            <Card className="border border-gray-200/50 dark:border-zinc-700/50 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm shadow-2xl rounded-2xl">
+              <CardHeader className="text-center pb-4">
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-[hsl(263.4,70%,50.4%)] rounded-xl flex items-center justify-center shadow-lg">
                     <Plus className="h-6 w-6 text-white" />
                   </div>
-                  <div>
-                    <CardTitle className="text-2xl font-bold">Create New Group</CardTitle>
-                    <p className="text-muted-foreground">Set up your group conversation</p>
+                  <div className="text-left">
+                    <CardTitle className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Create New Group</CardTitle>
+                    <p className="text-sm text-slate-600 dark:text-zinc-400">Set up your group conversation</p>
                   </div>
                 </div>
-              </CardHeader>              <CardContent>
-                <div className="mb-4">
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="mb-6">
                   <Button 
                     onClick={() => setCurrentView('main')}
                     variant="ghost"
-                    className="text-muted-foreground hover:text-foreground"
+                    className="text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all duration-200"
                   >
-                    ← Back to Main
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Main
                   </Button>
                 </div>
                 <GroupCreator 
@@ -221,25 +224,27 @@ export default function GroupChatMain({ userId: propUserId, groupId }: GroupChat
 
         {currentView === 'join' && (
           <div className="max-w-2xl mx-auto">
-            <Card className="border-2 border-emerald-500/20 bg-card/50 backdrop-blur-sm shadow-2xl">
-              <CardHeader>
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center">
+            <Card className="border border-gray-200/50 dark:border-zinc-700/50 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm shadow-2xl rounded-2xl">
+              <CardHeader className="text-center pb-4">
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center shadow-lg">
                     <LogIn className="h-6 w-6 text-white" />
                   </div>
-                  <div>
-                    <CardTitle className="text-2xl font-bold">Join Group</CardTitle>
-                    <p className="text-muted-foreground">Enter your invitation details</p>
+                  <div className="text-left">
+                    <CardTitle className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Join Group</CardTitle>
+                    <p className="text-sm text-slate-600 dark:text-zinc-400">Enter your invitation details</p>
                   </div>
                 </div>
-              </CardHeader>              <CardContent>
-                <div className="mb-4">
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="mb-6">
                   <Button 
                     onClick={() => setCurrentView('main')}
                     variant="ghost"
-                    className="text-muted-foreground hover:text-foreground"
+                    className="text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all duration-200"
                   >
-                    ← Back to Main
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Main
                   </Button>
                 </div>
                 <GroupJoiner 

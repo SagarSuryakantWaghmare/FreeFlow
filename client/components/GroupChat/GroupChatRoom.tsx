@@ -309,13 +309,12 @@ export default function GroupChatRoom({
   const shouldShowSenderName = (currentIndex: number) => {
     return shouldShowAvatar(currentIndex);
   };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-[hsl(263.4,70%,50.4%)/0.05] p-4">
+    <div className="min-h-screen bg-background/95 backdrop-blur-sm p-4">
       {/* Background decorative elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-[hsl(263.4,70%,50.4%)/0.1] rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[hsl(263.4,70%,50.4%)/0.1] rounded-full blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-[hsl(263.4,70%,50.4%)]/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[hsl(263.4,70%,50.4%)]/10 rounded-full blur-3xl" />
       </div>
 
       <div className="container mx-auto max-w-5xl relative z-10">        {/* Header with back button */}
@@ -331,29 +330,25 @@ export default function GroupChatRoom({
               Back to Groups
             </Button>
           </div>
-        )}
-
-        {/* Chat Container */}
-        <Card className="h-[calc(100vh-150px)] flex flex-col bg-card/50 backdrop-blur-sm border-2 border-[hsl(263.4,70%,50.4%)/0.1] shadow-2xl overflow-hidden">{/* Chat Header */}
-          {/* Chat Header */}
-          <CardHeader className="flex-shrink-0 bg-gradient-to-r from-[hsl(263.4,70%,50.4%)/0.05] to-[hsl(263.4,70%,50.4%)/0.1] border-b">
+        )}        {/* Chat Container */}
+        <Card className="h-[calc(100vh-150px)] flex flex-col bg-card/60 backdrop-blur-md border border-[hsl(263.4,70%,50.4%)]/20 shadow-2xl rounded-2xl overflow-hidden">{/* Chat Header */}          {/* Chat Header */}
+          <CardHeader className="flex-shrink-0 bg-[hsl(263.4,70%,50.4%)]/5 backdrop-blur-sm border-b border-border/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-[hsl(263.4,70%,50.4%)] to-[hsl(263.4,70%,60.4%)] rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-[hsl(263.4,70%,50.4%)] rounded-xl flex items-center justify-center shadow-lg">
                   <MessageCircle className="h-6 w-6 text-white" />
                 </div>
                 <div>
                   <CardTitle
-                    className="text-2xl font-bold bg-gradient-to-r from-foreground to-[hsl(263.4,70%,50.4%)] bg-clip-text text-transparent"
+                    className="text-2xl font-bold text-[hsl(263.4,70%,50.4%)]"
                     style={{ fontFamily: "'Bebas Neue', sans-serif" }}
                   >
                     {groupName}
                   </CardTitle>
-                  <div className="flex items-center space-x-2">
-                    <Badge
+                  <div className="flex items-center space-x-2">                    <Badge
                       variant={isConnected ? "default" : "secondary"}
                       className={`text-xs ${isConnected
-                        ? "bg-[hsl(263.4,70%,50.4%)] text-primary-foreground"
+                        ? "bg-[hsl(263.4,70%,50.4%)] text-white"
                         : "bg-muted text-muted-foreground"
                         }`}
                     >
@@ -366,12 +361,11 @@ export default function GroupChatRoom({
               </div>
 
               <div className="flex items-center space-x-2">
-                {inviteLink && (
-                  <Button
+                {inviteLink && (                  <Button
                     variant="outline"
                     size="sm"
                     onClick={copyInviteLink}
-                    className="border-[hsl(263.4,70%,50.4%)/0.3 text-[hsl(263.4,70%,50.4%)] hover:bg-[hsl(263.4,70%,50.4%)] hover:text-white transition-all duration-300"
+                    className="border-[hsl(263.4,70%,50.4%)]/30 text-[hsl(263.4,70%,50.4%)] hover:bg-[hsl(263.4,70%,50.4%)] hover:text-white transition-all duration-300"
                   >
                     <Copy className="h-4 w-4 mr-2" />
                     Copy Invite
