@@ -99,27 +99,27 @@ const Navbar: React.FC = () => {
           </div>          {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-2 lg:gap-4">
             <SignedIn>              {!isChatPage && (
-                <a
+                <Link
                   href="/user/chat"
                   className="relative group px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gradient-to-r from-primary/10 to-primary/20 hover:text-white rounded-xl border border-primary/20 hover:border-primary transition-all duration-300 shadow-sm hover:shadow-lg hover:scale-105 backdrop-blur-sm"
                 >
                   <span className="relative z-10">Go Private Now</span>
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-800 to-purple-900 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300"></div>
-                </a>
-              )}              <a
+                </Link>
+              )}              <Link
                 href="/group-chat"
                 className="relative group px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white/10 dark:bg-black/20 hover:text-white rounded-xl border border-white/20 dark:border-gray-700/50 hover:border-secondary transition-all duration-300 shadow-sm hover:shadow-lg hover:scale-105 backdrop-blur-sm"
               >
                 <span className="relative z-10">Group Chat</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-800 to-purple-900 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300"></div>
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/video-call"
                 className="relative group px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white/10 dark:bg-black/20 hover:text-white rounded-xl border border-white/20 dark:border-gray-700/50 hover:border-accent transition-all duration-300 shadow-sm hover:shadow-lg hover:scale-105 backdrop-blur-sm"
               >
                 <span className="relative z-10">Video Call</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-800 to-purple-900 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300"></div>
-              </a>
+              </Link>
             </SignedIn>
             
             <SignedOut>
@@ -139,39 +139,41 @@ const Navbar: React.FC = () => {
             </SignedOut>
             
             <SignedIn>
-              <div className="ml-2 p-1 rounded-xl bg-white/10 dark:bg-black/20 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 shadow-sm hover:shadow-md transition-all duration-300">
+              {/* <div className="ml-2 p-1 rounded-xl bg-white/10 dark:bg-black/20 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 shadow-sm hover:shadow-md transition-all duration-300"> */}
                 <UserButton />
-              </div>
+              {/* </div> */}
             </SignedIn>
           </div>
         </nav>        {/* Mobile Menu Dropdown */}
         {isMenuOpen && (
           <div className="md:hidden bg-white/95 dark:bg-black/95 backdrop-blur-lg border-t border-white/20 dark:border-gray-800/50 shadow-lg animate-in slide-in-from-top-2 duration-300">
-            <div className="px-4 py-6 space-y-3 max-w-7xl mx-auto">
-              <SignedIn>
+            <div className="px-4 py-6 space-y-3 max-w-7xl mx-auto">              <SignedIn>
                 {!isChatPage && (
                   <Link
-                    href="/p2p"
-                    className="block w-full text-center font-medium text-gray-700 dark:text-white bg-gradient-to-r from-primary/10 to-primary/20 hover:bg-purple-500  hover:text-white px-6 py-3 rounded-xl text-sm transition-all duration-300 shadow-sm hover:shadow-lg border border-primary/20 hover:border-primary transform hover:scale-[1.02]"
+                    href="/user/chat"
+                    className="relative group block w-full text-center font-medium text-gray-700 dark:text-white bg-gradient-to-r from-primary/10 to-primary/20 hover:text-white px-6 py-3 rounded-xl text-sm transition-all duration-300 shadow-sm hover:shadow-lg border border-primary/20 hover:border-primary transform hover:scale-[1.02]"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Go Private
+                    <span className="relative z-10">Go Private</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-800 to-purple-900 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300"></div>
                   </Link>
                 )}
-                <a
+                <Link
                   href="/group-chat"
-                  className="block w-full text-center font-medium text-gray-700 dark:text-gray-300 bg-white/20 dark:bg-black/40 hover:bg-secondary/80 hover:text-white px-6 py-3 rounded-xl border border-white/30 dark:border-gray-600/50 hover:border-secondary transition-all duration-300 shadow-sm hover:shadow-lg backdrop-blur-sm transform hover:scale-[1.02]"
+                  className="relative group block w-full text-center font-medium text-gray-700 dark:text-gray-300 bg-white/20 dark:bg-black/40 hover:text-white px-6 py-3 rounded-xl border border-white/30 dark:border-gray-600/50 hover:border-secondary transition-all duration-300 shadow-sm hover:shadow-lg backdrop-blur-sm transform hover:scale-[1.02]"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Group Chat
-                </a>
-                <a
+                  <span className="relative z-10">Group Chat</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-800 to-purple-900 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300"></div>
+                </Link>
+                <Link
                   href="/video-call"
-                  className="block w-full text-center font-medium text-gray-700 dark:text-gray-300 bg-white/20 dark:bg-black/40 hover:bg-accent/80 hover:text-white px-6 py-3 rounded-xl border border-white/30 dark:border-gray-600/50 hover:border-accent transition-all duration-300 shadow-sm hover:shadow-lg backdrop-blur-sm transform hover:scale-[1.02]"
+                  className="relative group block w-full text-center font-medium text-gray-700 dark:text-gray-300 bg-white/20 dark:bg-black/40 hover:text-white px-6 py-3 rounded-xl border border-white/30 dark:border-gray-600/50 hover:border-accent transition-all duration-300 shadow-sm hover:shadow-lg backdrop-blur-sm transform hover:scale-[1.02]"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Video Call
-                </a>
+                  <span className="relative z-10">Video Call</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-800 to-purple-900 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300"></div>
+                </Link>
               </SignedIn>
               
               <SignedOut>
