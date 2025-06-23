@@ -75,6 +75,17 @@ export function AnimatedFeaturesDemo() {
   return (
     <section id="features" className="py-20 bg-black md:py-28">
       <div className="container mx-auto px-4 md:px-6">
+        {/* Visual Break */}
+        <div className="flex items-center justify-center mb-12">
+          <div className="flex items-center space-x-4">
+            <div className="h-px w-12 bg-gradient-to-r from-transparent to-[hsl(263.4,70%,50.4%)]"></div>
+            <div className="h-2 w-2 rounded-full bg-[hsl(263.4,70%,50.4%)] animate-pulse"></div>
+            <div className="h-px w-24 bg-gradient-to-r from-[hsl(263.4,70%,50.4%)] to-transparent"></div>
+            <div className="h-2 w-2 rounded-full bg-[hsl(263.4,70%,50.4%)] animate-pulse delay-75"></div>
+            <div className="h-px w-12 bg-gradient-to-r from-transparent to-[hsl(263.4,70%,50.4%)]"></div>
+          </div>
+        </div>
+
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2
