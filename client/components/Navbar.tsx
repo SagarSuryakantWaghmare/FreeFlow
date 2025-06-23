@@ -98,27 +98,27 @@ const Navbar: React.FC = () => {
             </SignedIn>
           </div>          {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-2 lg:gap-4">
-            <SignedIn>
-              {!isChatPage && (
+            <SignedIn>              {!isChatPage && (
                 <a
                   href="/user/chat"
-                  className="relative group px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gradient-to-r from-primary/10 to-primary/20 hover:from-primary hover:to-primary/90 hover:text-white rounded-xl border border-primary/20 hover:border-primary transition-all duration-300 shadow-sm hover:shadow-lg hover:scale-105 backdrop-blur-sm"
+                  className="relative group px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gradient-to-r from-primary/10 to-primary/20 hover:text-white rounded-xl border border-primary/20 hover:border-primary transition-all duration-300 shadow-sm hover:shadow-lg hover:scale-105 backdrop-blur-sm"
                 >
                   <span className="relative z-10">Go Private Now</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-800 to-purple-900 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300"></div>
                 </a>
-              )}
-              <a
+              )}              <a
                 href="/group-chat"
-                className="relative group px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white/10 dark:bg-black/20 hover:bg-secondary/80 hover:text-white rounded-xl border border-white/20 dark:border-gray-700/50 hover:border-secondary transition-all duration-300 shadow-sm hover:shadow-lg hover:scale-105 backdrop-blur-sm"
+                className="relative group px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white/10 dark:bg-black/20 hover:text-white rounded-xl border border-white/20 dark:border-gray-700/50 hover:border-secondary transition-all duration-300 shadow-sm hover:shadow-lg hover:scale-105 backdrop-blur-sm"
               >
                 <span className="relative z-10">Group Chat</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-800 to-purple-900 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300"></div>
               </a>
               <a
                 href="/video-call"
-                className="relative group px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white/10 dark:bg-black/20 hover:bg-accent/80 hover:text-white rounded-xl border border-white/20 dark:border-gray-700/50 hover:border-accent transition-all duration-300 shadow-sm hover:shadow-lg hover:scale-105 backdrop-blur-sm"
+                className="relative group px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white/10 dark:bg-black/20 hover:text-white rounded-xl border border-white/20 dark:border-gray-700/50 hover:border-accent transition-all duration-300 shadow-sm hover:shadow-lg hover:scale-105 backdrop-blur-sm"
               >
                 <span className="relative z-10">Video Call</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-800 to-purple-900 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300"></div>
               </a>
             </SignedIn>
             
@@ -152,7 +152,7 @@ const Navbar: React.FC = () => {
                 {!isChatPage && (
                   <Link
                     href="/p2p"
-                    className="block w-full text-center font-medium text-gray-700 dark:text-white bg-gradient-to-r from-primary/10 to-primary/20 hover:from-primary hover:to-primary/90 hover:text-white px-6 py-3 rounded-xl text-sm transition-all duration-300 shadow-sm hover:shadow-lg border border-primary/20 hover:border-primary transform hover:scale-[1.02]"
+                    className="block w-full text-center font-medium text-gray-700 dark:text-white bg-gradient-to-r from-primary/10 to-primary/20 hover:bg-purple-500  hover:text-white px-6 py-3 rounded-xl text-sm transition-all duration-300 shadow-sm hover:shadow-lg border border-primary/20 hover:border-primary transform hover:scale-[1.02]"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Go Private
