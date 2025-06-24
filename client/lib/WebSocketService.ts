@@ -2,7 +2,12 @@
 
 import { SafeLocalStorage } from './utils/SafeLocalStorage';
 
-let backendUrl: string = "ws://localhost:8080/ws/p2p"; // Default URL for developmentbackendUrl = "ws://localhost:8080/ws/p2p";
+let backendUrl: string; // Default URL for developmentbackendUrl = "ws://localhost:8080/ws/p2p";
+if (process.env.NODE_ENV === 'production') {
+  backendUrl = 'https://freeflow-server.onrender.com/ws/p2p'
+} else {
+  backendUrl = "ws://localhost:8080/ws/p2p";
+}
 
 /**
  * WebSocketService.ts - Handles WebSocket connections to the signaling server
@@ -14,7 +19,7 @@ class WebSocketService {
   private socket: WebSocket | null = null;
   private listeners: Map<string, ((data: any) => void)[]> = new Map();
   private reconnectTimeout: NodeJS.Timeout | null = null;
-  private reconnectAttempts = 0;  private maxReconnectAttempts = 5;
+  private reconnectAttempts = 0; private maxReconnectAttempts = 5;
   private userId: string | null = null;
   private connectionStableTimeout: NodeJS.Timeout | null = null;
   private connectionIsStable = false;
@@ -52,15 +57,15 @@ class WebSocketService {
       }
 
       try {
-        this.socket = new WebSocket(serverUrl);        this.socket.onopen = () => {
+        this.socket = new WebSocket(serverUrl); this.socket.onopen = () => {
           console.log("WebSocket connection established");
           this.reconnectAttempts = 0;
-            // Mark connection as stable after a brief delay
+          // Mark connection as stable after a brief delay
           this.connectionStableTimeout = setTimeout(() => {
             this.connectionIsStable = true;
             console.log("WebSocket connection marked as stable");
           }, 2000);
-          
+
           // Send user_online message with username
           const username = SafeLocalStorage.getItem('username');
           this.sendMessage({
@@ -79,16 +84,16 @@ class WebSocketService {
           } catch (error) {
             console.error("Failed to parse WebSocket message:", error);
           }
-        };        this.socket.onclose = (event) => {
+        }; this.socket.onclose = (event) => {
           console.log("WebSocket connection closed", event.code, event.reason);
           this.connectionIsStable = false;
-          
+
           // Clear stability timeout if connection closes early
           if (this.connectionStableTimeout) {
             clearTimeout(this.connectionStableTimeout);
             this.connectionStableTimeout = null;
           }
-          
+
           // Handle different close codes
           if (event.code === 1011) {
             // Server error - likely backend crash
@@ -97,12 +102,12 @@ class WebSocketService {
             // Abnormal closure
             console.warn("Abnormal WebSocket closure (1006) - connection lost unexpectedly");
           }
-          
+
           // Only attempt reconnect if it wasn't a manual close (code 1000)
           if (event.code !== 1000) {
             this.attemptReconnect();
           }
-        };        this.socket.onerror = (error) => {
+        }; this.socket.onerror = (error) => {
           console.error("WebSocket error:", error);
           // Don't reject here as we want to handle reconnection gracefully
           // reject(error);
@@ -135,7 +140,7 @@ class WebSocketService {
    */
   private attemptImmediateReconnect(message: any): void {
     if (!this.userId) return;
-    
+
     // Only attempt if not already connecting
     if (!this.socket || this.socket.readyState === WebSocket.CLOSED) {
       this.connect(this.userId).then(() => {
