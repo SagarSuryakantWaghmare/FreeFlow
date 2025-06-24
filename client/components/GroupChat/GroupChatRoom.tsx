@@ -361,11 +361,12 @@ export default function GroupChatRoom({
               </div>
 
               <div className="flex items-center space-x-2">
-                {inviteLink && (                  <Button
+                {inviteLink && (
+                  <Button
                     variant="outline"
                     size="sm"
                     onClick={copyInviteLink}
-                    className="border-[hsl(263.4,70%,50.4%)]/30 text-[hsl(263.4,70%,50.4%)] hover:bg-[hsl(263.4,70%,50.4%)] hover:text-white transition-all duration-300"
+                    className="border-[hsl(263.4,70%,50.4%)/0.3 text-[hsl(263.4,70%,50.4%)] hover:bg-[hsl(263.4,70%,50.4%)] hover:text-white transition-all duration-300"
                   >
                     <Copy className="h-4 w-4 mr-2" />
                     Copy Invite
